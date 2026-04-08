@@ -4,11 +4,10 @@ use axum::{
     extract::DefaultBodyLimit,
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, get_service, post},
+    routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
-use tower_http::services::{ServeDir, ServeFile};
 
 const SERVER_PORT: u16 = 8765;
 const DEV_FRONTEND_PORT: u16 = 5173;
@@ -60,15 +59,13 @@ pub async fn run() {
 }
 
 fn build_router() -> Router {
-    let frontend_service = ServeDir::new(web_assets::frontend_dist_dir())
-        .not_found_service(ServeFile::new(web_assets::frontend_index_file()));
-
-    Router::new()
+    let api_router = Router::new()
         .route("/api/type-text", post(type_text))
         .route("/api/press-key", post(press_key))
         .route("/health", get(health))
-        .fallback_service(get_service(frontend_service))
-        .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES))
+        .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES));
+
+    web_assets::install(api_router)
 }
 
 fn print_startup_guide(api_port: u16) -> Option<String> {
@@ -85,7 +82,7 @@ fn print_startup_guide(api_port: u16) -> Option<String> {
         frontend_url
     } else {
         print_section_heading("Frontend (production)");
-        println!("Mode:        Rust serves built assets from frontend/dist");
+        println!("Mode:        Rust serves frontend assets embedded in the executable");
         api_url
     }
 }

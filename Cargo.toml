@@ -1,6 +1,6 @@
 [package]
 name = "voice-bridge"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Use a phone's input method and voice dictation to type into the focused window on a Windows PC."
 rust-version = "1.85"
@@ -9,9 +9,9 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 arboard = "3.6"
 axum = { version = "0.8", features = ["json"] }
+include_dir = "0.7"
 local-ip-address = "0.6"
 qrcode = "0.14"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
-tower-http = { version = "0.6", features = ["fs"] }
 windows = { version = "0.62", features = ["Win32_UI_Input_KeyboardAndMouse"] }

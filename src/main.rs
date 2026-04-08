@@ -1,3 +1,5 @@
+mod input;
+
 use axum::{
     Json, Router,
     extract::DefaultBodyLimit,
@@ -94,6 +96,8 @@ async fn type_text(Json(payload): Json<TypeTextRequest>) -> Result<Json<ApiRespo
     if text.is_empty() {
         return Err(AppError::bad_request("text cannot be empty"));
     }
+
+    input::type_text(text).map_err(AppError::type_text_failed)?;
 
     println!("\n--- type_text ---\ntext: {}\n-----------------", text);
 
@@ -231,6 +235,13 @@ impl AppError {
         Self {
             status: StatusCode::BAD_REQUEST,
             message: message.into(),
+        }
+    }
+
+    fn type_text_failed(error: input::InputError) -> Self {
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: error.to_string(),
         }
     }
 }

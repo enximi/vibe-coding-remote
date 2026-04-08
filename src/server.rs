@@ -1,32 +1,17 @@
 use crate::{input, network, web_assets};
 use axum::{
     Json, Router,
-    body::Body,
-    extract::{DefaultBodyLimit, Request},
-    http::{HeaderMap, HeaderValue, Method, StatusCode},
+    extract::DefaultBodyLimit,
+    http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, get_service, post},
 };
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::{convert::Infallible, net::SocketAddr, time::Duration};
-use tower::{ServiceExt, service_fn};
+use std::net::SocketAddr;
 use tower_http::services::{ServeDir, ServeFile};
 
 const SERVER_PORT: u16 = 8765;
-
-#[derive(Clone)]
-struct Frontend {
-    dev_server_url: Option<String>,
-    http_client: Client,
-}
-
-struct FrontendRequestMeta {
-    method: Method,
-    path_and_query: String,
-    accept: Option<HeaderValue>,
-    user_agent: Option<HeaderValue>,
-}
+const VITE_DEV_PORT: u16 = 5173;
 
 #[derive(Debug, Deserialize)]
 struct TypeTextRequest {
@@ -55,26 +40,17 @@ struct ApiResponse {
 }
 
 pub async fn run() {
-    let frontend = Frontend::new();
-    let app = build_router(frontend.clone());
+    let app = build_router();
     let addr = SocketAddr::from(([0, 0, 0, 0], SERVER_PORT));
 
     println!("VoiceBridge local server is starting...");
-    let recommended_url = network::print_access_urls(addr.port());
-    println!(
-        "RPC API:     http://127.0.0.1:{}/api/type-text",
-        addr.port()
-    );
-    println!(
-        "RPC API:     http://127.0.0.1:{}/api/press-key",
-        addr.port()
-    );
-    frontend.print_startup_mode();
-    network::print_startup_qr(recommended_url.as_deref());
+    let frontend_url = print_startup_guide(addr.port());
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .expect("failed to bind TCP listener");
+
+    network::print_startup_qr(frontend_url.as_deref());
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
@@ -82,135 +58,44 @@ pub async fn run() {
         .expect("server error");
 }
 
-fn build_router(frontend: Frontend) -> Router {
-    let frontend_fallback = service_fn(move |request: Request<Body>| {
-        let frontend = frontend.clone();
-        async move { Ok::<_, Infallible>(frontend.handle_request(request).await) }
-    });
+fn build_router() -> Router {
+    let static_files = ServeDir::new(web_assets::frontend_dist_dir())
+        .not_found_service(ServeFile::new(web_assets::frontend_index_file()));
 
     Router::new()
         .route("/api/type-text", post(type_text))
         .route("/api/press-key", post(press_key))
         .route("/health", get(health))
-        .fallback_service(frontend_fallback)
+        .fallback_service(get_service(static_files))
         .layer(DefaultBodyLimit::max(64 * 1024))
 }
 
-impl FrontendRequestMeta {
-    fn from_request(request: &Request<Body>) -> Self {
-        Self {
-            method: request.method().clone(),
-            path_and_query: request
-                .uri()
-                .path_and_query()
-                .map(|value| value.as_str().to_string())
-                .unwrap_or_else(|| "/".to_string()),
-            accept: request.headers().get("accept").cloned(),
-            user_agent: request.headers().get("user-agent").cloned(),
-        }
-    }
-}
+fn print_startup_guide(api_port: u16) -> Option<String> {
+    println!(
+        "
+API server:"
+    );
+    let api_url = network::print_access_urls(api_port);
+    println!("RPC API:     http://127.0.0.1:{api_port}/api/type-text");
+    println!("RPC API:     http://127.0.0.1:{api_port}/api/press-key");
 
-impl Frontend {
-    fn new() -> Self {
-        Self {
-            dev_server_url: web_assets::frontend_dev_server_url(),
-            http_client: Client::builder()
-                .connect_timeout(Duration::from_millis(300))
-                .timeout(Duration::from_secs(5))
-                .build()
-                .expect("failed to build frontend HTTP client"),
-        }
-    }
-
-    fn print_startup_mode(&self) {
-        if let Some(url) = &self.dev_server_url {
-            println!(
-                "Frontend:    dev proxy -> {} (fallback: frontend/dist)",
-                url
-            );
-        } else {
-            println!("Frontend:    built assets -> frontend/dist");
-        }
-    }
-
-    async fn handle_request(&self, request: Request<Body>) -> Response {
-        let request_meta = FrontendRequestMeta::from_request(&request);
-
-        if let Some(response) = self.try_proxy_to_dev_server(request_meta).await {
-            return response;
-        }
-
-        self.serve_built_assets(request).await
-    }
-
-    async fn try_proxy_to_dev_server(&self, request: FrontendRequestMeta) -> Option<Response> {
-        let dev_server_url = self.dev_server_url.as_ref()?;
-
-        if !matches!(request.method, Method::GET | Method::HEAD) {
-            return None;
-        }
-
-        let target_url = format!("{dev_server_url}{}", request.path_and_query);
-        let mut upstream_request = self.http_client.request(request.method, target_url);
-
-        if let Some(accept) = request.accept {
-            upstream_request = upstream_request.header("accept", accept);
-        }
-
-        if let Some(user_agent) = request.user_agent {
-            upstream_request = upstream_request.header("user-agent", user_agent);
-        }
-
-        let upstream_response = match upstream_request.send().await {
-            Ok(response) => response,
-            Err(_) => return None,
-        };
-
-        Some(build_proxy_response(upstream_response).await)
-    }
-
-    async fn serve_built_assets(&self, request: Request<Body>) -> Response {
-        let service = ServeDir::new(web_assets::frontend_dist_dir())
-            .not_found_service(ServeFile::new(web_assets::frontend_index_file()));
-
-        match service.oneshot(request).await {
-            Ok(response) => response.into_response(),
-            Err(error) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("failed to serve frontend assets: {error}"),
-            )
-                .into_response(),
-        }
-    }
-}
-
-async fn build_proxy_response(upstream_response: reqwest::Response) -> Response {
-    let status = upstream_response.status();
-    let headers = upstream_response.headers().clone();
-    let body = match upstream_response.bytes().await {
-        Ok(bytes) => Body::from(bytes),
-        Err(error) => {
-            return (
-                StatusCode::BAD_GATEWAY,
-                format!("failed to read frontend dev server response: {error}"),
-            )
-                .into_response();
-        }
-    };
-
-    let mut response = (status, body).into_response();
-    copy_response_headers(&headers, response.headers_mut());
-    response
-}
-
-fn copy_response_headers(source: &HeaderMap, target: &mut HeaderMap) {
-    for (name, value) in source {
-        if name.as_str().eq_ignore_ascii_case("content-length") {
-            continue;
-        }
-
-        target.insert(name, value.clone());
+    if cfg!(debug_assertions) {
+        println!(
+            "
+Frontend (development):"
+        );
+        let frontend_url = network::print_access_urls(VITE_DEV_PORT);
+        println!(
+            "Mode:        use Vite directly in development; Rust serves only API and production assets"
+        );
+        frontend_url
+    } else {
+        println!(
+            "
+Frontend (production):"
+        );
+        println!("Mode:        built assets -> frontend/dist");
+        api_url
     }
 }
 

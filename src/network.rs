@@ -1,9 +1,12 @@
 use local_ip_address::list_afinet_netifas;
-use qrcode::{QrCode, render::unicode};
+use qrcode::QrCode;
 use std::{
     collections::HashSet,
     net::{IpAddr, Ipv4Addr},
 };
+
+const QR_DARK_MODULE: &str = "\x1b[40m  \x1b[0m";
+const QR_LIGHT_MODULE: &str = "\x1b[47m  \x1b[0m";
 
 #[derive(Debug, Clone)]
 struct AddressCandidate {
@@ -53,7 +56,7 @@ pub fn print_startup_qr(url: Option<&str>) {
 
     match QrCode::new(url.as_bytes()) {
         Ok(code) => {
-            let image = code.render::<unicode::Dense1x2>().quiet_zone(true).build();
+            let image = render_terminal_qr(&code);
             println!("{image}");
             println!("{url}");
         }
@@ -62,6 +65,27 @@ pub fn print_startup_qr(url: Option<&str>) {
             println!("{url}");
         }
     }
+}
+
+fn render_terminal_qr(code: &QrCode) -> String {
+    let qr = code
+        .render::<&str>()
+        .dark_color(QR_DARK_MODULE)
+        .light_color(QR_LIGHT_MODULE)
+        .quiet_zone(false)
+        .build();
+
+    let side_border = QR_LIGHT_MODULE;
+    let border_line = QR_LIGHT_MODULE.repeat(code.width() + 2);
+    let mut lines = Vec::with_capacity(code.width() + 2);
+    lines.push(border_line.clone());
+
+    for line in qr.lines() {
+        lines.push(format!("{side_border}{line}{side_border}"));
+    }
+
+    lines.push(border_line);
+    lines.join("\n")
 }
 
 fn collect_address_candidates() -> Vec<AddressCandidate> {

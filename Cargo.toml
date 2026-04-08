@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Use a phone's input method and voice dictation to type into the focused window on a Windows PC."
 rust-version = "1.85"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 arboard = "3.6"

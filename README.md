@@ -304,6 +304,11 @@ bun run preview
 
 ## License
 
-仓库准备开源前，建议先补充正式许可证文件。
+本项目采用 **MIT / Apache-2.0 双授权**。
 
-如果你还没决定，可先参考 `doc/release-checklist.md` 里的开源发布检查项。
+你可以任选其一使用：
+
+- [LICENSE-MIT](./LICENSE-MIT)
+- [LICENSE-APACHE](./LICENSE-APACHE)
+
+除非你明确声明否则，提交到本仓库的贡献也将按相同的双授权方式发布。

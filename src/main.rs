@@ -8,6 +8,7 @@ use axum::{
     routing::{get, post},
 };
 use local_ip_address::list_afinet_netifas;
+use qrcode::{QrCode, render::unicode};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -64,7 +65,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8765));
 
     println!("VoiceBridge local server is starting...");
-    print_access_urls(addr.port());
+    let recommended_url = print_access_urls(addr.port());
     println!(
         "RPC API:     http://127.0.0.1:{}/api/type-text",
         addr.port()
@@ -73,6 +74,7 @@ async fn main() {
         "RPC API:     http://127.0.0.1:{}/api/press-key",
         addr.port()
     );
+    print_startup_qr(recommended_url.as_deref());
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
@@ -139,10 +141,13 @@ async fn press_key(Json(payload): Json<PressKeyRequest>) -> Result<Json<ApiRespo
     Ok(Json(ApiResponse { ok: true }))
 }
 
-fn print_access_urls(port: u16) {
+fn print_access_urls(port: u16) -> Option<String> {
     println!("Local:       http://127.0.0.1:{port}");
 
     let candidates = collect_address_candidates();
+    let recommended_url = candidates
+        .first()
+        .map(|candidate| format!("http://{}:{port}", candidate.ip));
 
     if let Some(recommended) = candidates.first() {
         println!(
@@ -161,6 +166,29 @@ fn print_access_urls(port: u16) {
                 "  - http://{}:{port}  ({})",
                 candidate.ip, candidate.interface_name
             );
+        }
+    }
+
+    recommended_url
+}
+
+fn print_startup_qr(url: Option<&str>) {
+    let Some(url) = url else {
+        println!("QR Code:     skipped (no recommended LAN address)");
+        return;
+    };
+
+    println!("Scan to open on phone:");
+
+    match QrCode::new(url.as_bytes()) {
+        Ok(code) => {
+            let image = code.render::<unicode::Dense1x2>().quiet_zone(true).build();
+            println!("{image}");
+            println!("{url}");
+        }
+        Err(error) => {
+            println!("QR Code:     failed to generate ({error})");
+            println!("{url}");
         }
     }
 }

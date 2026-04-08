@@ -1,10 +1,9 @@
-import React, { useRef, useState } from 'react';
-import { usePreferences } from './hooks/usePreferences';
-import { useViewportOffset } from './hooks/useViewportOffset';
-import { Composer } from './components/Composer';
-import type { ComposerHandle } from './components/Composer';
+import { useCallback, useRef, useState } from 'react';
+import { Composer, type ComposerHandle } from './components/Composer';
 import { Dock } from './components/Dock';
 import { SettingsModal } from './components/SettingsModal';
+import { usePreferences } from './hooks/usePreferences';
+import { useViewportOffset } from './hooks/useViewportOffset';
 
 function App() {
   const { prefs, setPrefs, addHistory, clearHistory } = usePreferences();
@@ -12,60 +11,75 @@ function App() {
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);
   const [hasText, setHasText] = useState(false);
   const composerRef = useRef<ComposerHandle>(null);
-  
-  // Applies native iOS visualViewport logic to --keyboard-offset var
+
   useViewportOffset();
 
-  const handleGlobalClick = (e: React.MouseEvent) => {
-    // To maximize immersion, tap anywhere outside the dock will auto-focus the composer
-    // This replicates the old Vanilla JS behavior
-    const target = e.target as HTMLElement;
-    const isDock = target.closest('.dock');
-    const isModal = target.closest('.modal');
-    const isInput = target.closest('#composerInput');
-    
-    if (!isDock && !isModal && !isInput) {
-      composerRef.current?.focusInput();
-    }
-  };
+  const focusComposer = useCallback(() => {
+    composerRef.current?.focusInput();
+  }, []);
 
-  const handleHistorySelect = (text: string) => {
-    composerRef.current?.setText(text);
-    setIsModalOpen(false);
-    setTimeout(() => {
-      composerRef.current?.focusInput();
-    }, 150);
-  };
+  const handleGlobalClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+      const isInteractiveOverlay =
+        target.closest('.dock') ||
+        target.closest('.modal') ||
+        target.closest('#composerInput');
 
-  const handleSendClick = async () => {
+      if (!isInteractiveOverlay) {
+        focusComposer();
+      }
+    },
+    [focusComposer],
+  );
+
+  const handleHistorySelect = useCallback(
+    (text: string) => {
+      composerRef.current?.setText(text);
+      setIsModalOpen(false);
+      window.setTimeout(focusComposer, 150);
+    },
+    [focusComposer],
+  );
+
+  const handleSendClick = useCallback(async () => {
     await composerRef.current?.submitText();
-  };
+  }, []);
 
   return (
-    <div className="app-container" onClick={handleGlobalClick} style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <form id="composerForm" onSubmit={e => { e.preventDefault(); handleSendClick(); }} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Composer 
-          ref={composerRef} 
-          prefs={prefs} 
+    <div className="app-shell" onClick={handleGlobalClick}>
+      <form
+        id="composerForm"
+        className="app-shell__form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSendClick();
+        }}
+      >
+        <Composer
+          ref={composerRef}
+          prefs={prefs}
           addHistory={addHistory}
           onTextChange={setHasText}
           onSendActionStart={() => setIsSendingSuccess(true)}
-          onSendActionEnd={() => setTimeout(() => setIsSendingSuccess(false), 400)}
+          onSendActionEnd={() => window.setTimeout(() => setIsSendingSuccess(false), 400)}
         />
-        <button className="submit-proxy" type="submit" aria-hidden="true" tabIndex={-1}>发送</button>
+        <button className="submit-proxy" type="submit" aria-hidden="true" tabIndex={-1}>
+          发送
+        </button>
       </form>
-      
-      <Dock 
-        prefs={prefs} 
-        onMenuClick={() => setIsModalOpen(true)} 
-        onSendClick={handleSendClick}
-        isSendingSuccess={isSendingSuccess}
+
+      <Dock
+        prefs={prefs}
         hasText={hasText}
+        isSendingSuccess={isSendingSuccess}
+        onMenuClick={() => setIsModalOpen(true)}
+        onSendClick={handleSendClick}
       />
 
-      <SettingsModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <SettingsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         prefs={prefs}
         setPrefs={setPrefs}
         clearHistory={clearHistory}

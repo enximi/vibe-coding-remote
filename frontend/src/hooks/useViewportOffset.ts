@@ -2,12 +2,17 @@ import { useEffect } from 'react';
 
 export function useViewportOffset() {
   useEffect(() => {
-    if (!window.visualViewport) return;
+    if (!window.visualViewport) {
+      return;
+    }
 
     const updateKeyboardOffset = () => {
-      const vp = window.visualViewport;
-      if (!vp) return;
-      const gap = window.innerHeight - (vp.height + vp.offsetTop);
+      const viewport = window.visualViewport;
+      if (!viewport) {
+        return;
+      }
+
+      const gap = window.innerHeight - (viewport.height + viewport.offsetTop);
       document.documentElement.style.setProperty('--keyboard-offset', `${Math.max(0, gap)}px`);
     };
 
@@ -16,10 +21,9 @@ export function useViewportOffset() {
     window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
 
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateKeyboardOffset);
-        window.visualViewport.removeEventListener('scroll', updateKeyboardOffset);
-      }
+      document.documentElement.style.setProperty('--keyboard-offset', '0px');
+      window.visualViewport?.removeEventListener('resize', updateKeyboardOffset);
+      window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset);
     };
   }, []);
 }

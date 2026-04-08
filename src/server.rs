@@ -11,7 +11,8 @@ use std::net::SocketAddr;
 use tower_http::services::{ServeDir, ServeFile};
 
 const SERVER_PORT: u16 = 8765;
-const VITE_DEV_PORT: u16 = 5173;
+const DEV_FRONTEND_PORT: u16 = 5173;
+const MAX_REQUEST_BODY_BYTES: usize = 64 * 1024;
 
 #[derive(Debug, Deserialize)]
 struct TypeTextRequest {
@@ -59,44 +60,39 @@ pub async fn run() {
 }
 
 fn build_router() -> Router {
-    let static_files = ServeDir::new(web_assets::frontend_dist_dir())
+    let frontend_service = ServeDir::new(web_assets::frontend_dist_dir())
         .not_found_service(ServeFile::new(web_assets::frontend_index_file()));
 
     Router::new()
         .route("/api/type-text", post(type_text))
         .route("/api/press-key", post(press_key))
         .route("/health", get(health))
-        .fallback_service(get_service(static_files))
-        .layer(DefaultBodyLimit::max(64 * 1024))
+        .fallback_service(get_service(frontend_service))
+        .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES))
 }
 
 fn print_startup_guide(api_port: u16) -> Option<String> {
-    println!(
-        "
-API server:"
-    );
+    print_section_heading("API server");
     let api_url = network::print_access_urls(api_port);
     println!("RPC API:     http://127.0.0.1:{api_port}/api/type-text");
     println!("RPC API:     http://127.0.0.1:{api_port}/api/press-key");
 
     if cfg!(debug_assertions) {
-        println!(
-            "
-Frontend (development):"
-        );
-        let frontend_url = network::print_access_urls(VITE_DEV_PORT);
-        println!(
-            "Mode:        use Vite directly in development; Rust serves only API and production assets"
-        );
+        print_section_heading("Frontend (development)");
+        let frontend_url = network::print_access_urls(DEV_FRONTEND_PORT);
+        println!("Mode:        use Vite directly in development");
+        println!("Proxy:       /api -> http://127.0.0.1:{api_port}");
         frontend_url
     } else {
-        println!(
-            "
-Frontend (production):"
-        );
-        println!("Mode:        built assets -> frontend/dist");
+        print_section_heading("Frontend (production)");
+        println!("Mode:        Rust serves built assets from frontend/dist");
         api_url
     }
+}
+
+fn print_section_heading(title: &str) {
+    println!();
+    println!("{title}:");
 }
 
 async fn shutdown_signal() {

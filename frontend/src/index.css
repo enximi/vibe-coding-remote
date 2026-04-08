@@ -11,10 +11,19 @@
   --primary-color: #ffffff;
   --divider: rgba(0, 0, 0, 0.1);
   --selection: rgba(0, 0, 0, 0.15);
-  font-family: "LXGW WenKai", -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  --keyboard-offset: 0px;
+  font-family:
+    'LXGW WenKai',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Inter',
+    'SF Pro Display',
+    'PingFang SC',
+    'Helvetica Neue',
+    sans-serif;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --bg: #000000;
   --text: #ffffff;
   --placeholder: #6e6e73;
@@ -28,7 +37,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     --bg: #000000;
     --text: #ffffff;
     --placeholder: #6e6e73;
@@ -47,26 +56,47 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-button, input, textarea {
-  font-family: inherit;
+button,
+input,
+textarea {
+  font: inherit;
 }
 
-html, body {
+html,
+body,
+#root {
   height: 100%;
+}
+
+html,
+body {
   margin: 0;
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  /* Allowed overscroll auto to natively support Pull to Refresh */
   overscroll-behavior-y: auto;
 }
 
-#composerForm {
+body {
+  text-rendering: optimizeLegibility;
+}
+
+.app-shell {
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
+}
+
+.app-shell__form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#composerForm {
   position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .composer-wrapper {
@@ -74,12 +104,12 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 24px 24px 120px 24px;
+  padding: 24px 24px 120px;
   -webkit-overflow-scrolling: touch;
 }
 
 .composer-wrapper::after {
-  content: "";
+  content: '';
   flex: 1;
 }
 
@@ -93,7 +123,7 @@ html, body {
   line-height: 1.6;
   outline: none;
   text-align: left;
-  caret-color: var(--primary-bg); /* caret dynamically matches inverse color */
+  caret-color: var(--primary-bg);
   letter-spacing: -0.02em;
   resize: none;
   overflow: hidden;
@@ -105,14 +135,38 @@ html, body {
   color: transparent;
 }
 
+.watermark-placeholder {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  color: var(--placeholder);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+  text-align: left;
+}
+
+.watermark-placeholder p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  opacity: 0.5;
+  user-select: none;
+}
+
+.watermark-placeholder.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
 #composerInput::selection {
   background: var(--selection);
 }
 
-/* Floating iOS-like Bottom Dock */
 .dock {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 20px) + 20px + var(--keyboard-offset, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 20px) + 20px + var(--keyboard-offset));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -121,14 +175,11 @@ html, body {
   padding: 10px;
   background: var(--dock-bg);
   border: 1px solid var(--dock-border);
-  border-radius: 999px; /* Pill shape */
-  
-  /* Modern Glassmorphism Blur */
+  border-radius: 999px;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  
-  box-shadow: 
-    0 16px 40px rgba(0, 0, 0, 0.08), 
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.08),
     0 4px 12px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 10;
@@ -136,8 +187,8 @@ html, body {
 
 @media (prefers-color-scheme: dark) {
   .dock {
-    box-shadow: 
-      0 16px 40px rgba(0, 0, 0, 0.6), 
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.6),
       0 4px 12px rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
@@ -158,13 +209,19 @@ html, body {
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), background-color 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    background-color 0.2s ease,
+    opacity 0.2s ease;
 }
 
-/* Add slight scaling micro-animation */
 .dock-btn:active {
   transform: scale(0.85);
   background: var(--btn-hover);
+}
+
+.dock-btn--action {
+  position: relative;
 }
 
 .dock-btn--primary {
@@ -175,25 +232,43 @@ html, body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
+.dock-btn--primary:active {
+  transform: scale(0.9);
+}
+
+.dock-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dock-btn--disabled:active {
+  transform: none;
+  background: var(--primary-bg);
+}
+
 @media (prefers-color-scheme: dark) {
   .dock-btn--primary {
     box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
   }
 }
 
-.dock-btn--primary:active {
-  transform: scale(0.9);
-}
-
-/* Success visual feedback on send */
 .dock-btn--sent {
   animation: pop-success 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
 @keyframes pop-success {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); color: #34c759; } 
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+    color: #34c759;
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .dock-divider {
@@ -204,7 +279,6 @@ html, body {
   border-radius: 1px;
 }
 
-/* Combo Visual UI Feedback */
 .combo-counter {
   position: absolute;
   top: -36px;
@@ -216,10 +290,12 @@ html, body {
   font-size: 14px;
   font-weight: 800;
   border-radius: 999px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  transition:
+    opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
   will-change: opacity, transform;
   z-index: 20;
 }
@@ -236,9 +312,17 @@ html, body {
 }
 
 @keyframes combo-bump {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .submit-proxy {
@@ -248,14 +332,13 @@ html, body {
   z-index: -1;
 }
 
-/* Modal Dialog Overlay */
 dialog.modal {
   border: none;
   background: transparent;
   width: 100%;
   max-width: 500px;
   height: min(85vh, 600px);
-  margin: auto auto 0 auto;
+  margin: auto auto 0;
   padding: 0;
   overflow: visible;
   outline: none;
@@ -276,19 +359,25 @@ dialog.modal::backdrop {
   width: 100%;
   height: 100%;
   background: var(--bg);
+  color: var(--text);
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
-  padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px) 24px;
+  padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   outline: none;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
   animation: slide-up 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.05);
 }
 
 @keyframes slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -303,16 +392,24 @@ dialog.modal::backdrop {
   font-size: 22px;
   margin: 0;
   font-weight: 600;
+  color: var(--text);
 }
 
 .close-btn {
   background: var(--btn-hover);
   border: none;
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text);
   cursor: pointer;
+}
+
+.close-btn:active {
+  transform: scale(0.95);
 }
 
 .settings-group {
@@ -327,7 +424,6 @@ dialog.modal::backdrop {
   font-weight: 500;
 }
 
-/* Compact Toggles */
 .compact-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -357,7 +453,6 @@ dialog.modal::backdrop {
   transform: scale(0.92);
 }
 
-/* Segmented Control */
 .segmented-control {
   display: flex;
   background: var(--btn-hover);
@@ -382,7 +477,7 @@ dialog.modal::backdrop {
 .segmented-control button.active {
   background: var(--bg);
   color: var(--text);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -390,11 +485,11 @@ dialog.modal::backdrop {
     background: #2a2a2c;
   }
 }
-:root[data-theme="dark"] .segmented-control button.active {
+
+:root[data-theme='dark'] .segmented-control button.active {
   background: #2a2a2c;
 }
 
-/* History Segment */
 .history-group {
   margin-bottom: 0;
 }
@@ -436,6 +531,18 @@ dialog.modal::backdrop {
   gap: 6px;
 }
 
+.history-item:active {
+  opacity: 0.5;
+}
+
+.history-item.empty {
+  color: var(--placeholder);
+  text-align: center;
+  border: none;
+  padding-top: 40px;
+  display: block;
+}
+
 .history-time {
   font-size: 13px;
   color: var(--placeholder);
@@ -451,38 +558,31 @@ dialog.modal::backdrop {
   white-space: pre-wrap;
 }
 
-.history-item:active {
-  opacity: 0.5;
-}
-
-.history-item.empty {
-  color: var(--placeholder);
-  text-align: center;
-  border: none;
-  padding-top: 40px;
-  display: block;
-}
-
 @media (max-width: 440px) {
   .dock {
     gap: 4px;
     padding: 8px;
-    bottom: calc(env(safe-area-inset-bottom, 16px) + 16px + var(--keyboard-offset, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 16px) + 16px + var(--keyboard-offset));
   }
+
   .dock-btn {
     width: 38px;
     height: 38px;
   }
+
   .dock-btn svg {
     transform: scale(0.85);
   }
+
   .dock-btn--primary {
     width: 42px;
     height: 42px;
   }
+
   .composer-wrapper {
-    padding: 20px 20px 104px 20px;
+    padding: 20px 20px 104px;
   }
+
   #composerInput {
     font-size: 20px;
   }

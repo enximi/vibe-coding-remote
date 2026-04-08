@@ -1,60 +1,99 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { pressKey } from '../utils/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { pressKey, type InputActionKey } from '../utils/api';
 import { hapticVibrate } from '../utils/haptics';
 
-export function useContinuousTrigger(actionKey: string, isContinuous: boolean) {
+const CONTINUOUS_TRIGGER_DELAY_MS = 450;
+const CONTINUOUS_TRIGGER_INTERVAL_MS = 100;
+const SINGLE_TRIGGER_LOCK_MS = 350;
+const SINGLE_TRIGGER_FADEOUT_MS = 1000;
+const CONTINUOUS_TRIGGER_FADEOUT_MS = 600;
+
+export function useContinuousTrigger(actionKey: InputActionKey, isContinuous: boolean) {
   const [triggerCount, setTriggerCount] = useState(0);
   const intervalRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const fadeoutRef = useRef<number | null>(null);
-  const isFiringRef = useRef(false);
   const countRef = useRef(0);
+  const isFiringRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      clearTimer(intervalRef.current, window.clearInterval);
+      clearTimer(timeoutRef.current, window.clearTimeout);
+      clearTimer(fadeoutRef.current, window.clearTimeout);
+    };
+  }, []);
 
   const incrementCount = () => {
     countRef.current += 1;
     setTriggerCount(countRef.current);
   };
 
-  const start = useCallback((e: React.PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    if (isFiringRef.current) return;
-    isFiringRef.current = true;
-    
-    if (fadeoutRef.current) clearTimeout(fadeoutRef.current);
-    countRef.current = 0;
-    setTriggerCount(0);
+  const fireAction = useCallback(
+    (vibration: number | number[]) => {
+      hapticVibrate(vibration);
+      void pressKey(actionKey).catch(() => undefined);
+      incrementCount();
+    },
+    [actionKey],
+  );
 
-    hapticVibrate(30);
-    try { pressKey(actionKey); } catch (err) {}
-    incrementCount();
+  const start = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (isFiringRef.current) {
+        return;
+      }
 
-    if (isContinuous) {
+      isFiringRef.current = true;
+      clearTimer(fadeoutRef.current, window.clearTimeout);
+      countRef.current = 0;
+      setTriggerCount(0);
+
+      fireAction(30);
+
+      if (!isContinuous) {
+        window.setTimeout(() => {
+          isFiringRef.current = false;
+        }, SINGLE_TRIGGER_LOCK_MS);
+        fadeoutRef.current = window.setTimeout(
+          () => setTriggerCount(0),
+          SINGLE_TRIGGER_FADEOUT_MS,
+        );
+        return;
+      }
+
       timeoutRef.current = window.setTimeout(() => {
         intervalRef.current = window.setInterval(() => {
-          hapticVibrate(20);
-          try { pressKey(actionKey); } catch (err) {}
-          incrementCount();
-        }, 100);
-      }, 450);
-    } else {
-      setTimeout(() => { isFiringRef.current = false; }, 350);
-      fadeoutRef.current = window.setTimeout(() => setTriggerCount(0), 1000);
-    }
-  }, [actionKey, isContinuous]);
+          fireAction(20);
+        }, CONTINUOUS_TRIGGER_INTERVAL_MS);
+      }, CONTINUOUS_TRIGGER_DELAY_MS);
+    },
+    [fireAction, isContinuous],
+  );
 
-  const stop = useCallback((e?: React.SyntheticEvent) => {
-    if (e) e.preventDefault();
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (isContinuous) {
+  const stop = useCallback(
+    (event?: React.SyntheticEvent) => {
+      event?.preventDefault();
+      clearTimer(timeoutRef.current, window.clearTimeout);
+      clearTimer(intervalRef.current, window.clearInterval);
+
+      if (!isContinuous) {
+        return;
+      }
+
       isFiringRef.current = false;
       if (countRef.current > 1) {
-        fadeoutRef.current = window.setTimeout(() => setTriggerCount(0), 600);
+        fadeoutRef.current = window.setTimeout(
+          () => setTriggerCount(0),
+          CONTINUOUS_TRIGGER_FADEOUT_MS,
+        );
       } else {
         setTriggerCount(0);
       }
-    }
-  }, [isContinuous]);
+    },
+    [isContinuous],
+  );
 
   return {
     triggerCount,
@@ -62,11 +101,24 @@ export function useContinuousTrigger(actionKey: string, isContinuous: boolean) {
     onPointerUp: stop,
     onPointerLeave: stop,
     onPointerCancel: stop,
-    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-    onClick: (e: React.MouseEvent) => {
+    onContextMenu: preventDefault,
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
       if (!isContinuous && !isFiringRef.current) {
-        start(e as any);
+        start(event);
       }
-    }
+    },
   };
+}
+
+function clearTimer(
+  timerId: number | null,
+  clear: (timerId: number) => void,
+) {
+  if (timerId !== null) {
+    clear(timerId);
+  }
+}
+
+function preventDefault(event: React.SyntheticEvent) {
+  event.preventDefault();
 }

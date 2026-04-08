@@ -5,6 +5,8 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VIRTUAL_KEY, VK_BACK, VK_C, VK_CONTROL, VK_RETURN, VK_TAB, VK_V,
 };
 
+const CLIPBOARD_SETTLE_DELAY_MS: u64 = 20;
+
 pub fn type_text(text: &str) -> Result<(), InputError> {
     paste_text(text)
 }
@@ -27,7 +29,7 @@ fn paste_text(text: &str) -> Result<(), InputError> {
         .set_text(text)
         .map_err(InputError::ClipboardWriteFailed)?;
 
-    thread::sleep(Duration::from_millis(20));
+    thread::sleep(Duration::from_millis(CLIPBOARD_SETTLE_DELAY_MS));
     send_ctrl_shortcut(VK_V).map_err(InputError::SendInputFailed)?;
 
     Ok(())
@@ -50,6 +52,8 @@ fn send_key(key: VIRTUAL_KEY) -> windows::core::Result<()> {
 }
 
 fn send_inputs(inputs: &[INPUT]) -> windows::core::Result<()> {
+    // SAFETY: `inputs` points to a valid slice of `INPUT` values that lives until the call returns,
+    // and the element size matches the `INPUT` layout expected by Win32.
     let sent = unsafe {
         SendInput(
             inputs,

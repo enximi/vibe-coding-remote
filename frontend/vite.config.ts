@@ -1,7 +1,8 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+const RUST_API_URL = 'http://127.0.0.1:8765';
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -12,8 +13,8 @@ export default defineConfig({
       clientPort: 5173,
     },
     proxy: {
-      "/api": {
-        target: "http://127.0.0.1:8765",
+      '/api': {
+        target: RUST_API_URL,
         changeOrigin: true,
       },
     },

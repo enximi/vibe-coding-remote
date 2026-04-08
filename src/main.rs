@@ -24,6 +24,19 @@ struct TypeTextRequest {
     text: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct PressKeyRequest {
+    key: PressKeyName,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum PressKeyName {
+    Enter,
+    Tab,
+    Backspace,
+}
+
 #[derive(Debug, Serialize)]
 struct ApiResponse {
     ok: bool,
@@ -44,6 +57,7 @@ async fn main() {
         .route("/styles.css", get(styles_css))
         .route("/manifest.webmanifest", get(manifest))
         .route("/api/type-text", post(type_text))
+        .route("/api/press-key", post(press_key))
         .route("/health", get(health))
         .layer(DefaultBodyLimit::max(64 * 1024));
 
@@ -53,6 +67,10 @@ async fn main() {
     print_access_urls(addr.port());
     println!(
         "RPC API:     http://127.0.0.1:{}/api/type-text",
+        addr.port()
+    );
+    println!(
+        "RPC API:     http://127.0.0.1:{}/api/press-key",
         addr.port()
     );
 
@@ -97,9 +115,26 @@ async fn type_text(Json(payload): Json<TypeTextRequest>) -> Result<Json<ApiRespo
         return Err(AppError::bad_request("text cannot be empty"));
     }
 
-    input::type_text(text).map_err(AppError::type_text_failed)?;
+    input::type_text(text).map_err(AppError::input_failed)?;
 
     println!("\n--- type_text ---\ntext: {}\n-----------------", text);
+
+    Ok(Json(ApiResponse { ok: true }))
+}
+
+async fn press_key(Json(payload): Json<PressKeyRequest>) -> Result<Json<ApiResponse>, AppError> {
+    let key = match payload.key {
+        PressKeyName::Enter => input::PressKey::Enter,
+        PressKeyName::Tab => input::PressKey::Tab,
+        PressKeyName::Backspace => input::PressKey::Backspace,
+    };
+
+    input::press_key(key).map_err(AppError::input_failed)?;
+
+    println!(
+        "\n--- press_key ---\nkey: {:?}\n-----------------",
+        payload.key
+    );
 
     Ok(Json(ApiResponse { ok: true }))
 }
@@ -238,7 +273,7 @@ impl AppError {
         }
     }
 
-    fn type_text_failed(error: input::InputError) -> Self {
+    fn input_failed(error: input::InputError) -> Self {
         Self {
             status: StatusCode::INTERNAL_SERVER_ERROR,
             message: error.to_string(),

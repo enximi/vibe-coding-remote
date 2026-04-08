@@ -2,7 +2,7 @@
   color-scheme: light dark;
   --bg: #ffffff;
   --text: #000000;
-  --placeholder: #b0b0b5;
+  --placeholder: #9b9b9b;
   --dock-bg: rgba(255, 255, 255, 0.82);
   --dock-border: rgba(0, 0, 0, 0.08);
   --btn-bg: transparent;
@@ -11,14 +11,14 @@
   --primary-color: #ffffff;
   --divider: rgba(0, 0, 0, 0.1);
   --selection: rgba(0, 0, 0, 0.15);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-family: "LXGW WenKai", -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000000;
     --text: #ffffff;
-    --placeholder: #4a4a4f;
+    --placeholder: #6e6e73;
     --dock-bg: rgba(28, 28, 30, 0.76);
     --dock-border: rgba(255, 255, 255, 0.12);
     --btn-hover: rgba(255, 255, 255, 0.1);
@@ -32,6 +32,10 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+}
+
+button, input, textarea {
+  font-family: inherit;
 }
 
 html, body {
@@ -60,7 +64,6 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-.composer-wrapper::before,
 .composer-wrapper::after {
   content: "";
   flex: 1;
@@ -71,11 +74,11 @@ html, body {
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 36px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.6;
   outline: none;
-  text-align: center;
+  text-align: left;
   caret-color: var(--primary-bg); /* caret dynamically matches inverse color */
   letter-spacing: -0.02em;
   resize: none;
@@ -84,13 +87,28 @@ html, body {
   flex-shrink: 0;
 }
 
-#composerInput::placeholder {
+.watermark-placeholder {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
   color: var(--placeholder);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.8;
+  pointer-events: none;
   transition: opacity 0.3s ease;
+  z-index: 0;
+  text-align: left;
 }
 
-#composerInput:focus::placeholder {
-  opacity: 0.25;
+#composerInput:not(:placeholder-shown) + .watermark-placeholder {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#composerInput::placeholder {
+  color: transparent;
 }
 
 #composerInput::selection {
@@ -212,7 +230,13 @@ html, body {
   .composer-wrapper {
     padding: 20px 20px 104px 20px;
   }
+  .watermark-placeholder {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    font-size: 16px;
+  }
   #composerInput {
-    font-size: 28px;
+    font-size: 20px;
   }
 }

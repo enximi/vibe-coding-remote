@@ -28,10 +28,7 @@ function focusInput(select = false) {
   }
 }
 
-function autoResizeInput() {
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-
+function updateEnterKeyHint() {
   const wantsSend = input.value.length > 0;
   const currentHint = input.getAttribute('enterkeyhint');
   const targetHint = wantsSend ? 'send' : 'enter';
@@ -39,6 +36,24 @@ function autoResizeInput() {
     input.setAttribute('enterkeyhint', targetHint);
   }
 }
+
+function autoResizeInput() {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+}
+
+let isComposing = false;
+input.addEventListener('compositionstart', () => { isComposing = true; });
+input.addEventListener('compositionend', () => {
+  isComposing = false;
+  updateEnterKeyHint();
+});
+
+input.addEventListener('keyup', () => {
+  if (!isComposing) {
+    updateEnterKeyHint();
+  }
+});
 
 input.addEventListener('input', autoResizeInput);
 input.addEventListener('keydown', (e) => {
@@ -121,6 +136,7 @@ async function submitCurrentText() {
     await sendToDesktop(text);
     input.value = '';
     autoResizeInput();
+    updateEnterKeyHint();
     focusInput();
   } catch (error) {
     console.error(error);

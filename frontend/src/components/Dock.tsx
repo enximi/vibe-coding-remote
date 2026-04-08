@@ -85,11 +85,14 @@ interface DockActionBtnProps {
 }
 
 const DockActionBtn: React.FC<DockActionBtnProps> = ({ actionKey, isContinuous, icon, ariaLabel }) => {
-  const triggerProps = useContinuousTrigger(actionKey, isContinuous);
+  const { triggerCount, ...triggerProps } = useContinuousTrigger(actionKey, isContinuous);
   
   return (
-    <button className="dock-btn" type="button" aria-label={ariaLabel} {...triggerProps}>
+    <button className="dock-btn" type="button" aria-label={ariaLabel} style={{ position: 'relative' }} {...triggerProps}>
       {icon}
+      <div className={`combo-counter ${triggerCount > 1 ? 'visible' : ''}`}>
+        {triggerCount > 1 && <span key={triggerCount} className="combo-number">x{triggerCount}</span>}
+      </div>
     </button>
   );
 };

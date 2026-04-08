@@ -154,6 +154,10 @@ html, body {
   color: var(--text);
   border-radius: 50%;
   cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), background-color 0.2s ease;
 }
 
@@ -200,6 +204,43 @@ html, body {
   border-radius: 1px;
 }
 
+/* Combo Visual UI Feedback */
+.combo-counter {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  will-change: opacity, transform;
+  z-index: 20;
+}
+
+.combo-counter.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.combo-number {
+  display: inline-block;
+  animation: combo-bump 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes combo-bump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
 .submit-proxy {
   position: absolute;
   opacity: 0;
@@ -232,8 +273,6 @@ dialog.modal::backdrop {
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
   padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px) 24px;
-  display: flex;
-  flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
@@ -350,11 +389,7 @@ dialog.modal::backdrop {
 
 /* History Segment */
 .history-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   margin-bottom: 0;
-  min-height: 150px;
 }
 
 .history-header {
@@ -382,9 +417,6 @@ dialog.modal::backdrop {
   list-style: none;
   padding: 0;
   margin: 0;
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .history-item {

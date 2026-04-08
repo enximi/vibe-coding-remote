@@ -4,10 +4,11 @@ use axum::{
     extract::DefaultBodyLimit,
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, get_service, post},
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use tower_http::services::{ServeDir, ServeFile};
 
 const SERVER_PORT: u16 = 8765;
 
@@ -18,15 +19,18 @@ struct TypeTextRequest {
 
 #[derive(Debug, Deserialize)]
 struct PressKeyRequest {
-    key: PressKeyName,
+    key: InputActionName,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum PressKeyName {
+enum InputActionName {
     Enter,
     Tab,
     Backspace,
+    Copy,
+    Paste,
+    Newline,
 }
 
 #[derive(Debug, Serialize)]
@@ -61,14 +65,14 @@ pub async fn run() {
 }
 
 fn build_router() -> Router {
+    let static_files = ServeDir::new(web_assets::frontend_dist_dir())
+        .not_found_service(ServeFile::new(web_assets::frontend_index_file()));
+
     Router::new()
-        .route("/", get(web_assets::index))
-        .route("/app.js", get(web_assets::app_js))
-        .route("/styles.css", get(web_assets::styles_css))
-        .route("/manifest.webmanifest", get(web_assets::manifest))
         .route("/api/type-text", post(type_text))
         .route("/api/press-key", post(press_key))
         .route("/health", get(health))
+        .fallback_service(get_service(static_files))
         .layer(DefaultBodyLimit::max(64 * 1024))
 }
 
@@ -95,7 +99,7 @@ async fn type_text(Json(payload): Json<TypeTextRequest>) -> Result<Json<ApiRespo
 }
 
 async fn press_key(Json(payload): Json<PressKeyRequest>) -> Result<Json<ApiResponse>, AppError> {
-    input::press_key(payload.key.into()).map_err(AppError::input_failed)?;
+    input::perform_action(payload.key.into()).map_err(AppError::input_failed)?;
 
     println!(
         "\n--- press_key ---\nkey: {:?}\n-----------------",
@@ -105,12 +109,15 @@ async fn press_key(Json(payload): Json<PressKeyRequest>) -> Result<Json<ApiRespo
     Ok(Json(ApiResponse { ok: true }))
 }
 
-impl From<PressKeyName> for input::PressKey {
-    fn from(value: PressKeyName) -> Self {
+impl From<InputActionName> for input::InputAction {
+    fn from(value: InputActionName) -> Self {
         match value {
-            PressKeyName::Enter => Self::Enter,
-            PressKeyName::Tab => Self::Tab,
-            PressKeyName::Backspace => Self::Backspace,
+            InputActionName::Enter => Self::Enter,
+            InputActionName::Tab => Self::Tab,
+            InputActionName::Backspace => Self::Backspace,
+            InputActionName::Copy => Self::Copy,
+            InputActionName::Paste => Self::Paste,
+            InputActionName::Newline => Self::Newline,
         }
     }
 }

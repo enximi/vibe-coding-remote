@@ -2,30 +2,42 @@ use arboard::Clipboard;
 use std::{thread, time::Duration};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, SendInput,
-    VIRTUAL_KEY, VK_BACK, VK_CONTROL, VK_RETURN, VK_TAB, VK_V,
+    VIRTUAL_KEY, VK_BACK, VK_C, VK_CONTROL, VK_RETURN, VK_TAB, VK_V,
 };
 
 pub fn type_text(text: &str) -> Result<(), InputError> {
+    paste_text(text)
+}
+
+pub fn perform_action(action: InputAction) -> Result<(), InputError> {
+    match action {
+        InputAction::Enter => send_key(VK_RETURN),
+        InputAction::Tab => send_key(VK_TAB),
+        InputAction::Backspace => send_key(VK_BACK),
+        InputAction::Copy => send_ctrl_shortcut(VK_C),
+        InputAction::Paste => send_ctrl_shortcut(VK_V),
+        InputAction::Newline => return paste_text("\n"),
+    }
+    .map_err(InputError::SendInputFailed)
+}
+
+fn paste_text(text: &str) -> Result<(), InputError> {
     let mut clipboard = Clipboard::new().map_err(InputError::ClipboardUnavailable)?;
     clipboard
         .set_text(text)
         .map_err(InputError::ClipboardWriteFailed)?;
 
     thread::sleep(Duration::from_millis(20));
-    send_ctrl_v().map_err(InputError::SendInputFailed)?;
+    send_ctrl_shortcut(VK_V).map_err(InputError::SendInputFailed)?;
 
     Ok(())
 }
 
-pub fn press_key(key: PressKey) -> Result<(), InputError> {
-    send_key(key.virtual_key()).map_err(InputError::SendInputFailed)
-}
-
-fn send_ctrl_v() -> windows::core::Result<()> {
+fn send_ctrl_shortcut(key: VIRTUAL_KEY) -> windows::core::Result<()> {
     send_inputs(&[
         keyboard_input(VK_CONTROL, KEYBD_EVENT_FLAGS(0)),
-        keyboard_input(VK_V, KEYBD_EVENT_FLAGS(0)),
-        keyboard_input(VK_V, KEYEVENTF_KEYUP),
+        keyboard_input(key, KEYBD_EVENT_FLAGS(0)),
+        keyboard_input(key, KEYEVENTF_KEYUP),
         keyboard_input(VK_CONTROL, KEYEVENTF_KEYUP),
     ])
 }
@@ -70,20 +82,13 @@ fn keyboard_input(key: VIRTUAL_KEY, flags: KEYBD_EVENT_FLAGS) -> INPUT {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum PressKey {
+pub enum InputAction {
     Enter,
     Tab,
     Backspace,
-}
-
-impl PressKey {
-    fn virtual_key(self) -> VIRTUAL_KEY {
-        match self {
-            Self::Enter => VK_RETURN,
-            Self::Tab => VK_TAB,
-            Self::Backspace => VK_BACK,
-        }
-    }
+    Copy,
+    Paste,
+    Newline,
 }
 
 #[derive(Debug)]

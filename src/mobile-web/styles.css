@@ -14,8 +14,21 @@
   font-family: "LXGW WenKai", -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --text: #ffffff;
+  --placeholder: #6e6e73;
+  --dock-bg: rgba(28, 28, 30, 0.76);
+  --dock-border: rgba(255, 255, 255, 0.12);
+  --btn-hover: rgba(255, 255, 255, 0.1);
+  --primary-bg: #ffffff;
+  --primary-color: #000000;
+  --divider: rgba(255, 255, 255, 0.15);
+  --selection: rgba(255, 255, 255, 0.25);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #000000;
     --text: #ffffff;
     --placeholder: #6e6e73;
@@ -211,6 +224,178 @@ html, body {
   opacity: 0;
   pointer-events: none;
   z-index: -1;
+}
+
+/* Modal Dialog Overlay */
+dialog.modal {
+  border: none;
+  background: transparent;
+  width: 100%;
+  max-width: 500px;
+  height: min(85vh, 600px);
+  margin: auto auto 0 auto;
+  padding: 0;
+  overflow: visible;
+}
+
+dialog.modal::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px) 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+  animation: slide-up 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.05);
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 22px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: var(--btn-hover);
+  border: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.settings-group {
+  margin-bottom: 32px;
+  flex-shrink: 0;
+}
+
+.settings-group h3 {
+  font-size: 15px;
+  color: var(--placeholder);
+  margin: 0 0 12px 6px;
+  font-weight: 500;
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background: var(--btn-hover);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented-control button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--placeholder);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.segmented-control button.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .segmented-control button.active {
+    background: #2a2a2c;
+  }
+}
+:root[data-theme="dark"] .segmented-control button.active {
+  background: #2a2a2c;
+}
+
+/* History Segment */
+.history-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  min-height: 150px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.history-header h3 {
+  margin: 0 0 0 6px;
+}
+
+.history-clear-btn {
+  background: transparent;
+  border: none;
+  color: #ff453a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-item {
+  padding: 16px 6px;
+  border-bottom: 1px solid var(--divider);
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--text);
+  transition: opacity 0.2s;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.history-item:active {
+  opacity: 0.5;
+}
+
+.history-item.empty {
+  color: var(--placeholder);
+  text-align: center;
+  border: none;
+  padding-top: 40px;
+  display: block;
 }
 
 @media (max-width: 440px) {

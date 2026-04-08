@@ -37,6 +37,13 @@
   </form>
 
   <nav class="dock" aria-label="快捷操作">
+    <button class="dock-btn" id="menuBtn" type="button" aria-label="设置与历史">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="1.5"></circle>
+        <circle cx="19" cy="12" r="1.5"></circle>
+        <circle cx="5" cy="12" r="1.5"></circle>
+      </svg>
+    </button>
     <button class="dock-btn" type="button" data-key="tab" aria-label="Tab">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -52,6 +59,47 @@
       </svg>
     </button>
   </nav>
+
+  <dialog id="menuModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">偏好设置</h2>
+        <button class="close-btn" id="closeModalBtn" type="button" aria-label="关闭">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settings-group">
+        <h3>界面外观</h3>
+        <div class="segmented-control" id="themeControl">
+          <button data-val="system" type="button">系统</button>
+          <button data-val="light" type="button">浅色</button>
+          <button data-val="dark" type="button">深色</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>键盘回车键功能</h3>
+        <div class="segmented-control" id="enterBehaviorControl">
+          <button data-val="send" type="button">直接发送</button>
+          <button data-val="newline" type="button">换行编写</button>
+        </div>
+      </div>
+
+      <div class="settings-group history-group">
+        <div class="history-header">
+          <h3>最近发送记录</h3>
+          <button class="history-clear-btn" id="clearHistoryBtn" type="button">清空全部</button>
+        </div>
+        <ul id="historyList" class="history-list">
+          <!-- 历史记录动态填充位置 -->
+        </ul>
+      </div>
+    </div>
+  </dialog>
 
   <script src="./app.js" defer></script>
 </body>

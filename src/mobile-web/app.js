@@ -4,6 +4,48 @@ const actionButtons = document.querySelectorAll('[data-key]');
 const sendBtn = document.getElementById('sendBtn');
 
 const ENDPOINT_KEY = 'voicebridge.mobile.endpoint';
+const PREFS_KEY = 'voicebridge.mobile.prefs';
+
+let prefs = {
+  theme: 'system',
+  enterBehavior: 'send',
+  history: []
+};
+
+function loadPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY));
+    if (saved) {
+      prefs.theme = saved.theme || prefs.theme;
+      prefs.enterBehavior = saved.enterBehavior || prefs.enterBehavior;
+      prefs.history = saved.history || prefs.history;
+    }
+  } catch (e) {}
+  applyTheme(prefs.theme);
+}
+
+function savePrefs() {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+}
+
+function applyTheme(theme) {
+  if (theme === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
+
+function addHistory(text) {
+  text = text.trim();
+  if (!text) return;
+  prefs.history = prefs.history.filter(t => t !== text);
+  prefs.history.unshift(text);
+  if (prefs.history.length > 50) prefs.history.pop();
+  savePrefs();
+}
+
+loadPrefs();
 const url = new URL(window.location.href);
 const presetEndpoint = url.searchParams.get('endpoint');
 
@@ -29,7 +71,7 @@ function focusInput(select = false) {
 }
 
 function updateEnterKeyHint() {
-  const wantsSend = input.value.length > 0;
+  const wantsSend = input.value.length > 0 && prefs.enterBehavior !== 'newline';
   const currentHint = input.getAttribute('enterkeyhint');
   const targetHint = wantsSend ? 'send' : 'enter';
   if (currentHint !== targetHint) {
@@ -62,6 +104,10 @@ input.addEventListener('keydown', (e) => {
     hapticVibrate(30);
     pressKey('backspace');
   } else if (e.key === 'Enter' && !e.shiftKey) {
+    if (prefs.enterBehavior === 'newline' && input.value !== '') {
+      // 允许原生换行，不做拦截
+      return;
+    }
     e.preventDefault();
     submitCurrentText();
   }
@@ -134,6 +180,7 @@ async function submitCurrentText() {
     hapticVibrate([20, 30, 20]); // Affirmative haptic feedback
     triggerSuccessAnimation(sendBtn);
     await sendToDesktop(text);
+    addHistory(text);
     input.value = '';
     autoResizeInput();
     updateEnterKeyHint();
@@ -206,3 +253,85 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', updateKeyboardOffset);
   window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
 }
+
+// --- Modal & Settings Logic ---
+const menuBtn = document.getElementById('menuBtn');
+const menuModal = document.getElementById('menuModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const historyList = document.getElementById('historyList');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+menuBtn.addEventListener('click', () => {
+  renderSettings();
+  renderHistory();
+  menuModal.showModal();
+});
+
+closeModalBtn.addEventListener('click', () => {
+  menuModal.close();
+});
+
+menuModal.addEventListener('click', (e) => {
+  // 点击空白处关闭弹窗
+  if (e.target === menuModal) {
+    menuModal.close();
+  }
+});
+
+document.querySelectorAll('.segmented-control button').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const parent = e.target.closest('.segmented-control');
+    parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    if (parent.id === 'themeControl') {
+      prefs.theme = e.target.dataset.val;
+      applyTheme(prefs.theme);
+      savePrefs();
+    } else if (parent.id === 'enterBehaviorControl') {
+      prefs.enterBehavior = e.target.dataset.val;
+      savePrefs();
+      updateEnterKeyHint();
+    }
+  });
+});
+
+function renderSettings() {
+  document.querySelectorAll('#themeControl button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === prefs.theme);
+  });
+  document.querySelectorAll('#enterBehaviorControl button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === prefs.enterBehavior);
+  });
+}
+
+function renderHistory() {
+  historyList.innerHTML = '';
+  if (prefs.history.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'history-item empty';
+    li.textContent = '过去犹如一张白纸';
+    historyList.appendChild(li);
+    return;
+  }
+  
+  prefs.history.forEach(itemText => {
+    const li = document.createElement('li');
+    li.className = 'history-item';
+    li.textContent = itemText;
+    li.addEventListener('click', () => {
+      input.value = itemText;
+      autoResizeInput();
+      updateEnterKeyHint();
+      menuModal.close();
+      setTimeout(() => focusInput(), 150);
+    });
+    historyList.appendChild(li);
+  });
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+  prefs.history = [];
+  savePrefs();
+  renderHistory();
+});

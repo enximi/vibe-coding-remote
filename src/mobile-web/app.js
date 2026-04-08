@@ -31,11 +31,22 @@ function focusInput(select = false) {
 function autoResizeInput() {
   input.style.height = 'auto';
   input.style.height = input.scrollHeight + 'px';
+
+  const wantsSend = input.value.length > 0;
+  const currentHint = input.getAttribute('enterkeyhint');
+  const targetHint = wantsSend ? 'send' : 'enter';
+  if (currentHint !== targetHint) {
+    input.setAttribute('enterkeyhint', targetHint);
+  }
 }
 
 input.addEventListener('input', autoResizeInput);
 input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Backspace' && input.value === '') {
+    e.preventDefault();
+    hapticVibrate(30);
+    pressKey('backspace');
+  } else if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     submitCurrentText();
   }
@@ -90,9 +101,17 @@ async function pressKey(key) {
 }
 
 async function submitCurrentText() {
-  const text = input.value.trim();
-  if (!text) {
-    focusInput();
+  const text = input.value;
+  if (text.length === 0) {
+    try {
+      hapticVibrate(30);
+      await pressKey('enter');
+      focusInput();
+    } catch (error) {
+      console.error(error);
+      hapticVibrate([50, 50, 50]);
+      focusInput();
+    }
     return;
   }
 
@@ -115,21 +134,21 @@ form.addEventListener('submit', async (event) => {
   await submitCurrentText();
 });
 
-sendBtn.addEventListener('click', async () => {
+sendBtn.addEventListener('pointerdown', async (e) => {
+  e.preventDefault(); // Prevents input from losing focus so keyboard won't dismiss
   await submitCurrentText();
 });
 
 for (const button of actionButtons) {
-  button.addEventListener('click', async () => {
+  button.addEventListener('pointerdown', async (e) => {
+    e.preventDefault(); // Prevents input from losing focus
     try {
       hapticVibrate(30); // Light haptic tap
       const key = button.dataset.key;
       await pressKey(key);
-      focusInput();
     } catch (error) {
       console.error(error);
       hapticVibrate([50, 50, 50]);
-      focusInput();
     }
   });
 }

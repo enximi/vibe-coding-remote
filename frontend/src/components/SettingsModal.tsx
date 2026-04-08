@@ -72,27 +72,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         <div className="settings-group">
           <h3>悬浮岛按键显示</h3>
-          <div className="toggle-list">
-            <label className="toggle-item">
-              <span>复制 (Ctrl+C)</span>
-              <input type="checkbox" checked={prefs.dockButtons.copy !== false} onChange={() => toggleDockBtn('copy')} />
-            </label>
-            <label className="toggle-item">
-              <span>粘贴 (Ctrl+V)</span>
-              <input type="checkbox" checked={prefs.dockButtons.paste !== false} onChange={() => toggleDockBtn('paste')} />
-            </label>
-            <label className="toggle-item">
-              <span>Tab 缩进</span>
-              <input type="checkbox" checked={prefs.dockButtons.tab !== false} onChange={() => toggleDockBtn('tab')} />
-            </label>
-            <label className="toggle-item">
-              <span>插入换行</span>
-              <input type="checkbox" checked={prefs.dockButtons.newline !== false} onChange={() => toggleDockBtn('newline')} />
-            </label>
-            <label className="toggle-item">
-              <span>实体退格</span>
-              <input type="checkbox" checked={prefs.dockButtons.backspace !== false} onChange={() => toggleDockBtn('backspace')} />
-            </label>
+          <div className="compact-toggles">
+            <button type="button" className={prefs.dockButtons.copy !== false ? 'active' : ''} onClick={() => toggleDockBtn('copy')}>复制</button>
+            <button type="button" className={prefs.dockButtons.paste !== false ? 'active' : ''} onClick={() => toggleDockBtn('paste')}>粘贴</button>
+            <button type="button" className={prefs.dockButtons.tab !== false ? 'active' : ''} onClick={() => toggleDockBtn('tab')}>Tab 缩进</button>
+            <button type="button" className={prefs.dockButtons.newline !== false ? 'active' : ''} onClick={() => toggleDockBtn('newline')}>插入换行</button>
+            <button type="button" className={prefs.dockButtons.backspace !== false ? 'active' : ''} onClick={() => toggleDockBtn('backspace')}>实体退格</button>
           </div>
         </div>
 

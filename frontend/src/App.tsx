@@ -10,6 +10,7 @@ function App() {
   const { prefs, setPrefs, addHistory, clearHistory } = usePreferences();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);
+  const [hasText, setHasText] = useState(false);
   const composerRef = useRef<ComposerHandle>(null);
   
   // Applies native iOS visualViewport logic to --keyboard-offset var
@@ -47,6 +48,7 @@ function App() {
           ref={composerRef} 
           prefs={prefs} 
           addHistory={addHistory}
+          onTextChange={setHasText}
           onSendActionStart={() => setIsSendingSuccess(true)}
           onSendActionEnd={() => setTimeout(() => setIsSendingSuccess(false), 400)}
         />
@@ -58,6 +60,7 @@ function App() {
         onMenuClick={() => setIsModalOpen(true)} 
         onSendClick={handleSendClick}
         isSendingSuccess={isSendingSuccess}
+        hasText={hasText}
       />
 
       <SettingsModal 

@@ -57,7 +57,8 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  overflow: hidden; /* Avoid elastic banding on scrolling the background */
+  /* Allowed overscroll auto to natively support Pull to Refresh */
+  overscroll-behavior-y: auto;
 }
 
 #composerForm {
@@ -98,72 +99,6 @@ html, body {
   overflow: hidden;
   height: auto;
   flex-shrink: 0;
-}
-
-.watermark-placeholder {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  right: 24px;
-  color: var(--placeholder);
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 0;
-  text-align: left;
-}
-
-.watermark-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 6px 0;
-  color: var(--text);
-  letter-spacing: -0.5px;
-}
-
-.watermark-header p {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.5;
-  margin: 0 0 24px 0;
-}
-
-.watermark-details {
-  font-size: 14px;
-  line-height: 1.5;
-  opacity: 0.8;
-}
-
-.watermark-details section {
-  margin-bottom: 20px;
-}
-
-.watermark-details h2 {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: var(--text);
-  opacity: 0.9;
-}
-
-.watermark-details ul {
-  padding-left: 20px;
-  margin: 0 0 8px 0;
-}
-
-.watermark-details li {
-  margin-bottom: 6px;
-}
-
-.watermark-note {
-  font-size: 13px;
-  opacity: 0.6;
-  margin-top: 16px;
-  font-style: italic;
-}
-
-#composerInput:not(:placeholder-shown) + .watermark-placeholder {
-  opacity: 0;
-  visibility: hidden;
 }
 
 #composerInput::placeholder {
@@ -299,6 +234,8 @@ dialog.modal::backdrop {
   padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px) 24px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
   animation: slide-up 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.05);
 }
@@ -344,66 +281,34 @@ dialog.modal::backdrop {
   font-weight: 500;
 }
 
-/* Toggle Switch List */
-.toggle-item {
+/* Compact Toggles */
+.compact-toggles {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--btn-hover);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.toggle-item:last-child {
-  margin-bottom: 0;
-}
-
-.toggle-item span {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.toggle-item input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 44px;
-  height: 24px;
-  background: var(--placeholder);
+.compact-toggles button {
+  padding: 8px 16px;
   border-radius: 999px;
-  position: relative;
-  transition: background 0.3s ease;
+  background: var(--btn-hover);
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  margin: 0;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  opacity: 0.6;
 }
 
-.toggle-item input[type="checkbox"]::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: #ffffff;
-  border-radius: 50%;
-  transition: transform 0.3s cubic-bezier(0.2, 0.85, 0.32, 1.2);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.compact-toggles button.active {
+  background: var(--primary-bg);
+  color: var(--primary-color);
+  opacity: 1;
 }
 
-.toggle-item input[type="checkbox"]:checked {
-  background: #34c759;
-}
-
-.toggle-item input[type="checkbox"]:checked::after {
-  transform: translateX(20px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .toggle-item input[type="checkbox"]:not(:checked) {
-    background: #3a3a3c;
-  }
+.compact-toggles button:active {
+  transform: scale(0.92);
 }
 
 /* Segmented Control */
@@ -538,12 +443,6 @@ dialog.modal::backdrop {
   }
   .composer-wrapper {
     padding: 20px 20px 104px 20px;
-  }
-  .watermark-placeholder {
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    font-size: 16px;
   }
   #composerInput {
     font-size: 20px;

@@ -7,9 +7,10 @@ interface DockProps {
   onMenuClick: () => void;
   onSendClick: () => Promise<void>;
   isSendingSuccess: boolean;
+  hasText: boolean;
 }
 
-export const Dock: React.FC<DockProps> = ({ prefs, onMenuClick, onSendClick, isSendingSuccess }) => {
+export const Dock: React.FC<DockProps> = ({ prefs, onMenuClick, onSendClick, isSendingSuccess, hasText }) => {
   const [isSending, setIsSending] = useState(false);
 
   const handleSend = async (e: React.PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) => {
@@ -51,7 +52,22 @@ export const Dock: React.FC<DockProps> = ({ prefs, onMenuClick, onSendClick, isS
 
       <div className="dock-divider"></div>
 
-      <button className={`dock-btn dock-btn--primary ${isSendingSuccess ? 'dock-btn--sent' : ''}`} id="sendBtn" type="button" aria-label="发送" onPointerDown={handleSend} onClick={handleSend}>
+      <button 
+        className={`dock-btn dock-btn--primary ${isSendingSuccess ? 'dock-btn--sent' : ''}`} 
+        id="sendBtn" 
+        type="button" 
+        aria-label="发送" 
+        onPointerDown={(e) => {
+          e.preventDefault();
+          if (hasText) handleSend(e);
+        }} 
+        onClick={(e) => {
+          e.preventDefault();
+          if (hasText) handleSend(e);
+        }}
+        aria-disabled={!hasText}
+        style={{ opacity: hasText ? 1 : 0.4, cursor: hasText ? 'pointer' : 'not-allowed' }}
+      >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <line x1="12" y1="19" x2="12" y2="5"></line>
           <polyline points="5 12 12 5 19 12"></polyline>

@@ -2,34 +2,61 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-  <title>声桥</title>
+  <title>声桥 | Voice Bridge</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <form id="composerForm" novalidate>
-    <input
-      id="composerInput"
-      name="text"
-      type="text"
-      inputmode="text"
-      autocomplete="off"
-      autocorrect="on"
-      autocapitalize="sentences"
-      spellcheck="false"
-      enterkeyhint="send"
-      aria-label="输入要发送到电脑的文字"
-    >
+    <div class="composer-wrapper">
+      <textarea
+        id="composerInput"
+        name="text"
+        inputmode="text"
+        autocomplete="off"
+        autocorrect="on"
+        autocapitalize="sentences"
+        spellcheck="false"
+        enterkeyhint="send"
+        placeholder="Type here..."
+        aria-label="输入要发送到电脑的文字"
+        rows="1"
+      ></textarea>
+    </div>
     <button class="submit-proxy" type="submit" aria-hidden="true" tabindex="-1">发送</button>
   </form>
-  <nav class="action-bar" aria-label="快捷操作">
-    <button class="action-button action-button--send" type="submit" form="composerForm">发送</button>
-    <button class="action-button" type="button" data-key="enter">回车</button>
-    <button class="action-button" type="button" data-key="tab">Tab</button>
-    <button class="action-button" type="button" data-key="backspace">退格</button>
+
+  <nav class="dock" aria-label="快捷操作">
+    <button class="dock-btn" type="button" data-key="tab" aria-label="Tab">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <polyline points="15 6 21 12 15 18"></polyline>
+        <line x1="21" y1="6" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <button class="dock-btn" type="button" data-key="backspace" aria-label="退格">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+        <line x1="18" y1="9" x2="12" y2="15"></line>
+        <line x1="12" y1="9" x2="18" y2="15"></line>
+      </svg>
+    </button>
+    <button class="dock-btn" type="button" data-key="enter" aria-label="回车">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 10 4 15 9 20"></polyline>
+        <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+      </svg>
+    </button>
+    <div class="dock-divider"></div>
+    <button class="dock-btn dock-btn--primary" id="sendBtn" type="button" aria-label="发送">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="19" x2="12" y2="5"></line>
+        <polyline points="5 12 12 5 19 12"></polyline>
+      </svg>
+    </button>
   </nav>
 
   <script src="./app.js" defer></script>

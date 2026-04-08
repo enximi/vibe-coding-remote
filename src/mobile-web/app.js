@@ -1,6 +1,7 @@
 const input = document.getElementById('composerInput');
 const form = document.getElementById('composerForm');
 const actionButtons = document.querySelectorAll('[data-key]');
+const sendBtn = document.getElementById('sendBtn');
 
 const ENDPOINT_KEY = 'voicebridge.mobile.endpoint';
 const url = new URL(window.location.href);
@@ -27,6 +28,35 @@ function focusInput(select = false) {
   }
 }
 
+function autoResizeInput() {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+}
+
+input.addEventListener('input', autoResizeInput);
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitCurrentText();
+  }
+});
+
+// Haptic feedback
+function hapticVibrate(pattern = 50) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+
+// Micro-animation trigger for the floating dock action
+function triggerSuccessAnimation(btn) {
+  if (!btn) return;
+  btn.classList.add('dock-btn--sent');
+  setTimeout(() => {
+    btn.classList.remove('dock-btn--sent');
+  }, 400);
+}
+
 async function sendToDesktop(text) {
   const response = await fetch(typeTextEndpoint, {
     method: 'POST',
@@ -37,7 +67,7 @@ async function sendToDesktop(text) {
   });
 
   if (!response.ok) {
-    throw new Error(`发送失败：${response.status}`);
+    throw new Error(`Sending failed：${response.status}`);
   }
 
   return response.json().catch(() => ({ ok: true }));
@@ -53,7 +83,7 @@ async function pressKey(key) {
   });
 
   if (!response.ok) {
-    throw new Error(`按键失败：${response.status}`);
+    throw new Error(`Keypress failed：${response.status}`);
   }
 
   return response.json().catch(() => ({ ok: true }));
@@ -67,11 +97,15 @@ async function submitCurrentText() {
   }
 
   try {
+    hapticVibrate([20, 30, 20]); // Affirmative haptic feedback
+    triggerSuccessAnimation(sendBtn);
     await sendToDesktop(text);
     input.value = '';
+    autoResizeInput();
     focusInput();
   } catch (error) {
     console.error(error);
+    hapticVibrate([50, 50, 50]); // Error haptic feedback buzz
     focusInput(true);
   }
 }
@@ -81,13 +115,20 @@ form.addEventListener('submit', async (event) => {
   await submitCurrentText();
 });
 
+sendBtn.addEventListener('click', async () => {
+  await submitCurrentText();
+});
+
 for (const button of actionButtons) {
   button.addEventListener('click', async () => {
     try {
-      await pressKey(button.dataset.key);
+      hapticVibrate(30); // Light haptic tap
+      const key = button.dataset.key;
+      await pressKey(key);
       focusInput();
     } catch (error) {
       console.error(error);
+      hapticVibrate([50, 50, 50]);
       focusInput();
     }
   });
@@ -102,3 +143,31 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('load', () => {
   setTimeout(() => focusInput(), 120);
 });
+
+// To maximize immersion, tap anywhere outside the dock will auto-focus the composer
+document.addEventListener('click', (e) => {
+  const isDock = e.target.closest('.dock');
+  if (!isDock && e.target !== input) {
+    focusInput();
+  }
+});
+
+window.addEventListener('load', () => {
+  autoResizeInput();
+  if (window.visualViewport) {
+    updateKeyboardOffset();
+  }
+});
+
+// Visual Viewport Sync for Keyboard popping up (iOS/Android)
+function updateKeyboardOffset() {
+  if (!window.visualViewport) return;
+  const vp = window.visualViewport;
+  const gap = window.innerHeight - (vp.height + vp.offsetTop);
+  document.documentElement.style.setProperty('--keyboard-offset', `${Math.max(0, gap)}px`);
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateKeyboardOffset);
+  window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
+}

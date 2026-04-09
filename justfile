@@ -10,3 +10,8 @@ dev:
 build-release:
     cd frontend; bun run build
     cargo build --release
+
+# Build the frontend bundle, then run Rust in embedded frontend mode.
+run-release:
+    cd frontend; bun run build
+    cargo run

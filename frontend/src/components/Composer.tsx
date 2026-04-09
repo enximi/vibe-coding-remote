@@ -9,6 +9,11 @@ import {
 import type { Preferences } from '../hooks/usePreferences';
 import { hapticVibrate } from '../utils/haptics';
 import { pressKey, sendToDesktop } from '../utils/api';
+import {
+  clearComposerDraft,
+  loadComposerDraft,
+  saveComposerDraft,
+} from '../utils/composerDraft';
 
 interface ComposerProps {
   prefs: Preferences;
@@ -28,9 +33,19 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   { prefs, addHistory, onTextChange, onSendActionStart, onSendActionEnd },
   ref,
 ) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(loadComposerDraft);
   const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const moveCaretToEnd = useCallback(() => {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+
+    const end = input.value.length;
+    input.setSelectionRange(end, end);
+  }, []);
 
   const focusInput = useCallback(() => {
     inputRef.current?.focus({ preventScroll: true });
@@ -62,9 +77,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   const setComposerText = useCallback(
     (value: string) => {
       setText(value);
-      onTextChange?.(value.length > 0);
     },
-    [onTextChange],
+    [],
   );
 
   const submitCurrentText = useCallback(async () => {
@@ -87,6 +101,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       await sendToDesktop(text);
       addHistory(text);
       setComposerText('');
+      clearComposerDraft();
       if (inputRef.current) inputRef.current.value = '';
       window.setTimeout(syncTextareaHeight, 0);
       window.setTimeout(syncEnterKeyHint, 0);
@@ -116,16 +131,27 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       setText: (value: string) => {
         setComposerText(value);
         if (inputRef.current) inputRef.current.value = value;
-        window.setTimeout(syncTextareaHeight, 0);
-        window.setTimeout(syncEnterKeyHint, 0);
+        window.setTimeout(() => {
+          syncTextareaHeight();
+          syncEnterKeyHint();
+          moveCaretToEnd();
+        }, 0);
       },
     }),
-    [focusInput, setComposerText, submitCurrentText, syncEnterKeyHint],
+    [focusInput, moveCaretToEnd, setComposerText, submitCurrentText, syncEnterKeyHint],
   );
 
   useEffect(() => {
     syncTextareaHeight();
   }, [syncTextareaHeight, text]);
+
+  useEffect(() => {
+    onTextChange?.(text.length > 0);
+  }, [onTextChange, text]);
+
+  useEffect(() => {
+    saveComposerDraft(text);
+  }, [text]);
 
   useEffect(() => {
     if (!isComposing) {
@@ -134,19 +160,37 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   }, [isComposing, prefs.enterBehavior, syncEnterKeyHint]);
 
   useEffect(() => {
+    const persistCurrentDraft = () => {
+      const currentValue = inputRef.current?.value ?? text;
+      saveComposerDraft(currentValue);
+    };
+
     const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        persistCurrentDraft();
+        return;
+      }
+
       if (document.visibilityState === 'visible') {
-        window.setTimeout(focusInput, 60);
+        window.setTimeout(() => {
+          focusInput();
+          moveCaretToEnd();
+        }, 60);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.setTimeout(focusInput, 120);
+    window.addEventListener('pagehide', persistCurrentDraft);
+    window.setTimeout(() => {
+      focusInput();
+      moveCaretToEnd();
+    }, 120);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', persistCurrentDraft);
     };
-  }, [focusInput]);
+  }, [focusInput, moveCaretToEnd, text]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (isComposing) {
@@ -175,7 +219,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       <textarea
         ref={inputRef}
         id="composerInput"
-        defaultValue=""
+        defaultValue={text}
         onChange={(event) => {
           setComposerText(event.target.value);
           window.setTimeout(syncTextareaHeight, 0);

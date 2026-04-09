@@ -1,4 +1,5 @@
 #[tokio::main]
 async fn main() {
-    voice_bridge::run().await;
+    let options = voice_bridge::parse_runtime_options();
+    voice_bridge::run(options).await;
 }

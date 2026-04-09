@@ -1,56 +1,46 @@
-#[cfg(not(debug_assertions))]
-use axum::http::Uri;
-use axum::{Router, http::StatusCode, response::IntoResponse};
+use crate::FrontendMode;
+use axum::{
+    Router,
+    http::{
+        HeaderValue, StatusCode, Uri,
+        header::{self, HeaderName},
+    },
+    response::{IntoResponse, Response},
+};
+use mime_guess::from_path;
+use rust_embed::{EmbeddedFile, RustEmbed};
 
-pub fn install(router: Router) -> Router {
-    #[cfg(debug_assertions)]
-    {
-        router.fallback(development_frontend_notice)
-    }
+#[derive(RustEmbed)]
+#[folder = "frontend/dist/"]
+struct FrontendAssets;
 
-    #[cfg(not(debug_assertions))]
-    {
-        router.fallback(serve_embedded_asset)
+const INDEX_FILE: &str = "index.html";
+const CACHE_CONTROL_HEADER: HeaderName = header::CACHE_CONTROL;
+const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
+const HTML_CONTENT_TYPE: &str = "text/html; charset=utf-8";
+
+pub fn install(router: Router, frontend_mode: FrontendMode) -> Router {
+    match frontend_mode {
+        FrontendMode::Dev => router.fallback(development_frontend_notice),
+        FrontendMode::Embedded => router.fallback(serve_embedded_asset),
     }
 }
 
-#[cfg(debug_assertions)]
 async fn development_frontend_notice() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
-        "Frontend is served by the Vite dev server during development. Open the Vite URL directly.",
+        "Frontend mode is set to dev. Open the Vite dev server directly instead of this Rust server.",
     )
 }
 
-#[cfg(not(debug_assertions))]
-use axum::{
-    http::{
-        HeaderValue,
-        header::{self, HeaderName},
-    },
-    response::Response,
-};
-#[cfg(not(debug_assertions))]
-use include_dir::{Dir, File, include_dir};
-
-#[cfg(not(debug_assertions))]
-static FRONTEND_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/frontend/dist");
-
-#[cfg(not(debug_assertions))]
-const INDEX_FILE: &str = "index.html";
-#[cfg(not(debug_assertions))]
-const CACHE_CONTROL_HEADER: HeaderName = header::CACHE_CONTROL;
-
-#[cfg(not(debug_assertions))]
 async fn serve_embedded_asset(uri: Uri) -> Response {
     let request_path = normalize_request_path(uri.path());
 
     find_embedded_file(&request_path)
-        .map(file_response)
+        .map(|file| file_response(&request_path, file))
         .unwrap_or_else(|| missing_asset_response(&request_path))
 }
 
-#[cfg(not(debug_assertions))]
 fn normalize_request_path(path: &str) -> String {
     let trimmed = path.trim_start_matches('/');
     if trimmed.is_empty() {
@@ -60,33 +50,25 @@ fn normalize_request_path(path: &str) -> String {
     }
 }
 
-#[cfg(not(debug_assertions))]
-fn find_embedded_file(path: &str) -> Option<File<'static>> {
-    FRONTEND_DIST
-        .get_file(path)
-        .cloned()
-        .or_else(|| spa_fallback_file(path))
+fn find_embedded_file(path: &str) -> Option<EmbeddedFile> {
+    FrontendAssets::get(path).or_else(|| spa_fallback_file(path))
 }
 
-#[cfg(not(debug_assertions))]
-fn spa_fallback_file(path: &str) -> Option<File<'static>> {
+fn spa_fallback_file(path: &str) -> Option<EmbeddedFile> {
     if looks_like_asset_path(path) {
         None
     } else {
-        FRONTEND_DIST.get_file(INDEX_FILE).cloned()
+        FrontendAssets::get(INDEX_FILE)
     }
 }
 
-#[cfg(not(debug_assertions))]
 fn looks_like_asset_path(path: &str) -> bool {
     path.rsplit_once('.').is_some()
 }
 
-#[cfg(not(debug_assertions))]
-fn file_response(file: File<'static>) -> Response {
-    let path = file.path().to_string_lossy();
-    let content_type = content_type_for_path(&path);
-    let cache_control = cache_control_for_path(&path);
+fn file_response(path: &str, file: EmbeddedFile) -> Response {
+    let content_type = content_type_for_path(path);
+    let cache_control = cache_control_for_path(path);
 
     (
         [
@@ -96,12 +78,11 @@ fn file_response(file: File<'static>) -> Response {
                 HeaderValue::from_static(cache_control),
             ),
         ],
-        file.contents().to_owned(),
+        file.data.into_owned(),
     )
         .into_response()
 }
 
-#[cfg(not(debug_assertions))]
 fn missing_asset_response(path: &str) -> Response {
     (
         StatusCode::NOT_FOUND,
@@ -110,27 +91,14 @@ fn missing_asset_response(path: &str) -> Response {
         .into_response()
 }
 
-#[cfg(not(debug_assertions))]
 fn content_type_for_path(path: &str) -> &'static str {
-    match path.rsplit_once('.').map(|(_, extension)| extension) {
-        Some("html") => "text/html; charset=utf-8",
-        Some("css") => "text/css; charset=utf-8",
-        Some("js") => "text/javascript; charset=utf-8",
-        Some("svg") => "image/svg+xml",
-        Some("json") => "application/json; charset=utf-8",
-        Some("webmanifest") => "application/manifest+json; charset=utf-8",
-        Some("txt") => "text/plain; charset=utf-8",
-        Some("ico") => "image/x-icon",
-        Some("png") => "image/png",
-        Some("jpg" | "jpeg") => "image/jpeg",
-        Some("webp") => "image/webp",
-        Some("woff") => "font/woff",
-        Some("woff2") => "font/woff2",
-        _ => "application/octet-stream",
+    if path.ends_with(".html") {
+        HTML_CONTENT_TYPE
+    } else {
+        from_path(path).first_raw().unwrap_or(DEFAULT_CONTENT_TYPE)
     }
 }
 
-#[cfg(not(debug_assertions))]
 fn cache_control_for_path(path: &str) -> &'static str {
     if path == INDEX_FILE {
         "no-cache"

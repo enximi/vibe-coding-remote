@@ -1,4 +1,4 @@
-use crate::{input, network, web_assets};
+use crate::{FrontendMode, RuntimeOptions, input, network, web_assets};
 use axum::{
     Json, Router,
     extract::DefaultBodyLimit,
@@ -39,12 +39,12 @@ struct ApiResponse {
     ok: bool,
 }
 
-pub async fn run() {
-    let app = build_router();
+pub async fn run(options: RuntimeOptions) {
+    let app = build_router(options.frontend_mode);
     let addr = SocketAddr::from(([0, 0, 0, 0], SERVER_PORT));
 
     println!("VoiceBridge local server is starting...");
-    let frontend_url = print_startup_guide(addr.port());
+    let frontend_url = print_startup_guide(addr.port(), options.frontend_mode);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
@@ -58,32 +58,37 @@ pub async fn run() {
         .expect("server error");
 }
 
-fn build_router() -> Router {
+fn build_router(frontend_mode: FrontendMode) -> Router {
     let api_router = Router::new()
         .route("/api/type-text", post(type_text))
         .route("/api/press-key", post(press_key))
         .route("/health", get(health))
         .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES));
 
-    web_assets::install(api_router)
+    web_assets::install(api_router, frontend_mode)
 }
 
-fn print_startup_guide(api_port: u16) -> Option<String> {
+fn print_startup_guide(api_port: u16, frontend_mode: FrontendMode) -> Option<String> {
     print_section_heading("API server");
     let api_url = network::print_access_urls(api_port);
     println!("RPC API:     http://127.0.0.1:{api_port}/api/type-text");
     println!("RPC API:     http://127.0.0.1:{api_port}/api/press-key");
 
-    if cfg!(debug_assertions) {
-        print_section_heading("Frontend (development)");
-        let frontend_url = network::print_access_urls(DEV_FRONTEND_PORT);
-        println!("Mode:        use Vite directly in development");
-        println!("Proxy:       /api -> http://127.0.0.1:{api_port}");
-        frontend_url
-    } else {
-        print_section_heading("Frontend (production)");
-        println!("Mode:        Rust serves frontend assets embedded in the executable");
-        api_url
+    match frontend_mode {
+        FrontendMode::Dev => {
+            print_section_heading("Frontend (dev)");
+            let frontend_url = network::print_access_urls(DEV_FRONTEND_PORT);
+            println!("Mode:        dev");
+            println!("Frontend:    access the Vite dev server directly");
+            println!("Proxy:       /api -> http://127.0.0.1:{api_port}");
+            frontend_url
+        }
+        FrontendMode::Embedded => {
+            print_section_heading("Frontend (embedded)");
+            println!("Mode:        embedded");
+            println!("Frontend:    Rust serves frontend assets embedded in the executable");
+            api_url
+        }
     }
 }
 

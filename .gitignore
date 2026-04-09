@@ -33,3 +33,9 @@ Thumbs.db
 *.sln
 *.swp
 *.swo
+
+# Android Studio / Gradle local files
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/app/build/

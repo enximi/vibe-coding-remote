@@ -127,26 +127,27 @@ voice-bridge/
 
 ## 快速开始
 
-### 1. 启动桌面 API 服务
+### 1. 首次准备
 
 ```powershell
 cd D:\projects\voice-bridge
-cargo run
+cd frontend
+bun install
 ```
 
-默认端口：`8765`
-
-### 2. 启动前端开发服务器
+### 2. 开发模式
 
 ```powershell
-cd D:\projects\voice-bridge\frontend
-bun install
-bun run dev
+cd D:\projects\voice-bridge
+just dev
 ```
 
-默认端口：`5173`
+这条命令会：
 
-### 3. 开发时在手机上访问前端
+- 在一个新的 PowerShell 窗口中启动 Vite 开发服务器
+- 在当前窗口启动 Rust 本地服务，并使用 `--frontend-mode dev`
+
+开发时在手机上访问：
 
 ```text
 http://你的电脑局域网IP:5173
@@ -157,7 +158,22 @@ http://你的电脑局域网IP:5173
 - 页面由 **Vite** 提供
 - `/api` 请求由 **Vite 代理到 Rust**
 
-也就是说，**开发时访问 5173，生产时访问 8765**。
+也就是说，**开发时访问 5173**。
+
+### 3. 构建发布版
+
+```powershell
+cd D:\projects\voice-bridge
+just build-release
+```
+
+这条命令会先构建前端，再构建 Rust release 可执行文件。
+
+构建完成后，发布版可执行文件位于：
+
+```text
+target/release/voice-bridge.exe
+```
 
 ---
 
@@ -165,29 +181,14 @@ http://你的电脑局域网IP:5173
 
 生产模式下，由 Rust 同时负责：
 
-- 提供前端构建产物 `frontend/dist`
+- 提供内嵌在可执行文件中的前端资源
 - 提供 `/api/*`
 
-### 构建前端
-
-```powershell
-cd D:\projects\voice-bridge\frontend
-bun install
-bun run build
-```
-
-### 构建后端
+运行发布版：
 
 ```powershell
 cd D:\projects\voice-bridge
-cargo build --release
-```
-
-### 运行
-
-```powershell
-cd D:\projects\voice-bridge
-cargo run --release
+.\target\release\voice-bridge.exe --frontend-mode embedded
 ```
 
 生产模式下访问：
@@ -279,21 +280,11 @@ ok
 
 ## 开发命令
 
-### Rust
+### 常用工作流
 
 ```powershell
-cargo fmt
-cargo check
-cargo build --release
-```
-
-### Frontend
-
-```powershell
-cd frontend
-bun run lint
-bun run build
-bun run preview
+just dev
+just build-release
 ```
 
 ---

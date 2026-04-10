@@ -36,6 +36,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   const [text, setText] = useState(loadComposerDraft);
   const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const textRef = useRef(text);
+  const hasRestoredDraftRef = useRef(text.length > 0);
 
   const moveCaretToEnd = useCallback(() => {
     const input = inputRef.current;
@@ -76,6 +78,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
   const setComposerText = useCallback(
     (value: string) => {
+      textRef.current = value;
       setText(value);
     },
     [],
@@ -154,6 +157,10 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   }, [text]);
 
   useEffect(() => {
+    textRef.current = text;
+  }, [text]);
+
+  useEffect(() => {
     if (!isComposing) {
       syncEnterKeyHint();
     }
@@ -161,7 +168,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
   useEffect(() => {
     const persistCurrentDraft = () => {
-      const currentValue = inputRef.current?.value ?? text;
+      const currentValue = inputRef.current?.value ?? textRef.current;
       saveComposerDraft(currentValue);
     };
 
@@ -172,10 +179,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       }
 
       if (document.visibilityState === 'visible') {
-        window.setTimeout(() => {
-          focusInput();
-          moveCaretToEnd();
-        }, 60);
+        window.setTimeout(focusInput, 60);
       }
     };
 
@@ -183,14 +187,16 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     window.addEventListener('pagehide', persistCurrentDraft);
     window.setTimeout(() => {
       focusInput();
-      moveCaretToEnd();
+      if (hasRestoredDraftRef.current) {
+        moveCaretToEnd();
+      }
     }, 120);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', persistCurrentDraft);
     };
-  }, [focusInput, moveCaretToEnd, text]);
+  }, [focusInput, moveCaretToEnd]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (isComposing) {

@@ -1,12 +1,17 @@
 /target
 
-# Frontend dependencies and build output
-/frontend/node_modules
-/frontend/dist
-/frontend/.vite
-/frontend/.vite-temp
-/frontend/.tmp
-/frontend/*.tsbuildinfo
+# JavaScript workspace
+/node_modules
+/bun.lockb
+**/node_modules/
+**/dist/
+**/.vite/
+**/.vite-temp/
+**/.tmp/
+**/*.tsbuildinfo
+
+# Tauri generated files
+/apps/tauri/src-tauri/gen/
 
 # Logs
 *.log
@@ -33,9 +38,3 @@ Thumbs.db
 *.sln
 *.swp
 *.swo
-
-# Android Studio / Gradle local files
-/android/.gradle/
-/android/.idea/
-/android/local.properties
-/android/app/build/

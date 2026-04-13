@@ -1,17 +1,18 @@
 set shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
-# Start the frontend dev server in a separate PowerShell window,
-# then run the Rust server in dev frontend mode in the current shell.
+# Start the web shell in a separate PowerShell window, then run the desktop server in dev mode.
 dev:
-    Start-Process pwsh -ArgumentList '-NoLogo', '-NoExit', '-Command', 'Set-Location frontend; bun run dev -- --host'
-    cargo run -- --frontend-mode dev
+    Start-Process pwsh -ArgumentList '-NoLogo', '-NoExit', '-Command', 'Set-Location {{invocation_directory()}}; bun run dev:web'
+    bun run dev:server
 
-# Build the frontend bundle first, then build the Rust release executable.
-build-release:
-    cd frontend; bun run build
-    cargo build --release
+# Run the Tauri desktop shell in development mode.
+dev-tauri:
+    bun run dev:tauri
 
-# Build the frontend bundle, then run Rust in embedded frontend mode.
-run-release:
-    cd frontend; bun run build
-    cargo run
+# Build the web bundle first, then build the standalone Rust desktop server.
+build:
+    bun run build:server
+
+# Build the packaged Tauri application.
+build-tauri:
+    bun run build:tauri

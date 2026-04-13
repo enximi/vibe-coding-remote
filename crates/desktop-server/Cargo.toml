@@ -1,0 +1,28 @@
+[package]
+name = "voice-bridge-desktop-server"
+version = "0.1.1"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Desktop API server and input bridge for Voice Bridge."
+
+[lib]
+name = "voice_bridge_desktop_server"
+
+[[bin]]
+name = "voice-bridge"
+path = "src/main.rs"
+
+[dependencies]
+arboard.workspace = true
+axum.workspace = true
+clap.workspace = true
+local-ip-address.workspace = true
+mime_guess.workspace = true
+qrcode.workspace = true
+rust-embed.workspace = true
+serde.workspace = true
+tokio.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows.workspace = true

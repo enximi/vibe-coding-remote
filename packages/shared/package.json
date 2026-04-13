@@ -1,0 +1,10 @@
+{
+  "name": "@voice-bridge/shared",
+  "private": true,
+  "version": "0.1.1",
+  "description": "Shared types and constants for Voice Bridge frontends.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

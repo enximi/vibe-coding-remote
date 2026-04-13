@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@voice-bridge/app": ["../../packages/app/src/index.tsx"],
+      "@voice-bridge/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["vite.config.ts", "../../packages/app/src", "../../packages/shared/src"]
+}

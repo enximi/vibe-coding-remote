@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "types": ["react", "react-dom", "vite/client"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src"]
+}

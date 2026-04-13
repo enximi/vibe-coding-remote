@@ -2,16 +2,9 @@
 
 感谢你对声桥感兴趣。
 
-这个项目目前仍在快速迭代阶段，所以在提 issue 或 PR 之前，建议先看一遍根目录 `README.md` 和 `doc/` 下的文档。
-
----
+仓库现在采用 monorepo 结构，所以在提 issue 或 PR 之前，建议先看一遍根目录 `README.md` 和 `doc/` 下的文档，先建立对 `apps / packages / crates` 的整体心智模型。
 
 ## 开发环境
-
-### 后端
-
-- Rust
-- Windows（当前桌面输入实现依赖 Win32）
 
 ### 前端
 
@@ -20,69 +13,70 @@
 - Vite
 - TypeScript
 
----
+### 桌面侧
+
+- Rust
+- Windows（当前输入执行依赖 Win32）
+- Tauri（桌面壳）
 
 ## 本地开发
 
-### 启动 Rust API
+### Web 壳 + Rust 本地服务
 
 ```powershell
-cargo run
-```
-
-默认端口：`8765`
-
-### 启动前端开发服务器
-
-```powershell
-cd frontend
 bun install
-bun run dev
+just dev
 ```
 
-默认端口：`5173`
+默认效果：
 
-开发模式下：
+- `apps/web` 在 `5173`
+- Rust 本地服务在 `8765`
+- `/api` 由 Vite 代理到 Rust
 
-- 页面访问 `5173`
-- `/api` 代理到 Rust `8765`
+### Tauri 壳
 
----
+```powershell
+just dev-tauri
+```
 
 ## 提交前建议检查
 
 ### Rust
 
 ```powershell
-cargo fmt
-cargo check
+cargo fmt --all
+cargo check --workspace
 ```
 
 ### Frontend
 
 ```powershell
-cd frontend
-bun run lint
-bun run build
+bun run build:web
+bun run build:tauri-ui
 ```
 
----
+## 代码组织约定
 
-## 代码风格
+### 目录职责
+
+- `packages/app`：共享 UI、组件、hooks、样式
+- `packages/shared`：共享类型、常量、桥接接口
+- `apps/web`：Web 壳与 Web 平台桥接
+- `apps/tauri`：Tauri 壳与桌面平台桥接
+- `crates/desktop-server`：本地 HTTP API、输入执行、二维码与静态资源托管
 
 ### Rust
 
 - 使用现代模块文件命名，不使用 `mod.rs`
-- 优先保持模块职责清晰
-- 尽量让函数名直观表达用途
+- 优先让模块职责保持单一
+- 能直接重构清楚的地方，不保留多余兼容层
 
 ### Frontend
 
-- 优先使用清晰的组件边界
-- 样式尽量通过 class 管理，避免大量内联样式
-- 保持移动端交互和输入法兼容性优先
-
----
+- 平台差异优先放到壳层 `platform/bridge.ts`
+- 共享交互逻辑优先放到 `packages/app`
+- 样式与交互要优先考虑移动端输入法兼容性
 
 ## 文档
 
@@ -91,26 +85,25 @@ bun run build
 - 功能行为
 - 页面交互
 - API
+- 目录结构
 - 开发流程
 - 发布流程
 
 请同步更新对应文档。
 
-目前文档主要在：
+当前主要文档：
 
 - `README.md`
 - `doc/architecture.md`
 - `doc/frontend-features.md`
 - `doc/release-checklist.md`
+- `doc/product/*`
 
----
 ## 许可证与贡献授权
 
 本项目采用 **MIT / Apache-2.0 双授权**。
 
 默认情况下，除非你明确声明否则，你提交到本仓库的代码、文档和其他贡献，都会按与项目相同的双授权方式发布。
-
----
 
 ## Issue / PR 建议
 
@@ -120,14 +113,4 @@ bun run build
 - 预期行为是什么
 - 当前行为是什么
 - 复现步骤
-- 如果和输入法/设备相关，请说明机型、浏览器、系统版本
-
----
-
-## 目前最适合的贡献方向
-
-- 改善移动端输入体验
-- 提升桌面端输入稳定性
-- 完善局域网连接体验
-- 补充文档与示例
-- 增加跨平台支持
+- 如果和输入法 / 浏览器 / 设备相关，请说明环境信息

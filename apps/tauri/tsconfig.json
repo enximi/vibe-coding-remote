@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@voice-bridge/app": ["../../packages/app/src/index.tsx"],
+      "@voice-bridge/shared": ["../../packages/shared/src/index.ts"]
+    },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "../../packages/app/src", "../../packages/shared/src"],
+  "references": [
+    { "path": "../../packages/shared/tsconfig.json" },
+    { "path": "../../packages/app/tsconfig.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

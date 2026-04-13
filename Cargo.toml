@@ -1,12 +1,16 @@
-[package]
-name = "voice-bridge"
-version = "0.1.1"
-edition = "2024"
-description = "Use a phone's input method and voice dictation to type into the focused window on a Windows PC."
-rust-version = "1.85"
-license = "MIT OR Apache-2.0"
+[workspace]
+members = [
+  "apps/tauri/src-tauri",
+  "crates/desktop-server"
+]
+resolver = "2"
 
-[dependencies]
+[workspace.package]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.85"
+
+[workspace.dependencies]
 arboard = "3.6"
 axum = { version = "0.8", features = ["json"] }
 clap = { version = "4.5", features = ["derive"] }
@@ -15,5 +19,8 @@ mime_guess = "2"
 qrcode = "0.14"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-opener = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
 windows = { version = "0.62", features = ["Win32_UI_Input_KeyboardAndMouse"] }

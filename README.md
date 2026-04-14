@@ -95,7 +95,7 @@ voice-bridge/
 │  ├─ app/                  # 共享 React UI、组件、hooks、样式
 │  └─ shared/               # 共享类型、常量、桥接接口
 ├─ crates/
-│  └─ desktop-server/       # Rust 本地服务：API、输入执行、二维码、静态资源托管
+│  └─ server/               # Rust 本地服务：API、输入执行、二维码、静态资源托管
 ├─ doc/
 │  ├─ architecture.md
 │  ├─ frontend-features.md
@@ -108,7 +108,7 @@ voice-bridge/
 
 - `packages/app` 只关心产品 UI 和交互，不关心运行平台
 - `apps/web` 和 `apps/tauri` 只做“壳”和平台桥接
-- `crates/desktop-server` 负责本地 API 与桌面输入执行
+- `crates/server` 负责本地 API 与桌面输入执行
 
 ## 快速开始
 

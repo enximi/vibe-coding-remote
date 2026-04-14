@@ -9,7 +9,7 @@
 1. `packages/app`：共享 React 应用本体
 2. `apps/web`：手机浏览器访问的 Web 壳
 3. `apps/tauri`：桌面端 Tauri 壳
-4. `crates/desktop-server`：真正负责 API 和桌面输入执行的 Rust 本地服务
+4. `crates/server`：真正负责 API 和桌面输入执行的 Rust 本地服务
 
 整体原则是：
 
@@ -64,7 +64,7 @@ Tauri 壳只负责：
 - 先保持 Web 和 Tauri 两个壳复用同一套 API 语义
 - 减少迁移期的分叉
 
-### `crates/desktop-server`
+### `crates/server`
 
 这是当前桌面侧真正的执行核心。
 
@@ -250,17 +250,17 @@ Tauri 平台桥接。
 
 Tauri Rust 壳启动逻辑。
 
-它在应用启动时异步拉起 `voice_bridge_desktop_server::run_embedded()`，让桌面壳里也有同一个本地服务可用。
+它在应用启动时异步拉起 `voice_bridge_server::run_embedded()`，让桌面壳里也有同一个本地服务可用。
 
 ### 4.3 Rust 服务侧
 
-#### `crates/desktop-server/src/main.rs`
+#### `crates/server/src/main.rs`
 
 Rust 可执行入口。
 
 它解析命令行参数，然后启动 Tokio 运行时，最终进入 `run()`。
 
-#### `crates/desktop-server/src/cli.rs`
+#### `crates/server/src/cli.rs`
 
 命令行参数层。
 
@@ -269,7 +269,7 @@ Rust 可执行入口。
 - `dev`
 - `embedded`
 
-#### `crates/desktop-server/src/lib.rs`
+#### `crates/server/src/lib.rs`
 
 Rust 模块汇总入口。
 
@@ -278,7 +278,7 @@ Rust 模块汇总入口。
 - `run()`
 - `run_embedded()`
 
-#### `crates/desktop-server/src/server.rs`
+#### `crates/server/src/server.rs`
 
 HTTP 服务层。
 
@@ -290,7 +290,7 @@ HTTP 服务层。
 - 根据前端模式决定是否托管嵌入资源
 - 启动时打印访问说明
 
-#### `crates/desktop-server/src/input.rs`
+#### `crates/server/src/input.rs`
 
 桌面输入执行层。
 
@@ -306,7 +306,7 @@ HTTP 服务层。
    - 模拟 `Enter / Tab / Backspace / Ctrl+C / Ctrl+V`
    - `newline` 走粘贴 `\n`
 
-#### `crates/desktop-server/src/network.rs`
+#### `crates/server/src/network.rs`
 
 网络信息展示层。
 
@@ -317,7 +317,7 @@ HTTP 服务层。
 - 打印推荐访问地址
 - 生成二维码并打印到终端
 
-#### `crates/desktop-server/src/web_assets.rs`
+#### `crates/server/src/web_assets.rs`
 
 嵌入前端资源层。
 

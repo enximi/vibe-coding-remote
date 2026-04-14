@@ -64,7 +64,7 @@ bun run build:tauri-ui
 - `packages/shared`：共享类型、常量、桥接接口
 - `apps/web`：Web 壳与 Web 平台桥接
 - `apps/tauri`：Tauri 壳与桌面平台桥接
-- `crates/desktop-server`：本地 HTTP API、输入执行、二维码与静态资源托管
+- `crates/server`：本地 HTTP API、输入执行、二维码与静态资源托管
 
 ### Rust
 

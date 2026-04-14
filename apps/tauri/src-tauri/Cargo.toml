@@ -20,5 +20,5 @@ tauri-build.workspace = true
 tauri.workspace = true
 tauri-plugin-opener.workspace = true
 tokio.workspace = true
-voice-bridge-desktop-server = { path = "../../../crates/desktop-server" }
+voice-bridge-server = { path = "../../../crates/server" }
 

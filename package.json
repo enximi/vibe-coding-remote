@@ -8,10 +8,10 @@
   ],
   "scripts": {
     "dev:web": "bun --filter @voice-bridge/web dev --host",
-    "dev:server": "cargo run -p voice-bridge-desktop-server -- --frontend-mode dev",
+    "dev:server": "cargo run -p voice-bridge-server -- --frontend-mode dev",
     "dev:tauri": "bun --filter @voice-bridge/tauri tauri dev",
     "build:web": "bun --filter @voice-bridge/web build",
-    "build:server": "bun run build:web && cargo build -p voice-bridge-desktop-server --release",
+    "build:server": "bun run build:web && cargo build -p voice-bridge-server --release",
     "build:tauri-ui": "bun --filter @voice-bridge/tauri build",
     "build:tauri": "bun --filter @voice-bridge/tauri tauri build"
   }

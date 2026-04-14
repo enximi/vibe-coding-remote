@@ -4,8 +4,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|_app| {
             tauri::async_runtime::spawn(async {
-                if let Err(error) = voice_bridge_desktop_server::run_embedded().await {
-                    eprintln!("voice bridge desktop server stopped: {error}");
+                if let Err(error) = voice_bridge_server::run_embedded().await {
+                    eprintln!("voice bridge server stopped: {error}");
                 }
             });
 

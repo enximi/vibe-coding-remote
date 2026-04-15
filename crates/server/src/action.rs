@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ActionRequest {
@@ -38,17 +39,8 @@ pub enum Shortcut {
     ShiftTab,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Error)]
 pub enum ActionValidationError {
+    #[error("text cannot be empty")]
     EmptyText,
 }
-
-impl std::fmt::Display for ActionValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::EmptyText => write!(f, "text cannot be empty"),
-        }
-    }
-}
-
-impl std::error::Error for ActionValidationError {}

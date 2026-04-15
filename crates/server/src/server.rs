@@ -12,6 +12,7 @@ use axum::{
 };
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
+use thiserror::Error;
 use tower_http::cors::CorsLayer;
 
 const MAX_REQUEST_BODY_BYTES: usize = 64 * 1024;
@@ -26,7 +27,19 @@ struct ApiResponse {
     ok: bool,
 }
 
-pub async fn run(options: RuntimeOptions) -> Result<(), String> {
+#[derive(Debug, Error)]
+pub enum ServerError {
+    #[error("failed to bind TCP listener on {addr}: {source}")]
+    Bind {
+        addr: SocketAddr,
+        #[source]
+        source: std::io::Error,
+    },
+    #[error("server error: {0}")]
+    Serve(#[source] std::io::Error),
+}
+
+pub async fn run(options: RuntimeOptions) -> Result<(), ServerError> {
     let addr = SocketAddr::new(options.host, options.port);
     let app = build_router(options.auth_token.clone());
 
@@ -35,12 +48,12 @@ pub async fn run(options: RuntimeOptions) -> Result<(), String> {
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
-        .map_err(|error| format!("failed to bind TCP listener on {addr}: {error}"))?;
+        .map_err(|source| ServerError::Bind { addr, source })?;
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .map_err(|error| format!("server error: {error}"))
+        .map_err(ServerError::Serve)
 }
 
 fn build_router(auth_token: String) -> Router {

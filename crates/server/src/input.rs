@@ -1,15 +1,20 @@
 use crate::action::{Action, KeyName, Shortcut};
 use arboard::Clipboard;
 use std::{thread, time::Duration};
+use thiserror::Error;
 
 const CLIPBOARD_SETTLE_DELAY_MS: u64 = 20;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum InputError {
+    #[error("failed to open clipboard: {0}")]
     ClipboardUnavailable(arboard::Error),
+    #[error("failed to write text to clipboard: {0}")]
     ClipboardWriteFailed(arboard::Error),
+    #[error("failed to send keyboard input: {0}")]
     SendInputFailed(String),
     #[cfg(not(target_os = "windows"))]
+    #[error("desktop input injection is not implemented on this platform yet")]
     UnsupportedPlatform,
 }
 
@@ -168,28 +173,3 @@ mod platform {
         Err(InputError::UnsupportedPlatform)
     }
 }
-
-impl std::fmt::Display for InputError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::ClipboardUnavailable(error) => {
-                write!(f, "failed to open clipboard: {error}")
-            }
-            Self::ClipboardWriteFailed(error) => {
-                write!(f, "failed to write text to clipboard: {error}")
-            }
-            Self::SendInputFailed(error) => {
-                write!(f, "failed to send keyboard input: {error}")
-            }
-            #[cfg(not(target_os = "windows"))]
-            Self::UnsupportedPlatform => {
-                write!(
-                    f,
-                    "desktop input injection is not implemented on this platform yet"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for InputError {}

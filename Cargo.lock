@@ -5166,6 +5166,7 @@ dependencies = [
  "config",
  "local-ip-address",
  "serde",
+ "thiserror 2.0.18",
  "tokio",
  "tower-http",
  "tracing",

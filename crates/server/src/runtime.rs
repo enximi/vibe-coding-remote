@@ -5,6 +5,7 @@ use std::{
     net::{IpAddr, Ipv4Addr},
     path::PathBuf,
 };
+use thiserror::Error;
 
 const DEFAULT_CONFIG_PATH: &str = "config.toml";
 const DEFAULT_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
@@ -24,17 +25,37 @@ struct BaseConfig {
     auth_token: Option<String>,
 }
 
-pub fn parse_runtime_options() -> Result<RuntimeOptions, String> {
+#[derive(Debug, Error)]
+pub enum RuntimeError {
+    #[error("config path is not valid UTF-8: {0}")]
+    ConfigPathNotUtf8(String),
+    #[error("failed to set default {field}: {source}")]
+    SetDefault {
+        field: &'static str,
+        #[source]
+        source: config::ConfigError,
+    },
+    #[error("failed to load runtime configuration: {0}")]
+    LoadConfig(#[source] config::ConfigError),
+    #[error("failed to deserialize runtime configuration: {0}")]
+    DeserializeConfig(#[source] config::ConfigError),
+    #[error(
+        "missing required auth token; set it with --auth-token, VOICE_BRIDGE_AUTH_TOKEN, or config.toml"
+    )]
+    MissingAuthToken,
+}
+
+pub fn parse_runtime_options() -> Result<RuntimeOptions, RuntimeError> {
     let cli = parse_cli_options();
     load_runtime_options(cli)
 }
 
-fn load_runtime_options(cli: CliOptions) -> Result<RuntimeOptions, String> {
+fn load_runtime_options(cli: CliOptions) -> Result<RuntimeOptions, RuntimeError> {
     let base_config = load_base_config(&cli)?;
     build_runtime_options(cli, base_config)
 }
 
-fn load_base_config(cli: &CliOptions) -> Result<BaseConfig, String> {
+fn load_base_config(cli: &CliOptions) -> Result<BaseConfig, RuntimeError> {
     let config_path = cli
         .config
         .clone()
@@ -42,38 +63,40 @@ fn load_base_config(cli: &CliOptions) -> Result<BaseConfig, String> {
     let required = cli.config.is_some();
     let config_path = config_path
         .to_str()
-        .ok_or_else(|| format!("config path is not valid UTF-8: {}", config_path.display()))?;
+        .ok_or_else(|| RuntimeError::ConfigPathNotUtf8(config_path.display().to_string()))?;
 
     Config::builder()
         .set_default("host", DEFAULT_HOST.to_string())
-        .map_err(|error| format!("failed to set default host: {error}"))?
+        .map_err(|source| RuntimeError::SetDefault {
+            field: "host",
+            source,
+        })?
         .set_default("port", DEFAULT_PORT)
-        .map_err(|error| format!("failed to set default port: {error}"))?
+        .map_err(|source| RuntimeError::SetDefault {
+            field: "port",
+            source,
+        })?
         .add_source(File::new(config_path, FileFormat::Toml).required(required))
         .add_source(Environment::with_prefix("VOICE_BRIDGE"))
         .build()
-        .map_err(|error| format!("failed to load runtime configuration: {error}"))?
+        .map_err(RuntimeError::LoadConfig)?
         .try_deserialize()
-        .map_err(|error| format!("failed to deserialize runtime configuration: {error}"))
+        .map_err(RuntimeError::DeserializeConfig)
 }
 
 fn build_runtime_options(
     cli: CliOptions,
     base_config: BaseConfig,
-) -> Result<RuntimeOptions, String> {
+) -> Result<RuntimeOptions, RuntimeError> {
     let auth_token = cli
         .auth_token
         .or(base_config.auth_token)
         .filter(|token| !token.trim().is_empty())
-        .ok_or_else(|| missing_auth_token_error().to_owned())?;
+        .ok_or(RuntimeError::MissingAuthToken)?;
 
     Ok(RuntimeOptions {
         host: cli.host.unwrap_or(base_config.host),
         port: cli.port.unwrap_or(base_config.port),
         auth_token,
     })
-}
-
-fn missing_auth_token_error() -> &'static str {
-    "missing required auth token; set it with --auth-token, VOICE_BRIDGE_AUTH_TOKEN, or config.toml"
 }

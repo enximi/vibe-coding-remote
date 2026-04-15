@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { InputActionKey } from '@voice-bridge/shared';
 import { useBridge } from '../features/runtime/BridgeContext';
 
 const CONTINUOUS_TRIGGER_DELAY_MS = 450;
@@ -8,7 +7,9 @@ const SINGLE_TRIGGER_LOCK_MS = 350;
 const SINGLE_TRIGGER_FADEOUT_MS = 1000;
 const CONTINUOUS_TRIGGER_FADEOUT_MS = 600;
 
-export function useContinuousTrigger(actionKey: InputActionKey, isContinuous: boolean) {
+export type DockAction = 'copy' | 'paste' | 'tab' | 'newline' | 'backspace';
+
+export function useContinuousTrigger(action: DockAction, isContinuous: boolean) {
   const bridge = useBridge();
   const [triggerCount, setTriggerCount] = useState(0);
   const intervalRef = useRef<number | null>(null);
@@ -33,10 +34,10 @@ export function useContinuousTrigger(actionKey: InputActionKey, isContinuous: bo
   const fireAction = useCallback(
     (vibration: number | number[]) => {
       bridge.vibrate(vibration);
-      void bridge.pressKey(actionKey).catch(() => undefined);
+      void executeDockAction(bridge, action).catch(() => undefined);
       incrementCount();
     },
-    [actionKey, bridge],
+    [action, bridge],
   );
 
   const start = useCallback(
@@ -111,10 +112,30 @@ export function useContinuousTrigger(actionKey: InputActionKey, isContinuous: bo
   };
 }
 
-function clearTimer(
-  timerId: number | null,
-  clear: (timerId: number) => void,
+async function executeDockAction(
+  bridge: ReturnType<typeof useBridge>,
+  action: DockAction,
 ) {
+  switch (action) {
+    case 'copy':
+      await bridge.sendShortcut('ctrl-c');
+      break;
+    case 'paste':
+      await bridge.sendShortcut('ctrl-v');
+      break;
+    case 'tab':
+      await bridge.sendKey('tab');
+      break;
+    case 'newline':
+      await bridge.pasteText('\n');
+      break;
+    case 'backspace':
+      await bridge.sendKey('backspace');
+      break;
+  }
+}
+
+function clearTimer(timerId: number | null, clear: (timerId: number) => void) {
   if (timerId !== null) {
     clear(timerId);
   }

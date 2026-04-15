@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import type { InputActionKey } from '@voice-bridge/shared';
 import type { Preferences } from '../hooks/usePreferences';
-import { useContinuousTrigger } from '../hooks/useContinuousTrigger';
+import { useContinuousTrigger, type DockAction } from '../hooks/useContinuousTrigger';
 import {
   BackspaceIcon,
   CopyIcon,
@@ -13,7 +12,7 @@ import {
 } from './icons';
 
 type DockActionConfig = {
-  actionKey: InputActionKey;
+  actionKey: DockAction;
   ariaLabel: string;
   isContinuous: boolean;
   isVisible: boolean;

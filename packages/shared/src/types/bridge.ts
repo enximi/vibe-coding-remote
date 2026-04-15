@@ -1,19 +1,11 @@
-export type ApiResponse = {
-  ok: boolean;
-};
-
-export type InputActionKey =
-  | 'enter'
-  | 'tab'
-  | 'backspace'
-  | 'copy'
-  | 'paste'
-  | 'newline';
+import type { ApiResponse, ServerAction, ServerKeyName, ServerShortcut } from './server';
 
 export type VibrationPattern = number | number[];
 
 export interface VoiceBridgeBridge {
-  sendText(text: string): Promise<ApiResponse>;
-  pressKey(key: InputActionKey): Promise<ApiResponse>;
+  executeAction(action: ServerAction): Promise<ApiResponse>;
+  sendKey(key: ServerKeyName): Promise<ApiResponse>;
+  sendShortcut(shortcut: ServerShortcut): Promise<ApiResponse>;
+  pasteText(text: string): Promise<ApiResponse>;
   vibrate(pattern?: VibrationPattern): void;
 }

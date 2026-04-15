@@ -88,7 +88,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     if (text.length === 0) {
       try {
         bridge.vibrate(30);
-        await bridge.pressKey('enter');
+        await bridge.sendKey('enter');
       } catch (error) {
         console.error(error);
         bridge.vibrate([50, 50, 50]);
@@ -101,7 +101,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     try {
       bridge.vibrate([20, 30, 20]);
       onSendActionStart?.();
-      await bridge.sendText(text);
+      await bridge.pasteText(text);
       addHistory(text);
       setComposerText('');
       clearComposerDraft();
@@ -207,7 +207,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     if (event.key === 'Backspace' && text.length === 0) {
       event.preventDefault();
       bridge.vibrate(30);
-      void bridge.pressKey('backspace').catch(() => undefined);
+      void bridge.sendKey('backspace').catch(() => undefined);
       return;
     }
 

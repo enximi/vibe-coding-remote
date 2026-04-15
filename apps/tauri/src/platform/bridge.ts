@@ -1,37 +1,68 @@
 import {
-  DEFAULT_LOCAL_SERVER_URL,
+  createPasteTextAction,
+  createSendKeyAction,
+  createSendShortcutAction,
+  resolveConfiguredActionEndpoint,
+  resolveConfiguredAuthToken,
   type ApiResponse,
-  type VoiceBridgeBridge,
+  type ServerAction,
   type VibrationPattern,
+  type VoiceBridgeBridge,
 } from '@voice-bridge/shared';
-
-const TYPE_TEXT_ENDPOINT = `${DEFAULT_LOCAL_SERVER_URL}/api/type-text`;
-const PRESS_KEY_ENDPOINT = `${DEFAULT_LOCAL_SERVER_URL}/api/press-key`;
 
 export function createTauriBridge(): VoiceBridgeBridge {
   return {
-    sendText(text) {
-      return postJson<ApiResponse>(TYPE_TEXT_ENDPOINT, { text }, 'Sending text failed');
+    executeAction(action) {
+      return postAction(action);
     },
-    pressKey(key) {
-      return postJson<ApiResponse>(PRESS_KEY_ENDPOINT, { key }, 'Triggering key action failed');
+    sendKey(key) {
+      return postAction(createSendKeyAction(key));
+    },
+    sendShortcut(shortcut) {
+      return postAction(createSendShortcutAction(shortcut));
+    },
+    pasteText(text) {
+      return postAction(createPasteTextAction(text));
     },
     vibrate(_pattern: VibrationPattern = 50) {
-      // Desktop Tauri currently uses no haptic feedback.
+      // Android haptics will be handled later through the native layer if needed.
     },
   };
 }
 
-async function postJson<T>(url: string, body: unknown, errorPrefix: string): Promise<T> {
-  const response = await fetch(url, {
+function getRequiredActionEndpoint(): string {
+  const endpoint = resolveConfiguredActionEndpoint();
+  if (!endpoint) {
+    throw new Error(
+      'No Voice Bridge server action endpoint is configured. Provide ?endpoint=... or persist one before sending.',
+    );
+  }
+
+  return endpoint;
+}
+
+async function postAction(action: ServerAction): Promise<ApiResponse> {
+  const response = await fetch(getRequiredActionEndpoint(), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: buildHeaders(),
+    body: JSON.stringify({ action }),
   });
 
   if (!response.ok) {
-    throw new Error(`${errorPrefix}: ${response.status}`);
+    throw new Error(`Executing action failed: ${response.status}`);
   }
 
-  return response.json().catch(() => ({ ok: true } as T));
+  return response.json().catch(() => ({ ok: true } as ApiResponse));
+}
+
+function buildHeaders(): HeadersInit {
+  const authToken = resolveConfiguredAuthToken();
+  return authToken
+    ? {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      }
+    : {
+        'Content-Type': 'application/json',
+      };
 }

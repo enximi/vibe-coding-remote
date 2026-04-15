@@ -1,19 +1,31 @@
 import {
-  API_ENDPOINT_STORAGE_KEY,
-  DEFAULT_WEB_PRESS_KEY_ENDPOINT,
-  DEFAULT_WEB_TYPE_TEXT_ENDPOINT,
+  DEFAULT_ACTION_API_PATH,
+  createPasteTextAction,
+  createSendKeyAction,
+  createSendShortcutAction,
+  resolveConfiguredActionEndpoint,
+  resolveConfiguredAuthToken,
   type ApiResponse,
-  type VoiceBridgeBridge,
+  type ServerAction,
+  type ServerKeyName,
+  type ServerShortcut,
   type VibrationPattern,
+  type VoiceBridgeBridge,
 } from '@voice-bridge/shared';
 
 export function createWebBridge(): VoiceBridgeBridge {
   return {
-    sendText(text) {
-      return postJson<ApiResponse>(getTypeTextEndpoint(), { text }, 'Sending text failed');
+    executeAction(action) {
+      return postAction(action);
     },
-    pressKey(key) {
-      return postJson<ApiResponse>(getPressKeyEndpoint(), { key }, 'Triggering key action failed');
+    sendKey(key) {
+      return postAction(createSendKeyAction(key));
+    },
+    sendShortcut(shortcut) {
+      return postAction(createSendShortcutAction(shortcut));
+    },
+    pasteText(text) {
+      return postAction(createPasteTextAction(text));
     },
     vibrate(pattern: VibrationPattern = 50) {
       if (!navigator.vibrate) {
@@ -29,42 +41,32 @@ export function createWebBridge(): VoiceBridgeBridge {
   };
 }
 
-function getTypeTextEndpoint(): string {
-  return (
-    getPresetEndpoint() ??
-    window.localStorage.getItem(API_ENDPOINT_STORAGE_KEY) ??
-    DEFAULT_WEB_TYPE_TEXT_ENDPOINT
-  );
+function getRequiredActionEndpoint(): string {
+  return resolveConfiguredActionEndpoint() ?? DEFAULT_ACTION_API_PATH;
 }
 
-function getPressKeyEndpoint(): string {
-  const typeTextEndpoint = getTypeTextEndpoint();
-
-  try {
-    const resolved = new URL(typeTextEndpoint, window.location.href);
-    resolved.pathname = resolved.pathname.replace(/\/[^/]+$/, '/press-key');
-    resolved.search = '';
-    return resolved.toString();
-  } catch {
-    return DEFAULT_WEB_PRESS_KEY_ENDPOINT;
-  }
-}
-
-function getPresetEndpoint(): string | null {
-  const url = new URL(window.location.href);
-  return url.searchParams.get('endpoint');
-}
-
-async function postJson<T>(url: string, body: unknown, errorPrefix: string): Promise<T> {
-  const response = await fetch(url, {
+async function postAction(action: ServerAction): Promise<ApiResponse> {
+  const response = await fetch(getRequiredActionEndpoint(), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: buildHeaders(),
+    body: JSON.stringify({ action }),
   });
 
   if (!response.ok) {
-    throw new Error(`${errorPrefix}: ${response.status}`);
+    throw new Error(`Executing action failed: ${response.status}`);
   }
 
-  return response.json().catch(() => ({ ok: true } as T));
+  return response.json().catch(() => ({ ok: true } as ApiResponse));
+}
+
+function buildHeaders(): HeadersInit {
+  const authToken = resolveConfiguredAuthToken();
+  return authToken
+    ? {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      }
+    : {
+        'Content-Type': 'application/json',
+      };
 }

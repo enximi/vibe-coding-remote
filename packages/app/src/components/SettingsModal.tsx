@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DockButtons, Preferences } from '../hooks/usePreferences';
 import { CloseIcon } from './icons';
 
@@ -7,6 +7,8 @@ interface SettingsModalProps {
   onClose: () => void;
   prefs: Preferences;
   setPrefs: (update: (p: Preferences) => Preferences) => void;
+  serverEndpoint: string;
+  setServerEndpoint: (value: string) => void;
   clearHistory: () => void;
   onHistorySelect: (text: string) => void;
 }
@@ -16,10 +18,13 @@ export function SettingsModal({
   onClose,
   prefs,
   setPrefs,
+  serverEndpoint,
+  setServerEndpoint,
   clearHistory,
   onHistorySelect,
 }: SettingsModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [endpointDraft, setEndpointDraft] = useState(serverEndpoint);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -38,6 +43,10 @@ export function SettingsModal({
       dialog.close();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    setEndpointDraft(serverEndpoint);
+  }, [serverEndpoint]);
 
   const toggleDockButton = (key: keyof DockButtons) => {
     setPrefs((prev) => ({
@@ -68,6 +77,30 @@ export function SettingsModal({
             <CloseIcon width={24} height={24} />
           </button>
         </div>
+
+        <section className="settings-group">
+          <h3>Server 地址</h3>
+          <label className="settings-text-field">
+            <input
+              type="url"
+              inputMode="url"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="http://192.168.1.23:8765"
+              value={endpointDraft}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                setEndpointDraft(nextValue);
+                setServerEndpoint(nextValue);
+              }}
+            />
+          </label>
+          <p className="settings-hint">
+            填写电脑上 Voice Bridge server 的地址或完整 action 接口地址。留空时，Web 壳会继续使用同源
+            <code>/api/action</code>。
+          </p>
+        </section>
 
         <section className="settings-group">
           <h3>界面外观</h3>

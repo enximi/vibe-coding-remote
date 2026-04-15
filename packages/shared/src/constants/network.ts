@@ -1,3 +1,5 @@
-export const DEFAULT_WEB_TYPE_TEXT_ENDPOINT = '/api/type-text';
-export const DEFAULT_WEB_PRESS_KEY_ENDPOINT = '/api/press-key';
-export const DEFAULT_LOCAL_SERVER_URL = 'http://127.0.0.1:8765';
+export const DEFAULT_ACTION_API_PATH = '/api/action';
+export const DEFAULT_HEALTHCHECK_PATH = '/health';
+
+export const SERVER_ENDPOINT_QUERY_PARAM = 'endpoint';
+export const SERVER_AUTH_TOKEN_QUERY_PARAM = 'token';

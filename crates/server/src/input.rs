@@ -1,17 +1,8 @@
+use crate::action::{Action, KeyName, Shortcut};
 use arboard::Clipboard;
 use std::{thread, time::Duration};
 
 const CLIPBOARD_SETTLE_DELAY_MS: u64 = 20;
-
-#[derive(Debug, Clone, Copy)]
-pub enum InputAction {
-    Enter,
-    Tab,
-    Backspace,
-    Copy,
-    Paste,
-    Newline,
-}
 
 #[derive(Debug)]
 pub enum InputError {
@@ -22,18 +13,11 @@ pub enum InputError {
     UnsupportedPlatform,
 }
 
-pub fn type_text(text: &str) -> Result<(), InputError> {
-    paste_text(text)
-}
-
-pub fn perform_action(action: InputAction) -> Result<(), InputError> {
+pub fn execute_action(action: Action) -> Result<(), InputError> {
     match action {
-        InputAction::Enter => send_enter(),
-        InputAction::Tab => send_tab(),
-        InputAction::Backspace => send_backspace(),
-        InputAction::Copy => send_copy(),
-        InputAction::Paste => send_paste(),
-        InputAction::Newline => paste_text("\n"),
+        Action::SendKey { key } => send_key(key),
+        Action::SendShortcut { shortcut } => send_shortcut(shortcut),
+        Action::PasteText { text } => paste_text(&text),
     }
 }
 
@@ -44,7 +28,23 @@ fn paste_text(text: &str) -> Result<(), InputError> {
         .map_err(InputError::ClipboardWriteFailed)?;
 
     thread::sleep(Duration::from_millis(CLIPBOARD_SETTLE_DELAY_MS));
-    send_paste()
+    send_shortcut(Shortcut::CtrlV)
+}
+
+fn send_key(key: KeyName) -> Result<(), InputError> {
+    match key {
+        KeyName::Tab => platform::send_tab(),
+        KeyName::Enter => platform::send_enter(),
+        KeyName::Backspace => platform::send_backspace(),
+    }
+}
+
+fn send_shortcut(shortcut: Shortcut) -> Result<(), InputError> {
+    match shortcut {
+        Shortcut::CtrlC => platform::send_ctrl_c(),
+        Shortcut::CtrlV => platform::send_ctrl_v(),
+        Shortcut::ShiftTab => platform::send_shift_tab(),
+    }
 }
 
 #[cfg(target_os = "windows")]
@@ -52,7 +52,7 @@ mod platform {
     use super::InputError;
     use windows::Win32::UI::Input::KeyboardAndMouse::{
         INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, SendInput,
-        VIRTUAL_KEY, VK_BACK, VK_C, VK_CONTROL, VK_RETURN, VK_TAB, VK_V,
+        VIRTUAL_KEY, VK_BACK, VK_C, VK_CONTROL, VK_RETURN, VK_SHIFT, VK_TAB, VK_V,
     };
 
     pub fn send_enter() -> Result<(), InputError> {
@@ -67,21 +67,33 @@ mod platform {
         send_key(VK_BACK)
     }
 
-    pub fn send_copy() -> Result<(), InputError> {
-        send_ctrl_shortcut(VK_C)
+    pub fn send_ctrl_c() -> Result<(), InputError> {
+        send_shortcut(&[VK_CONTROL], VK_C)
     }
 
-    pub fn send_paste() -> Result<(), InputError> {
-        send_ctrl_shortcut(VK_V)
+    pub fn send_ctrl_v() -> Result<(), InputError> {
+        send_shortcut(&[VK_CONTROL], VK_V)
     }
 
-    fn send_ctrl_shortcut(key: VIRTUAL_KEY) -> Result<(), InputError> {
-        send_inputs(&[
-            keyboard_input(VK_CONTROL, KEYBD_EVENT_FLAGS(0)),
-            keyboard_input(key, KEYBD_EVENT_FLAGS(0)),
-            keyboard_input(key, KEYEVENTF_KEYUP),
-            keyboard_input(VK_CONTROL, KEYEVENTF_KEYUP),
-        ])
+    pub fn send_shift_tab() -> Result<(), InputError> {
+        send_shortcut(&[VK_SHIFT], VK_TAB)
+    }
+
+    fn send_shortcut(modifiers: &[VIRTUAL_KEY], key: VIRTUAL_KEY) -> Result<(), InputError> {
+        let mut inputs = Vec::with_capacity((modifiers.len() * 2) + 2);
+
+        for &modifier in modifiers {
+            inputs.push(keyboard_input(modifier, KEYBD_EVENT_FLAGS(0)));
+        }
+
+        inputs.push(keyboard_input(key, KEYBD_EVENT_FLAGS(0)));
+        inputs.push(keyboard_input(key, KEYEVENTF_KEYUP));
+
+        for &modifier in modifiers.iter().rev() {
+            inputs.push(keyboard_input(modifier, KEYEVENTF_KEYUP));
+        }
+
+        send_inputs(&inputs)
     }
 
     fn send_key(key: VIRTUAL_KEY) -> Result<(), InputError> {
@@ -144,16 +156,18 @@ mod platform {
         Err(InputError::UnsupportedPlatform)
     }
 
-    pub fn send_copy() -> Result<(), InputError> {
+    pub fn send_ctrl_c() -> Result<(), InputError> {
         Err(InputError::UnsupportedPlatform)
     }
 
-    pub fn send_paste() -> Result<(), InputError> {
+    pub fn send_ctrl_v() -> Result<(), InputError> {
+        Err(InputError::UnsupportedPlatform)
+    }
+
+    pub fn send_shift_tab() -> Result<(), InputError> {
         Err(InputError::UnsupportedPlatform)
     }
 }
-
-use platform::{send_backspace, send_copy, send_enter, send_paste, send_tab};
 
 impl std::fmt::Display for InputError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -169,7 +183,10 @@ impl std::fmt::Display for InputError {
             }
             #[cfg(not(target_os = "windows"))]
             Self::UnsupportedPlatform => {
-                write!(f, "desktop input injection is not implemented on this platform yet")
+                write!(
+                    f,
+                    "desktop input injection is not implemented on this platform yet"
+                )
             }
         }
     }

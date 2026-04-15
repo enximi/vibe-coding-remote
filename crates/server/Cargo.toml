@@ -17,12 +17,13 @@ path = "src/main.rs"
 arboard.workspace = true
 axum.workspace = true
 clap.workspace = true
+config.workspace = true
 local-ip-address.workspace = true
-mime_guess.workspace = true
-qrcode.workspace = true
-rust-embed.workspace = true
 serde.workspace = true
 tokio.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows.workspace = true

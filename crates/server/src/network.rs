@@ -1,12 +1,8 @@
 use local_ip_address::list_afinet_netifas;
-use qrcode::QrCode;
 use std::{
     collections::HashSet,
     net::{IpAddr, Ipv4Addr},
 };
-
-const QR_DARK_MODULE: &str = "\x1b[40m  \x1b[0m";
-const QR_LIGHT_MODULE: &str = "\x1b[47m  \x1b[0m";
 
 #[derive(Debug, Clone)]
 struct AddressCandidate {
@@ -15,77 +11,56 @@ struct AddressCandidate {
     score: i32,
 }
 
-pub fn print_access_urls(port: u16) -> Option<String> {
-    println!("Local:       http://127.0.0.1:{port}");
+pub fn log_access_urls(host: IpAddr, port: u16) -> Option<String> {
+    tracing::info!(bind = %format!("{host}:{port}"), "server bind address");
+
+    if host.is_loopback() {
+        let local_url = format!("http://127.0.0.1:{port}");
+        tracing::info!(url = %local_url, "local access URL");
+        tracing::info!("LAN access disabled because the server is bound to a loopback address");
+        return Some(local_url);
+    }
+
+    if !host.is_unspecified() {
+        let direct_url = format_url(host, port);
+        tracing::info!(url = %direct_url, "direct access URL");
+        return Some(direct_url);
+    }
+
+    tracing::info!(url = %format!("http://127.0.0.1:{port}"), "local access URL");
 
     let candidates = collect_address_candidates();
     let recommended_url = candidates
         .first()
-        .map(|candidate| format!("http://{}:{port}", candidate.ip));
+        .map(|candidate| format_url(IpAddr::V4(candidate.ip), port));
 
     if let Some(recommended) = candidates.first() {
-        println!(
-            "Recommended: http://{}:{port}  ({})",
-            recommended.ip, recommended.interface_name
+        tracing::info!(
+            url = %format!("http://{}:{port}", recommended.ip),
+            interface = %recommended.interface_name,
+            "recommended LAN access URL"
         );
     } else {
-        println!("Recommended: no private LAN IPv4 address found");
+        tracing::warn!("no private LAN IPv4 address found for recommended access URL");
     }
 
     let others = candidates.iter().skip(1).collect::<Vec<_>>();
-    if !others.is_empty() {
-        println!("Other IPv4:");
-        for candidate in others {
-            println!(
-                "  - http://{}:{port}  ({})",
-                candidate.ip, candidate.interface_name
-            );
-        }
+    for candidate in others {
+        tracing::info!(
+            url = %format!("http://{}:{port}", candidate.ip),
+            interface = %candidate.interface_name,
+            "alternative LAN access URL"
+        );
     }
 
     recommended_url
 }
 
-pub fn print_startup_qr(url: Option<&str>) {
-    let Some(url) = url else {
-        println!("QR Code:     skipped (no recommended LAN address)");
-        return;
-    };
-
-    println!("Scan to open on phone:");
-
-    match QrCode::new(url.as_bytes()) {
-        Ok(code) => {
-            let image = render_terminal_qr(&code);
-            println!("{image}");
-            println!("{url}");
-        }
-        Err(error) => {
-            println!("QR Code:     failed to generate ({error})");
-            println!("{url}");
-        }
+fn format_url(host: IpAddr, port: u16) -> String {
+    match host {
+        IpAddr::V4(ipv4) => format!("http://{ipv4}:{port}"),
+        IpAddr::V6(ipv6) => format!("http://[{ipv6}]:{port}"),
     }
-}
-
-fn render_terminal_qr(code: &QrCode) -> String {
-    let qr = code
-        .render::<&str>()
-        .dark_color(QR_DARK_MODULE)
-        .light_color(QR_LIGHT_MODULE)
-        .quiet_zone(false)
-        .build();
-
-    let side_border = QR_LIGHT_MODULE;
-    let border_line = QR_LIGHT_MODULE.repeat(code.width() + 2);
-    let mut lines = Vec::with_capacity(code.width() + 2);
-    lines.push(border_line.clone());
-
-    for line in qr.lines() {
-        lines.push(format!("{side_border}{line}{side_border}"));
-    }
-
-    lines.push(border_line);
-    lines.join("\n")
 }
 
 fn collect_address_candidates() -> Vec<AddressCandidate> {

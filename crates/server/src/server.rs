@@ -1,37 +1,24 @@
-use crate::{FrontendMode, RuntimeOptions, input, network, web_assets};
+use crate::{
+    RuntimeOptions,
+    action::{ActionRequest, ActionValidationError},
+    input, network,
+};
 use axum::{
     Json, Router,
-    extract::DefaultBodyLimit,
-    http::StatusCode,
+    extract::{DefaultBodyLimit, State},
+    http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use serde::Serialize;
+use std::{net::SocketAddr, sync::Arc};
+use tower_http::cors::CorsLayer;
 
-const SERVER_PORT: u16 = 8765;
-const DEV_FRONTEND_PORT: u16 = 5173;
 const MAX_REQUEST_BODY_BYTES: usize = 64 * 1024;
 
-#[derive(Debug, Deserialize)]
-struct TypeTextRequest {
-    text: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct PressKeyRequest {
-    key: InputActionName,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum InputActionName {
-    Enter,
-    Tab,
-    Backspace,
-    Copy,
-    Paste,
-    Newline,
+#[derive(Debug, Clone)]
+struct AppState {
+    auth_token: Arc<str>,
 }
 
 #[derive(Debug, Serialize)]
@@ -40,17 +27,15 @@ struct ApiResponse {
 }
 
 pub async fn run(options: RuntimeOptions) -> Result<(), String> {
-    let app = build_router(options.frontend_mode);
-    let addr = SocketAddr::from(([0, 0, 0, 0], SERVER_PORT));
+    let addr = SocketAddr::new(options.host, options.port);
+    let app = build_router(options.auth_token.clone());
 
-    println!("VoiceBridge local server is starting...");
-    let frontend_url = print_startup_guide(addr.port(), options.frontend_mode);
+    tracing::info!("Voice Bridge server is starting");
+    log_startup_guide(options.host, options.port);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
-        .map_err(|error| format!("failed to bind TCP listener on port {SERVER_PORT}: {error}"))?;
-
-    network::print_startup_qr(frontend_url.as_deref());
+        .map_err(|error| format!("failed to bind TCP listener on {addr}: {error}"))?;
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
@@ -58,88 +43,76 @@ pub async fn run(options: RuntimeOptions) -> Result<(), String> {
         .map_err(|error| format!("server error: {error}"))
 }
 
-fn build_router(frontend_mode: FrontendMode) -> Router {
-    let api_router = Router::new()
-        .route("/api/type-text", post(type_text))
-        .route("/api/press-key", post(press_key))
+fn build_router(auth_token: String) -> Router {
+    Router::new()
+        .route("/api/action", post(execute_action))
         .route("/health", get(health))
-        .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES));
-
-    web_assets::install(api_router, frontend_mode)
+        .layer(CorsLayer::permissive())
+        .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES))
+        .with_state(AppState {
+            auth_token: Arc::<str>::from(auth_token),
+        })
 }
 
-fn print_startup_guide(api_port: u16, frontend_mode: FrontendMode) -> Option<String> {
-    print_section_heading("API server");
-    let api_url = network::print_access_urls(api_port);
-    println!("RPC API:     http://127.0.0.1:{api_port}/api/type-text");
-    println!("RPC API:     http://127.0.0.1:{api_port}/api/press-key");
-
-    match frontend_mode {
-        FrontendMode::Dev => {
-            print_section_heading("Frontend (dev)");
-            let frontend_url = network::print_access_urls(DEV_FRONTEND_PORT);
-            println!("Mode:        dev");
-            println!("Frontend:    access the Vite dev server directly");
-            println!("Proxy:       /api -> http://127.0.0.1:{api_port}");
-            frontend_url
-        }
-        FrontendMode::Embedded => {
-            print_section_heading("Frontend (embedded)");
-            println!("Mode:        embedded");
-            println!("Frontend:    Rust serves frontend assets embedded in the executable");
-            api_url
-        }
-    }
-}
-
-fn print_section_heading(title: &str) {
-    println!();
-    println!("{title}:");
+fn log_startup_guide(host: std::net::IpAddr, api_port: u16) {
+    tracing::info!("API server");
+    network::log_access_urls(host, api_port);
+    tracing::info!(url = %format!("http://127.0.0.1:{api_port}/health"), "health endpoint");
+    tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/action"), "action endpoint");
+    tracing::info!("Bearer token required for /api/action");
+    tracing::info!("CORS enabled for cross-origin frontend clients");
 }
 
 async fn shutdown_signal() {
     let _ = tokio::signal::ctrl_c().await;
-    println!("\nVoiceBridge local server stopped.");
+    tracing::info!("Voice Bridge server stopped");
 }
 
 async fn health() -> &'static str {
     "ok"
 }
 
-async fn type_text(Json(payload): Json<TypeTextRequest>) -> Result<Json<ApiResponse>, AppError> {
-    let text = payload.text.trim();
-    if text.is_empty() {
-        return Err(AppError::bad_request("text cannot be empty"));
-    }
+async fn execute_action(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(payload): Json<ActionRequest>,
+) -> Result<Json<ApiResponse>, AppError> {
+    authorize(&headers, state.auth_token.as_ref())?;
 
-    input::type_text(text).map_err(AppError::input_failed)?;
+    let action = payload.action.validate().map_err(|error| {
+        tracing::warn!(error = %error, "rejected invalid action");
+        AppError::bad_request(error)
+    })?;
+    let debug_action = format!("{action:?}");
 
-    println!("\n--- type_text ---\ntext: {}\n-----------------", text);
+    input::execute_action(action).map_err(|error| {
+        tracing::error!(error = %error, action = %debug_action, "failed to execute action");
+        AppError::input_failed(error)
+    })?;
+
+    tracing::info!(action = %debug_action, "executed action");
 
     Ok(Json(ApiResponse { ok: true }))
 }
 
-async fn press_key(Json(payload): Json<PressKeyRequest>) -> Result<Json<ApiResponse>, AppError> {
-    input::perform_action(payload.key.into()).map_err(AppError::input_failed)?;
+fn authorize(headers: &HeaderMap, expected_token: &str) -> Result<(), AppError> {
+    let authorization = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .ok_or_else(|| {
+            tracing::warn!("rejected request with missing authorization token");
+            AppError::unauthorized()
+        })?;
+    let token = authorization.strip_prefix("Bearer ").ok_or_else(|| {
+        tracing::warn!("rejected request with invalid authorization scheme");
+        AppError::unauthorized()
+    })?;
 
-    println!(
-        "\n--- press_key ---\nkey: {:?}\n-----------------",
-        payload.key
-    );
-
-    Ok(Json(ApiResponse { ok: true }))
-}
-
-impl From<InputActionName> for input::InputAction {
-    fn from(value: InputActionName) -> Self {
-        match value {
-            InputActionName::Enter => Self::Enter,
-            InputActionName::Tab => Self::Tab,
-            InputActionName::Backspace => Self::Backspace,
-            InputActionName::Copy => Self::Copy,
-            InputActionName::Paste => Self::Paste,
-            InputActionName::Newline => Self::Newline,
-        }
+    if token == expected_token {
+        Ok(())
+    } else {
+        tracing::warn!("rejected request with invalid authorization token");
+        Err(AppError::unauthorized())
     }
 }
 
@@ -149,10 +122,17 @@ struct AppError {
 }
 
 impl AppError {
-    fn bad_request(message: impl Into<String>) -> Self {
+    fn bad_request(error: impl ToString) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
-            message: message.into(),
+            message: error.to_string(),
+        }
+    }
+
+    fn unauthorized() -> Self {
+        Self {
+            status: StatusCode::UNAUTHORIZED,
+            message: "missing or invalid authorization token".to_owned(),
         }
     }
 
@@ -161,6 +141,12 @@ impl AppError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
             message: error.to_string(),
         }
+    }
+}
+
+impl From<ActionValidationError> for AppError {
+    fn from(error: ActionValidationError) -> Self {
+        Self::bad_request(error)
     }
 }
 

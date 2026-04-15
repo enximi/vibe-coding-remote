@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PREFERENCES_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY } from '@voice-bridge/shared';
+import { PREFERENCES_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY, SERVER_AUTH_TOKEN_STORAGE_KEY } from '@voice-bridge/shared';
 
 const MAX_HISTORY_ITEMS = 50;
 
@@ -44,6 +44,7 @@ const defaultPreferences: Preferences = {
 export function usePreferences() {
   const [prefs, setPrefsState] = useState<Preferences>(loadPreferences);
   const [serverEndpoint, setServerEndpointState] = useState(loadServerEndpoint);
+  const [serverAuthToken, setServerAuthTokenState] = useState(loadServerAuthToken);
 
   useEffect(() => {
     if (prefs.theme === 'system') {
@@ -92,6 +93,17 @@ export function usePreferences() {
     setServerEndpointState(normalizedValue);
   };
 
+  const setServerAuthToken = (value: string) => {
+    const normalizedValue = value.trim();
+    if (normalizedValue) {
+      window.localStorage.setItem(SERVER_AUTH_TOKEN_STORAGE_KEY, normalizedValue);
+    } else {
+      window.localStorage.removeItem(SERVER_AUTH_TOKEN_STORAGE_KEY);
+    }
+
+    setServerAuthTokenState(normalizedValue);
+  };
+
   return {
     prefs,
     setPrefs,
@@ -99,6 +111,8 @@ export function usePreferences() {
     clearHistory,
     serverEndpoint,
     setServerEndpoint,
+    serverAuthToken,
+    setServerAuthToken,
   };
 }
 
@@ -146,4 +160,8 @@ function normalizeHistory(history: StoredPreferences['history']): HistoryItem[] 
 
 function loadServerEndpoint(): string {
   return window.localStorage.getItem(SERVER_ENDPOINT_STORAGE_KEY)?.trim() ?? '';
+}
+
+function loadServerAuthToken(): string {
+  return window.localStorage.getItem(SERVER_AUTH_TOKEN_STORAGE_KEY)?.trim() ?? '';
 }

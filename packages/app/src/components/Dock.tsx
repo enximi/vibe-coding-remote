@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Preferences } from '../hooks/usePreferences';
+import type { ConnectionStatus } from '../hooks/useConnectionState';
 import { useContinuousTrigger, type DockAction } from '../hooks/useContinuousTrigger';
 import {
   BackspaceIcon,
@@ -21,6 +22,7 @@ type DockActionConfig = {
 
 interface DockProps {
   prefs: Preferences;
+  status?: ConnectionStatus;
   onMenuClick: () => void;
   onSendClick: () => Promise<void>;
   isSendingSuccess: boolean;
@@ -29,6 +31,7 @@ interface DockProps {
 
 export function Dock({
   prefs,
+  status,
   onMenuClick,
   onSendClick,
   isSendingSuccess,
@@ -93,7 +96,7 @@ export function Dock({
   return (
     <nav className="dock" aria-label="快捷操作">
       <button
-        className="dock-btn"
+        className={`dock-btn ${status !== 'workable' && status !== 'checking' ? 'dock-btn--attention' : ''}`}
         type="button"
         aria-label="设置与历史"
         onClick={onMenuClick}
@@ -105,10 +108,12 @@ export function Dock({
       {actionButtons
         .filter((button) => button.isVisible)
         .map((button) => (
-          <DockActionButton key={button.actionKey} {...button} />
+          <DockActionButton key={button.actionKey} {...button} disabled={status !== 'workable'} />
         ))}
 
-      <div className="dock-divider" />
+      {status === 'workable' && (
+        <>
+          <div className="dock-divider" />
 
       <button
         className={[
@@ -137,9 +142,11 @@ export function Dock({
             event.preventDefault();
           }
         }}
-      >
-        <SendIcon width={20} height={20} />
-      </button>
+          >
+            <SendIcon width={20} height={20} />
+          </button>
+        </>
+      )}
     </nav>
   );
 }
@@ -149,11 +156,19 @@ function DockActionButton({
   ariaLabel,
   icon,
   isContinuous,
-}: DockActionConfig) {
+  disabled,
+}: DockActionConfig & { disabled?: boolean }) {
   const { triggerCount, ...triggerProps } = useContinuousTrigger(actionKey, isContinuous);
 
+  const mergedProps = disabled ? {} : triggerProps;
+
   return (
-    <button className="dock-btn dock-btn--action" type="button" aria-label={ariaLabel} {...triggerProps}>
+    <button
+      className={`dock-btn dock-btn--action ${disabled ? 'dock-btn--disabled' : ''}`}
+      type="button"
+      aria-label={ariaLabel}
+      {...mergedProps}
+    >
       {icon}
       <div className={`combo-counter ${triggerCount > 1 ? 'visible' : ''}`}>
         {triggerCount > 1 && <span className="combo-number">x{triggerCount}</span>}

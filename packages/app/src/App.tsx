@@ -1,16 +1,36 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Composer, type ComposerHandle } from './components/Composer';
 import { Dock } from './components/Dock';
 import { SettingsModal } from './components/SettingsModal';
+import { useConnectionState } from './hooks/useConnectionState';
 import { usePreferences } from './hooks/usePreferences';
 import { useViewportOffset } from './hooks/useViewportOffset';
 
 function App() {
-  const { prefs, setPrefs, addHistory, clearHistory } = usePreferences();
+  const {
+    prefs,
+    setPrefs,
+    addHistory,
+    clearHistory,
+    serverEndpoint,
+    setServerEndpoint,
+    serverAuthToken,
+    setServerAuthToken,
+  } = usePreferences();
+  
+  const { status, checkConnection } = useConnectionState(serverEndpoint, serverAuthToken);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);
   const [hasText, setHasText] = useState(false);
   const composerRef = useRef<ComposerHandle>(null);
+
+  // Automatically open modal when there is a connection issue
+  useEffect(() => {
+    if (status !== 'workable' && status !== 'checking') {
+      setIsModalOpen(true);
+    }
+  }, [status]);
 
   useViewportOffset();
 
@@ -59,6 +79,7 @@ function App() {
         <Composer
           ref={composerRef}
           prefs={prefs}
+          status={status}
           addHistory={addHistory}
           onTextChange={setHasText}
           onSendActionStart={() => setIsSendingSuccess(true)}
@@ -71,6 +92,7 @@ function App() {
 
       <Dock
         prefs={prefs}
+        status={status}
         hasText={hasText}
         isSendingSuccess={isSendingSuccess}
         onMenuClick={() => setIsModalOpen(true)}
@@ -79,9 +101,15 @@ function App() {
 
       <SettingsModal
         isOpen={isModalOpen}
+        status={status}
+        checkConnection={checkConnection}
         onClose={() => setIsModalOpen(false)}
         prefs={prefs}
         setPrefs={setPrefs}
+        serverEndpoint={serverEndpoint}
+        setServerEndpoint={setServerEndpoint}
+        serverAuthToken={serverAuthToken}
+        setServerAuthToken={setServerAuthToken}
         clearHistory={clearHistory}
         onHistorySelect={handleHistorySelect}
       />

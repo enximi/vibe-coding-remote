@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { Preferences } from '../hooks/usePreferences';
 import { useBridge } from '../features/runtime/BridgeContext';
+import type { ConnectionStatus } from '../hooks/useConnectionState';
 import {
   clearComposerDraft,
   loadComposerDraft,
@@ -16,6 +17,7 @@ import {
 
 interface ComposerProps {
   prefs: Preferences;
+  status: ConnectionStatus;
   addHistory: (text: string) => void;
   onTextChange?: (hasText: boolean) => void;
   onSendActionStart?: () => void;
@@ -29,7 +31,7 @@ export interface ComposerHandle {
 }
 
 export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer(
-  { prefs, addHistory, onTextChange, onSendActionStart, onSendActionEnd },
+  { prefs, status, addHistory, onTextChange, onSendActionStart, onSendActionEnd },
   ref,
 ) {
   const bridge = useBridge();
@@ -85,6 +87,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   );
 
   const submitCurrentText = useCallback(async () => {
+    if (status !== 'workable') {
+      return;
+    }
     if (text.length === 0) {
       try {
         bridge.vibrate(30);
@@ -205,6 +210,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
 
     if (event.key === 'Backspace' && text.length === 0) {
+      if (status !== 'workable') {
+        return;
+      }
       event.preventDefault();
       bridge.vibrate(30);
       void bridge.sendKey('backspace').catch(() => undefined);
@@ -213,6 +221,10 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
     if (event.key === 'Enter' && !event.shiftKey) {
       if (prefs.enterBehavior === 'newline' && text.length > 0) {
+        return;
+      }
+
+      if (status !== 'workable') {
         return;
       }
 
@@ -251,6 +263,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         rows={1}
       />
       <div className={`watermark-placeholder ${text.length > 0 ? 'hidden' : ''}`}>
+        {status !== 'workable' && status !== 'checking' && (
+          <p className="disconnected-notice">当前服务器处于断开状态。可以继续在这里输入并写草稿，待网络恢复后即可发送。</p>
+        )}
         <p>这是一个把手机输入发送到电脑的小工具。</p>
         <p>先在电脑上把光标放到你想输入的位置，然后在这里输入文字，或直接使用手机输入法的语音输入。</p>
         <p>点击发送后，内容会出现在电脑当前光标处。回车可以根据设置用于发送或换行；当输入框为空时，退格会直接作用到电脑。底部按钮也可以帮助你发送换行、退格等常用操作。</p>

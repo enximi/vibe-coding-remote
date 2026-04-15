@@ -2,29 +2,40 @@ import { useEffect, useRef, useState } from 'react';
 import type { DockButtons, Preferences } from '../hooks/usePreferences';
 import { CloseIcon } from './icons';
 
+import type { ConnectionStatus } from '../hooks/useConnectionState';
+
 interface SettingsModalProps {
   isOpen: boolean;
+  status: ConnectionStatus;
+  checkConnection: () => void;
   onClose: () => void;
   prefs: Preferences;
   setPrefs: (update: (p: Preferences) => Preferences) => void;
   serverEndpoint: string;
   setServerEndpoint: (value: string) => void;
+  serverAuthToken: string;
+  setServerAuthToken: (value: string) => void;
   clearHistory: () => void;
   onHistorySelect: (text: string) => void;
 }
 
 export function SettingsModal({
   isOpen,
+  status,
+  checkConnection,
   onClose,
   prefs,
   setPrefs,
   serverEndpoint,
   setServerEndpoint,
+  serverAuthToken,
+  setServerAuthToken,
   clearHistory,
   onHistorySelect,
 }: SettingsModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [endpointDraft, setEndpointDraft] = useState(serverEndpoint);
+  const [tokenDraft, setTokenDraft] = useState(serverAuthToken);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -47,6 +58,16 @@ export function SettingsModal({
   useEffect(() => {
     setEndpointDraft(serverEndpoint);
   }, [serverEndpoint]);
+
+  useEffect(() => {
+    setTokenDraft(serverAuthToken);
+  }, [serverAuthToken]);
+
+  const handleApplyConfig = () => {
+    setServerEndpoint(endpointDraft);
+    setServerAuthToken(tokenDraft);
+    void checkConnection();
+  };
 
   const toggleDockButton = (key: keyof DockButtons) => {
     setPrefs((prev) => ({
@@ -78,9 +99,15 @@ export function SettingsModal({
           </button>
         </div>
 
-        <section className="settings-group">
-          <h3>Server 地址</h3>
+        <section className="settings-group connection-group">
+          <div className="connection-header">
+            <h3>Server 配置</h3>
+            {status === 'checking' && <span className="status-badge checking">检查中...</span>}
+            {status === 'workable' && <span className="status-badge ok">配置正常</span>}
+          </div>
+          
           <label className="settings-text-field">
+            <div className="field-label">Server 地址</div>
             <input
               type="url"
               inputMode="url"
@@ -89,17 +116,38 @@ export function SettingsModal({
               spellCheck={false}
               placeholder="http://192.168.1.23:8765"
               value={endpointDraft}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setEndpointDraft(nextValue);
-                setServerEndpoint(nextValue);
-              }}
+              onChange={(event) => setEndpointDraft(event.target.value)}
+              onBlur={handleApplyConfig}
             />
           </label>
+          {status === 'connection_error' && (
+            <p className="settings-error">连接失败，请检查地址或确保服务器已启动。</p>
+          )}
+
+          <label className="settings-text-field">
+            <div className="field-label">Server Token</div>
+            <input
+              type="password"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="可选的访问密钥"
+              value={tokenDraft}
+              onChange={(event) => setTokenDraft(event.target.value)}
+              onBlur={handleApplyConfig}
+            />
+          </label>
+          {status === 'auth_error' && (
+            <p className="settings-error">认证失败，请检查 Token 是否匹配。</p>
+          )}
+
           <p className="settings-hint">
-            填写电脑上 Voice Bridge server 的地址或完整 action 接口地址。留空时，Web 壳会继续使用同源
-            <code>/api/action</code>。
+            填写电脑上 Voice Bridge server 的地址和 Token。留空时默认状态为“未配置”。修改后自动测试连接。
           </p>
+
+          <button className="settings-retry-btn" type="button" onClick={handleApplyConfig}>
+            重试连接
+          </button>
         </section>
 
         <section className="settings-group">

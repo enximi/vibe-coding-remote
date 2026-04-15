@@ -1,5 +1,6 @@
 import {
   DEFAULT_ACTION_API_PATH,
+  DEFAULT_AUTH_CHECK_API_PATH,
   SERVER_AUTH_TOKEN_QUERY_PARAM,
   SERVER_ENDPOINT_QUERY_PARAM,
 } from '../constants/network';
@@ -14,6 +15,23 @@ export function resolveConfiguredActionEndpoint(): string | null {
     readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
   return candidate ? normalizeActionEndpoint(candidate) : null;
+}
+
+export function resolveConfiguredAuthCheckEndpoint(): string | null {
+  const actionEndpoint = resolveConfiguredActionEndpoint();
+
+  if (!actionEndpoint) {
+    return null;
+  }
+
+  try {
+    const url = new URL(actionEndpoint, window.location.href);
+    url.pathname = normalizeAuthCheckPath(url.pathname);
+    url.search = '';
+    return url.toString();
+  } catch {
+    return actionEndpoint;
+  }
 }
 
 export function resolveConfiguredAuthToken(): string | null {
@@ -55,6 +73,26 @@ function normalizeActionPath(pathname: string): string {
 
   if (pathname.endsWith('/api')) {
     return `${pathname}/action`;
+  }
+
+  return pathname;
+}
+
+function normalizeAuthCheckPath(pathname: string): string {
+  if (!pathname || pathname === '/') {
+    return DEFAULT_AUTH_CHECK_API_PATH;
+  }
+
+  if (pathname.endsWith(DEFAULT_AUTH_CHECK_API_PATH)) {
+    return pathname;
+  }
+
+  if (pathname.endsWith(DEFAULT_ACTION_API_PATH)) {
+    return pathname.slice(0, pathname.length - DEFAULT_ACTION_API_PATH.length) + DEFAULT_AUTH_CHECK_API_PATH;
+  }
+
+  if (pathname.endsWith('/api')) {
+    return `${pathname}/auth-check`;
   }
 
   return pathname;

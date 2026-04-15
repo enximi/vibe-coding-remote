@@ -59,6 +59,7 @@ pub async fn run(options: RuntimeOptions) -> Result<(), ServerError> {
 fn build_router(auth_token: String) -> Router {
     Router::new()
         .route("/api/action", post(execute_action))
+        .route("/api/auth-check", get(auth_check))
         .route("/health", get(health))
         .layer(CorsLayer::permissive())
         .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES))
@@ -71,8 +72,9 @@ fn log_startup_guide(host: std::net::IpAddr, api_port: u16) {
     tracing::info!("API server");
     network::log_access_urls(host, api_port);
     tracing::info!(url = %format!("http://127.0.0.1:{api_port}/health"), "health endpoint");
+    tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/auth-check"), "auth check endpoint");
     tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/action"), "action endpoint");
-    tracing::info!("Bearer token required for /api/action");
+    tracing::info!("Bearer token required for /api/auth-check and /api/action");
     tracing::info!("CORS enabled for cross-origin frontend clients");
 }
 
@@ -83,6 +85,15 @@ async fn shutdown_signal() {
 
 async fn health() -> &'static str {
     "ok"
+}
+
+async fn auth_check(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse>, AppError> {
+    authorize(&headers, state.auth_token.as_ref())?;
+    tracing::info!("auth check succeeded");
+    Ok(Json(ApiResponse { ok: true }))
 }
 
 async fn execute_action(

@@ -15,6 +15,12 @@ import {
   saveComposerDraft,
 } from '../features/editor/draft';
 
+type NavigatorWithVirtualKeyboard = Navigator & {
+  virtualKeyboard?: {
+    show?: () => void;
+  };
+};
+
 interface ComposerProps {
   prefs: Preferences;
   status: ConnectionStatus;
@@ -52,7 +58,25 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   }, []);
 
   const focusInput = useCallback(() => {
-    inputRef.current?.focus({ preventScroll: true });
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+
+    const focusAndShowKeyboard = () => {
+      input.focus({ preventScroll: true });
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+
+      try {
+        (navigator as NavigatorWithVirtualKeyboard).virtualKeyboard?.show?.();
+      } catch {
+        // Some WebViews expose the API but reject calls outside accepted focus windows.
+      }
+    };
+
+    focusAndShowKeyboard();
+    window.requestAnimationFrame(focusAndShowKeyboard);
   }, []);
 
   const syncTextareaHeight = useCallback(() => {

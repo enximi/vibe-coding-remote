@@ -28,7 +28,6 @@ interface SettingsModalProps {
   status: ConnectionStatus;
   checkConnection: (endpoint?: string, token?: string) => void;
   onClose: () => void;
-  onCloseStart?: () => void;
   prefs: Preferences;
   setPrefs: (update: (p: Preferences) => Preferences) => void;
   serverEndpoint: string;
@@ -59,28 +58,32 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isClosingRef = useRef(false);
   const touchStartY = useRef(0);
   const scrollStartY = useRef(0);
 
-  const handleCloseAnimation = useCallback(() => {
+  const resetCloseAnimation = useCallback(() => {
     if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      contentRef.current.style.transform = 'translateY(100%)';
+      contentRef.current.style.transform = '';
     }
     if (dialogRef.current) {
-      dialogRef.current.classList.add('modal-animating');
-      dialogRef.current.classList.add('modal-closing');
+      dialogRef.current.classList.remove('modal-animating');
+      dialogRef.current.classList.remove('modal-closing');
+      dialogRef.current.style.setProperty('--backdrop-opacity', '1');
     }
-    setTimeout(() => {
-      onClose();
-      if (contentRef.current) contentRef.current.style.transform = '';
-      if (dialogRef.current) {
-        dialogRef.current.classList.remove('modal-animating');
-        dialogRef.current.classList.remove('modal-closing');
-        dialogRef.current.style.setProperty('--backdrop-opacity', '1');
-      }
-    }, 300);
-  }, [onClose]);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (isClosingRef.current) {
+      return;
+    }
+    isClosingRef.current = true;
+    if (dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+    resetCloseAnimation();
+    onClose();
+  }, [onClose, resetCloseAnimation]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -115,7 +118,7 @@ export function SettingsModal({
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     
     if (scrollStartY.current <= 0 && deltaY > 100) {
-      handleCloseAnimation();
+      requestClose();
     } else {
       contentRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
       contentRef.current.style.transform = '';
@@ -165,6 +168,7 @@ export function SettingsModal({
     }
 
     if (isOpen) {
+      isClosingRef.current = false;
       if (!dialog.open) {
         dialog.showModal();
       }
@@ -226,12 +230,21 @@ export function SettingsModal({
       ref={dialogRef}
       id="menuModal"
       className="modal"
-      onClick={(event) => {
+      onPointerDown={(event) => {
         if (event.target === dialogRef.current) {
-          onClose();
+          event.preventDefault();
+          requestClose();
         }
       }}
-      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) {
+          requestClose();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        requestClose();
+      }}
     >
       <div 
         className="modal-content"
@@ -242,7 +255,16 @@ export function SettingsModal({
       >
         <div className="modal-header">
           <h2 className="modal-title">偏好设置</h2>
-          <button className="close-btn" type="button" aria-label="关闭" onClick={onClose}>
+          <button
+            className="close-btn"
+            type="button"
+            aria-label="关闭"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              requestClose();
+            }}
+            onClick={requestClose}
+          >
             <CloseIcon width={24} height={24} />
           </button>
         </div>

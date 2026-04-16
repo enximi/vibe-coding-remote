@@ -17,9 +17,11 @@ import {
   SystemThemeIcon,
   LightThemeIcon,
   DarkThemeIcon,
+  ScanIcon,
   SendIcon,
 } from './icons';
 import { DOCK_ACTION_DEFINITIONS } from './dockActions';
+import { QrScannerModal } from './QrScannerModal';
 
 import type { ConnectionStatus } from '../hooks/useConnectionState';
 
@@ -137,6 +139,7 @@ export function SettingsModal({
 
   const [endpointDraft, setEndpointDraft] = useState(serverEndpoint);
   const [tokenDraft, setTokenDraft] = useState(serverAuthToken);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const dockActionDefinitions = useMemo(
     () => new Map(DOCK_ACTION_DEFINITIONS.map((definition) => [definition.key, definition])),
@@ -193,6 +196,23 @@ export function SettingsModal({
     setServerAuthToken(tokenDraft);
     void checkConnection(endpointDraft, tokenDraft);
   };
+
+  const handleQrScan = useCallback(
+    (rawValue: string) => {
+      const parsed = parseImportUrl(rawValue);
+      if (!parsed) {
+        return;
+      }
+
+      setEndpointDraft(parsed.endpoint);
+      setTokenDraft(parsed.token);
+      setServerEndpoint(parsed.endpoint);
+      setServerAuthToken(parsed.token);
+      void checkConnection(parsed.endpoint, parsed.token);
+      setIsScannerOpen(false);
+    },
+    [checkConnection, setServerAuthToken, setServerEndpoint],
+  );
 
   const toggleDockButton = (key: keyof DockButtons) => {
     setPrefs((prev) => ({
@@ -311,6 +331,10 @@ export function SettingsModal({
             <div className="settings-card-divider" />
             <button className="settings-card-btn" type="button" onClick={handleApplyConfig}>
               测试并保存连接
+            </button>
+            <div className="settings-card-divider" />
+            <button className="settings-card-btn" type="button" onClick={() => setIsScannerOpen(true)}>
+              <ScanIcon width={18} height={18} /> 扫码导入配置
             </button>
           </div>
 
@@ -508,6 +532,12 @@ export function SettingsModal({
           </ul>
         </section>
       </div>
+
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleQrScan}
+      />
     </dialog>
   );
 }
@@ -597,4 +627,30 @@ function formatHistoryTime(timestamp: number) {
   }
 
   return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+type ParsedImportConfig = {
+  endpoint: string;
+  token: string;
+};
+
+function parseImportUrl(rawValue: string): ParsedImportConfig | null {
+  try {
+    const url = new URL(rawValue.trim());
+    if (url.protocol !== 'voicebridge:' || url.hostname !== 'import') {
+      return null;
+    }
+
+    const endpoint = url.searchParams.get('endpoint')?.trim() ?? '';
+    const token = url.searchParams.get('token')?.trim() ?? '';
+    const version = url.searchParams.get('v')?.trim() ?? '';
+
+    if (version !== '1' || !endpoint || !token) {
+      return null;
+    }
+
+    return { endpoint, token };
+  } catch {
+    return null;
+  }
 }

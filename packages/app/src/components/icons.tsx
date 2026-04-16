@@ -11,12 +11,17 @@ import {
   Monitor,
   Sun,
   Moon,
+  ScanLine,
   type LucideProps,
 } from 'lucide-react';
 
 type IconProps = LucideProps;
 
 const STROKE_WIDTH = 2.4;
+
+export function ScanIcon(props: IconProps) {
+  return <ScanLine strokeWidth={STROKE_WIDTH} {...props} />;
+}
 
 export function SettingsIcon(props: IconProps) {
   return <Settings2 strokeWidth={STROKE_WIDTH} {...props} />;

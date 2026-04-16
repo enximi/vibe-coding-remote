@@ -3,6 +3,12 @@ export type ApiResponse = {
 	ok: boolean,
 };
 
+export type ImportPayload = {
+	v: number,
+	endpoint: string,
+	token: string,
+};
+
 export type ServerAction = { type: "send-key"; key: ServerKeyName } | { type: "send-shortcut"; shortcut: ServerShortcut } | { type: "paste-text"; text: string };
 
 export type ServerActionRequest = {

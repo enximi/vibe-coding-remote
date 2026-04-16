@@ -45,6 +45,14 @@ pub struct ApiResponse {
     pub ok: bool,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
+pub struct ImportPayload {
+    #[serde(rename = "v")]
+    pub version: u8,
+    pub endpoint: String,
+    pub token: String,
+}
+
 #[derive(Debug, Clone, Copy, Error)]
 pub enum ActionValidationError {
     #[error("text cannot be empty")]

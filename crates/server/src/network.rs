@@ -11,20 +11,29 @@ struct AddressCandidate {
     score: i32,
 }
 
-pub fn log_access_urls(host: IpAddr, port: u16) -> Option<String> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ImportEndpointStatus {
+    Available { endpoint: String },
+    LoopbackOnly,
+    NoLanAddress,
+}
+
+pub fn log_access_urls(host: IpAddr, port: u16) -> ImportEndpointStatus {
     tracing::info!(bind = %format!("{host}:{port}"), "server bind address");
 
     if host.is_loopback() {
         let local_url = format!("http://127.0.0.1:{port}");
         tracing::info!(url = %local_url, "local access URL");
         tracing::info!("LAN access disabled because the server is bound to a loopback address");
-        return Some(local_url);
+        return ImportEndpointStatus::LoopbackOnly;
     }
 
     if !host.is_unspecified() {
         let direct_url = format_url(host, port);
         tracing::info!(url = %direct_url, "direct access URL");
-        return Some(direct_url);
+        return ImportEndpointStatus::Available {
+            endpoint: direct_url,
+        };
     }
 
     tracing::info!(url = %format!("http://127.0.0.1:{port}"), "local access URL");
@@ -54,6 +63,8 @@ pub fn log_access_urls(host: IpAddr, port: u16) -> Option<String> {
     }
 
     recommended_url
+        .map(|endpoint| ImportEndpointStatus::Available { endpoint })
+        .unwrap_or(ImportEndpointStatus::NoLanAddress)
 }
 
 fn format_url(host: IpAddr, port: u16) -> String {

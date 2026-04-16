@@ -1,5 +1,5 @@
 use crate::protocol::{
-    ApiResponse, ServerAction, ServerActionRequest, ServerKeyName, ServerShortcut,
+    ApiResponse, ImportPayload, ServerAction, ServerActionRequest, ServerKeyName, ServerShortcut,
 };
 use specta::Types;
 use specta_serde::apply;
@@ -39,6 +39,7 @@ pub fn export_typescript_bindings(output_path: Option<PathBuf>) -> Result<PathBu
 
     let types = Types::default()
         .register::<ApiResponse>()
+        .register::<ImportPayload>()
         .register::<ServerActionRequest>()
         .register::<ServerAction>()
         .register::<ServerKeyName>()

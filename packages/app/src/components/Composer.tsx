@@ -92,11 +92,11 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
     if (text.length === 0) {
       try {
-        bridge.vibrate(30);
+        if (prefs.vibrationEnabled) bridge.vibrate(30);
         await bridge.sendKey('enter');
       } catch (error) {
         console.error(error);
-        bridge.vibrate([50, 50, 50]);
+        if (prefs.vibrationEnabled) bridge.vibrate([50, 50, 50]);
       } finally {
         focusInput();
       }
@@ -104,7 +104,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
 
     try {
-      bridge.vibrate([20, 30, 20]);
+      if (prefs.vibrationEnabled) bridge.vibrate([20, 30, 20]);
       onSendActionStart?.();
       await bridge.pasteText(text);
       addHistory(text);
@@ -116,7 +116,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       window.setTimeout(focusInput, 50);
     } catch (error) {
       console.error(error);
-      bridge.vibrate([50, 50, 50]);
+      if (prefs.vibrationEnabled) bridge.vibrate([50, 50, 50]);
       focusInput();
     } finally {
       onSendActionEnd?.();
@@ -130,6 +130,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     syncEnterKeyHint,
     text,
     bridge,
+    prefs.vibrationEnabled,
   ]);
 
   useImperativeHandle(
@@ -214,7 +215,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         return;
       }
       event.preventDefault();
-      bridge.vibrate(30);
+      if (prefs.vibrationEnabled) bridge.vibrate(30);
       void bridge.sendKey('backspace').catch(() => undefined);
       return;
     }

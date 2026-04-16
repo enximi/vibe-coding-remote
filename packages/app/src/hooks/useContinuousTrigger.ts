@@ -16,7 +16,7 @@ export type DockAction =
   | 'paste-newline'
   | 'backspace';
 
-export function useContinuousTrigger(action: DockAction, isContinuous: boolean) {
+export function useContinuousTrigger(action: DockAction, isContinuous: boolean, vibrationEnabled: boolean = true) {
   const bridge = useBridge();
   const [triggerCount, setTriggerCount] = useState(0);
   const intervalRef = useRef<number | null>(null);
@@ -40,11 +40,13 @@ export function useContinuousTrigger(action: DockAction, isContinuous: boolean) 
 
   const fireAction = useCallback(
     (vibration: number | number[]) => {
-      bridge.vibrate(vibration);
+      if (vibrationEnabled) {
+        bridge.vibrate(vibration);
+      }
       void executeDockAction(bridge, action).catch(() => undefined);
       incrementCount();
     },
-    [action, bridge],
+    [action, bridge, vibrationEnabled],
   );
 
   const start = useCallback(

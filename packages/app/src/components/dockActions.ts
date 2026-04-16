@@ -15,7 +15,7 @@ export const DOCK_ACTION_DEFINITIONS: DockActionDefinition[] = [
     actionKey: 'enter',
     ariaLabel: '发送 Enter',
     settingsLabel: 'Enter',
-    isContinuous: false,
+    isContinuous: true,
   },
   {
     key: 'tab',
@@ -36,14 +36,14 @@ export const DOCK_ACTION_DEFINITIONS: DockActionDefinition[] = [
     actionKey: 'ctrl-c',
     ariaLabel: '发送 Ctrl+C',
     settingsLabel: 'Ctrl+C',
-    isContinuous: false,
+    isContinuous: true,
   },
   {
     key: 'ctrlV',
     actionKey: 'ctrl-v',
     ariaLabel: '发送 Ctrl+V',
     settingsLabel: 'Ctrl+V',
-    isContinuous: false,
+    isContinuous: true,
   },
   {
     key: 'pasteNewline',

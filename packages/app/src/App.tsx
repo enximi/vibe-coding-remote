@@ -106,7 +106,10 @@ function App() {
         isOpen={isModalOpen}
         status={status}
         checkConnection={checkConnection}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          focusComposer();
+        }}
         prefs={prefs}
         setPrefs={setPrefs}
         serverEndpoint={serverEndpoint}

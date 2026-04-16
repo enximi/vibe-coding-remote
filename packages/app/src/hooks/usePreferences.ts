@@ -31,6 +31,7 @@ export type Preferences = {
   theme: 'system' | 'light' | 'dark';
   enterBehavior: 'send' | 'newline';
   fontSize: number;
+  vibrationEnabled: boolean;
   dockButtons: DockButtons;
   dockButtonOrder: DockButtonKey[];
   history: HistoryItem[];
@@ -56,6 +57,7 @@ const defaultPreferences: Preferences = {
   theme: 'system',
   enterBehavior: 'send',
   fontSize: 24,
+  vibrationEnabled: true,
   dockButtons: {
     enter: true,
     tab: true,
@@ -164,6 +166,7 @@ function loadPreferences(): Preferences {
       ...defaultPreferences,
       ...parsed,
       fontSize: typeof parsed.fontSize === 'number' ? Math.max(16, Math.min(64, parsed.fontSize)) : defaultPreferences.fontSize,
+      vibrationEnabled: typeof parsed.vibrationEnabled === 'boolean' ? parsed.vibrationEnabled : defaultPreferences.vibrationEnabled,
       dockButtons: {
         ...defaultPreferences.dockButtons,
         ...parsed.dockButtons,

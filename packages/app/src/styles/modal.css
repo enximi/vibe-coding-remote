@@ -17,19 +17,15 @@ dialog.modal:focus-visible {
 }
 
 dialog.modal::backdrop {
-  background: rgba(0, 0, 0, calc(0.4 * var(--backdrop-opacity, 1)));
-  backdrop-filter: blur(calc(8px * var(--backdrop-opacity, 1)));
-  -webkit-backdrop-filter: blur(calc(8px * var(--backdrop-opacity, 1)));
+  background: transparent;
 }
 
 dialog.modal.modal-animating::backdrop {
-  transition: background 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), backdrop-filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), -webkit-backdrop-filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* No visual transition needed if transparent */
 }
 
 dialog.modal.modal-closing::backdrop {
   background: transparent;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
 }
 
 .modal-content {
@@ -44,9 +40,25 @@ dialog.modal.modal-closing::backdrop {
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
   outline: none;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 -12px 48px rgba(0, 0, 0, 0.18),
+    0 -4px 16px rgba(0, 0, 0, 0.08);
   animation: slide-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   scrollbar-width: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    box-shadow:
+      0 -12px 48px rgba(0, 0, 0, 0.5),
+      0 -4px 16px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-theme='dark'] .modal-content {
+  box-shadow:
+    0 -12px 48px rgba(0, 0, 0, 0.5),
+    0 -4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content::-webkit-scrollbar {

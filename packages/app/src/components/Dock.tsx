@@ -223,7 +223,7 @@ export function Dock({
         {visibleActionButtons.length > 0 && <div className="dock-divider" />}
 
         {dockActionButtons.map((button) => (
-          <DockActionButton key={button.actionKey} {...button} disabled={status !== 'workable'} variant="dock" />
+          <DockActionButton key={button.actionKey} {...button} disabled={status !== 'workable'} variant="dock" vibrationEnabled={prefs.vibrationEnabled} />
         ))}
 
         {overflowActionButtons.length > 0 && (
@@ -262,6 +262,7 @@ export function Dock({
                       {...button}
                       disabled={status !== 'workable'}
                       variant="popover"
+                      vibrationEnabled={prefs.vibrationEnabled}
                     />
                   ))}
                 </div>
@@ -345,8 +346,9 @@ function DockActionButton({
   isContinuous,
   disabled,
   variant,
-}: DockActionConfig & { disabled?: boolean; variant: 'dock' | 'popover' }) {
-  const { triggerCount, ...triggerProps } = useContinuousTrigger(actionKey, isContinuous);
+  vibrationEnabled,
+}: DockActionConfig & { disabled?: boolean; variant: 'dock' | 'popover'; vibrationEnabled: boolean }) {
+  const { triggerCount, ...triggerProps } = useContinuousTrigger(actionKey, isContinuous, vibrationEnabled);
 
   const mergedProps = disabled ? {} : triggerProps;
 

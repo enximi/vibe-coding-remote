@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -26,10 +26,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "../../packages/app/src", "../../packages/shared/src"],
-  "references": [
-    { "path": "../../packages/shared/tsconfig.json" },
-    { "path": "../../packages/app/tsconfig.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "include": ["src", "../../packages/app/src", "../../packages/shared/src"]
 }

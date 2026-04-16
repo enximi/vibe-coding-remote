@@ -607,14 +607,19 @@ dialog.modal::backdrop {
 }
 
 .dock-btn--attention {
-  color: #ff3b30;
-  animation: pulse-attention 2s infinite ease-in-out;
+  position: relative;
 }
 
-@keyframes pulse-attention {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+.dock-btn--attention::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--placeholder);
+  border-radius: 50%;
+  border: 1.5px solid var(--dock-bg);
 }
 
 .connection-header {
@@ -644,6 +649,11 @@ dialog.modal::backdrop {
 .status-badge.ok {
   background: color-mix(in srgb, #34c759 15%, transparent);
   color: #34c759;
+}
+
+.status-badge.unconfigured {
+  background: color-mix(in srgb, #ff9f0a 18%, transparent);
+  color: #ff9f0a;
 }
 
 .settings-error {

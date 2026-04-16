@@ -2,7 +2,7 @@
   "name": "@voice-bridge/tauri",
   "private": true,
   "version": "0.1.1",
-  "description": "Tauri shell for Voice Bridge.",
+  "description": "Android Tauri shell for Voice Bridge.",
   "type": "module",
   "scripts": {
     "dev": "vite",

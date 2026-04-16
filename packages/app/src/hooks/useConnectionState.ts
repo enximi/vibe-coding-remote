@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  resolveAuthCheckEndpoint,
+  resolveHealthcheckEndpoint,
+} from '@voice-bridge/shared';
 
 export type ConnectionStatus =
   | 'checking'
@@ -8,19 +12,28 @@ export type ConnectionStatus =
   | 'auth_error';
 
 export function useConnectionState(endpoint: string, token: string) {
-  const [status, setStatus] = useState<ConnectionStatus>('unconfigured');
+  const [status, setStatus] = useState<ConnectionStatus>(() =>
+    hasCompleteConfig(endpoint, token) ? 'checking' : 'unconfigured',
+  );
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const checkConnection = useCallback(async () => {
+  const checkConnection = useCallback(async (nextEndpoint = endpoint, nextToken = token) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    const cleanEndpoint = endpoint.trim().replace(/\/+$/, '');
-    const cleanToken = token.trim();
+    const rawEndpoint = nextEndpoint.trim();
+    const cleanToken = nextToken.trim();
+    const healthEndpoint = resolveHealthcheckEndpoint(rawEndpoint);
+    const authCheckEndpoint = resolveAuthCheckEndpoint(rawEndpoint);
 
-    if (!cleanEndpoint || !cleanToken) {
+    if (!rawEndpoint || !cleanToken) {
       setStatus('unconfigured');
+      return;
+    }
+
+    if (!healthEndpoint || !authCheckEndpoint) {
+      setStatus('connection_error');
       return;
     }
 
@@ -30,8 +43,9 @@ export function useConnectionState(endpoint: string, token: string) {
     abortControllerRef.current = controller;
 
     try {
-      const healthRes = await fetch(`${cleanEndpoint}/health`, {
+      const healthRes = await fetch(healthEndpoint, {
         method: 'GET',
+        cache: 'no-store',
         signal: controller.signal,
       }).catch(() => {
         throw new Error('network_error');
@@ -41,8 +55,9 @@ export function useConnectionState(endpoint: string, token: string) {
         throw new Error('network_error');
       }
 
-      const authRes = await fetch(`${cleanEndpoint}/api/auth-check`, {
+      const authRes = await fetch(authCheckEndpoint, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${cleanToken}`,
         },
@@ -74,7 +89,7 @@ export function useConnectionState(endpoint: string, token: string) {
   }, [endpoint, token]);
 
   useEffect(() => {
-    void checkConnection();
+    void checkConnection(endpoint, token);
 
     return () => {
       if (abortControllerRef.current) {
@@ -84,4 +99,8 @@ export function useConnectionState(endpoint: string, token: string) {
   }, [checkConnection]);
 
   return { status, checkConnection };
+}
+
+function hasCompleteConfig(endpoint: string, token: string): boolean {
+  return endpoint.trim().length > 0 && token.trim().length > 0;
 }

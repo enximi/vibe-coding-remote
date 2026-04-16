@@ -4,19 +4,12 @@
   "version": "0.1.1",
   "identifier": "com.enximi.voicebridge",
   "build": {
-    "beforeDevCommand": "bun run dev",
+    "beforeDevCommand": "pnpm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "pnpm run build",
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "Voice Bridge",
-        "width": 800,
-        "height": 600
-      }
-    ],
     "security": {
       "csp": null
     }

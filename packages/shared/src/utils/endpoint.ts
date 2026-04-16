@@ -1,6 +1,7 @@
 import {
   DEFAULT_ACTION_API_PATH,
   DEFAULT_AUTH_CHECK_API_PATH,
+  DEFAULT_HEALTHCHECK_PATH,
   SERVER_AUTH_TOKEN_QUERY_PARAM,
   SERVER_ENDPOINT_QUERY_PARAM,
 } from '../constants/network';
@@ -14,24 +15,23 @@ export function resolveConfiguredActionEndpoint(): string | null {
     readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
     readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
-  return candidate ? normalizeActionEndpoint(candidate) : null;
+  return resolveActionEndpoint(candidate);
 }
 
 export function resolveConfiguredAuthCheckEndpoint(): string | null {
-  const actionEndpoint = resolveConfiguredActionEndpoint();
+  const candidate =
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
+    readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
-  if (!actionEndpoint) {
-    return null;
-  }
+  return resolveAuthCheckEndpoint(candidate);
+}
 
-  try {
-    const url = new URL(actionEndpoint, window.location.href);
-    url.pathname = normalizeAuthCheckPath(url.pathname);
-    url.search = '';
-    return url.toString();
-  } catch {
-    return actionEndpoint;
-  }
+export function resolveConfiguredHealthcheckEndpoint(): string | null {
+  const candidate =
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
+    readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
+
+  return resolveHealthcheckEndpoint(candidate);
 }
 
 export function resolveConfiguredAuthToken(): string | null {
@@ -41,61 +41,131 @@ export function resolveConfiguredAuthToken(): string | null {
   );
 }
 
-export function normalizeActionEndpoint(value: string): string {
-  const normalized = normalizeEndpoint(value);
+export function resolveActionEndpoint(value: string | null | undefined): string | null {
+  const url = parseServerUrl(value);
 
-  if (!normalized) {
-    return normalized;
+  if (!url) {
+    return null;
+  }
+
+  url.pathname = normalizeActionPath(url.pathname);
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+}
+
+export function resolveAuthCheckEndpoint(value: string | null | undefined): string | null {
+  return resolveDerivedEndpoint(value, DEFAULT_AUTH_CHECK_API_PATH);
+}
+
+export function resolveHealthcheckEndpoint(value: string | null | undefined): string | null {
+  return resolveDerivedEndpoint(value, DEFAULT_HEALTHCHECK_PATH);
+}
+
+export function normalizeActionEndpoint(value: string): string | null {
+  return resolveActionEndpoint(value);
+}
+
+function resolveDerivedEndpoint(
+  value: string | null | undefined,
+  targetPath: typeof DEFAULT_AUTH_CHECK_API_PATH | typeof DEFAULT_HEALTHCHECK_PATH,
+): string | null {
+  const actionEndpoint = resolveActionEndpoint(value);
+
+  if (!actionEndpoint) {
+    return null;
+  }
+
+  const url = new URL(actionEndpoint);
+  const prefix = getActionBasePath(url.pathname);
+  url.pathname = `${prefix}${targetPath}` || targetPath;
+  return url.toString();
+}
+
+function parseServerUrl(value: string | null | undefined): URL | null {
+  const normalizedInput = normalizeServerInput(value);
+
+  if (!normalizedInput) {
+    return null;
   }
 
   try {
-    const url = new URL(normalized, window.location.href);
-    url.pathname = normalizeActionPath(url.pathname);
-    url.search = '';
-    return url.toString();
+    const url = new URL(normalizedInput);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null;
+    }
+
+    if (!url.hostname) {
+      return null;
+    }
+
+    return url;
   } catch {
-    return normalized;
+    return null;
   }
 }
 
-function normalizeEndpoint(value: string): string {
-  return value.trim();
+function normalizeServerInput(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
+    return null;
+  }
+
+  if (hasAbsoluteScheme(trimmed)) {
+    return trimmed;
+  }
+
+  return `http://${trimmed}`;
+}
+
+function hasAbsoluteScheme(value: string): boolean {
+  return /^[a-z][a-z\d+\-.]*:\/\//i.test(value);
 }
 
 function normalizeActionPath(pathname: string): string {
-  if (!pathname || pathname === '/') {
+  const basePath = trimTrailingSlash(pathname);
+
+  if (!basePath || basePath === '/') {
     return DEFAULT_ACTION_API_PATH;
   }
 
-  if (pathname.endsWith(DEFAULT_ACTION_API_PATH)) {
-    return pathname;
+  if (basePath.endsWith(DEFAULT_ACTION_API_PATH)) {
+    return basePath;
   }
 
-  if (pathname.endsWith('/api')) {
-    return `${pathname}/action`;
+  if (basePath.endsWith(DEFAULT_AUTH_CHECK_API_PATH)) {
+    return (
+      basePath.slice(0, basePath.length - DEFAULT_AUTH_CHECK_API_PATH.length) +
+      DEFAULT_ACTION_API_PATH
+    );
   }
 
-  return pathname;
+  if (basePath.endsWith(DEFAULT_HEALTHCHECK_PATH)) {
+    return (
+      basePath.slice(0, basePath.length - DEFAULT_HEALTHCHECK_PATH.length) +
+      DEFAULT_ACTION_API_PATH
+    );
+  }
+
+  if (basePath.endsWith('/api')) {
+    return `${basePath}/action`;
+  }
+
+  return `${basePath}${DEFAULT_ACTION_API_PATH}`;
 }
 
-function normalizeAuthCheckPath(pathname: string): string {
-  if (!pathname || pathname === '/') {
-    return DEFAULT_AUTH_CHECK_API_PATH;
-  }
+function getActionBasePath(pathname: string): string {
+  const actionPath = normalizeActionPath(pathname);
+  return actionPath.slice(0, actionPath.length - DEFAULT_ACTION_API_PATH.length);
+}
 
-  if (pathname.endsWith(DEFAULT_AUTH_CHECK_API_PATH)) {
-    return pathname;
-  }
-
-  if (pathname.endsWith(DEFAULT_ACTION_API_PATH)) {
-    return pathname.slice(0, pathname.length - DEFAULT_ACTION_API_PATH.length) + DEFAULT_AUTH_CHECK_API_PATH;
-  }
-
-  if (pathname.endsWith('/api')) {
-    return `${pathname}/auth-check`;
-  }
-
-  return pathname;
+function trimTrailingSlash(pathname: string): string {
+  return pathname.replace(/\/+$/, '') || '/';
 }
 
 function readPresetValue(name: string): string | null {

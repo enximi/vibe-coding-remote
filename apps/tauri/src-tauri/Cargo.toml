@@ -19,6 +19,4 @@ tauri-build.workspace = true
 [dependencies]
 tauri.workspace = true
 tauri-plugin-opener.workspace = true
-tokio.workspace = true
-voice-bridge-server = { path = "../../../crates/server" }
 

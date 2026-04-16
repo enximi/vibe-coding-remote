@@ -7,7 +7,14 @@ const SINGLE_TRIGGER_LOCK_MS = 350;
 const SINGLE_TRIGGER_FADEOUT_MS = 1000;
 const CONTINUOUS_TRIGGER_FADEOUT_MS = 600;
 
-export type DockAction = 'copy' | 'paste' | 'tab' | 'newline' | 'backspace';
+export type DockAction =
+  | 'enter'
+  | 'tab'
+  | 'shift-tab'
+  | 'ctrl-c'
+  | 'ctrl-v'
+  | 'paste-newline'
+  | 'backspace';
 
 export function useContinuousTrigger(action: DockAction, isContinuous: boolean) {
   const bridge = useBridge();
@@ -117,16 +124,22 @@ async function executeDockAction(
   action: DockAction,
 ) {
   switch (action) {
-    case 'copy':
-      await bridge.sendShortcut('ctrl-c');
-      break;
-    case 'paste':
-      await bridge.sendShortcut('ctrl-v');
+    case 'enter':
+      await bridge.sendKey('enter');
       break;
     case 'tab':
       await bridge.sendKey('tab');
       break;
-    case 'newline':
+    case 'shift-tab':
+      await bridge.sendShortcut('shift-tab');
+      break;
+    case 'ctrl-c':
+      await bridge.sendShortcut('ctrl-c');
+      break;
+    case 'ctrl-v':
+      await bridge.sendShortcut('ctrl-v');
+      break;
+    case 'paste-newline':
       await bridge.pasteText('\n');
       break;
     case 'backspace':

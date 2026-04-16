@@ -1,5 +1,4 @@
 import {
-  DEFAULT_ACTION_API_PATH,
   createPasteTextAction,
   createSendKeyAction,
   createSendShortcutAction,
@@ -7,8 +6,6 @@ import {
   resolveConfiguredAuthToken,
   type ApiResponse,
   type ServerAction,
-  type ServerKeyName,
-  type ServerShortcut,
   type VibrationPattern,
   type VoiceBridgeBridge,
 } from '@voice-bridge/shared';
@@ -42,7 +39,14 @@ export function createWebBridge(): VoiceBridgeBridge {
 }
 
 function getRequiredActionEndpoint(): string {
-  return resolveConfiguredActionEndpoint() ?? DEFAULT_ACTION_API_PATH;
+  const endpoint = resolveConfiguredActionEndpoint();
+  if (!endpoint) {
+    throw new Error(
+      'No Voice Bridge server action endpoint is configured. Provide a valid server address before sending.',
+    );
+  }
+
+  return endpoint;
 }
 
 async function postAction(action: ServerAction): Promise<ApiResponse> {

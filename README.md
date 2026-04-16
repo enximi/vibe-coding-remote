@@ -61,7 +61,6 @@
   - `paste`
   - `newline`
 - 启动时打印推荐局域网访问地址
-- 启动时在终端打印二维码，方便手机扫码
 - 前端支持：
   - 深色 / 浅色 / 跟随系统
   - 回车发送 / 回车换行
@@ -82,7 +81,7 @@
 不过前端已经重构成了 monorepo 结构，后续可以用同一套 React UI 同时支撑：
 
 - 浏览器里的 Web 壳
-- Tauri 桌面壳
+- Android 上的 Tauri App 壳
 
 ## 仓库结构
 
@@ -90,17 +89,12 @@
 voice-bridge/
 ├─ apps/
 │  ├─ web/                  # Web 壳：Vite dev server + 手机浏览器入口
-│  └─ tauri/                # Tauri 壳：桌面应用入口
+│  └─ tauri/                # Tauri 壳：Android App 入口
 ├─ packages/
 │  ├─ app/                  # 共享 React UI、组件、hooks、样式
 │  └─ shared/               # 共享类型、常量、桥接接口
 ├─ crates/
-│  └─ server/               # Rust 本地服务：API、输入执行、二维码、静态资源托管
-├─ doc/
-│  ├─ architecture.md
-│  ├─ frontend-features.md
-│  ├─ release-checklist.md
-│  └─ product/
+│  └─ server/               # Rust 本地服务：API、输入执行、局域网访问地址输出
 └─ ...
 ```
 
@@ -116,19 +110,20 @@ voice-bridge/
 
 ```powershell
 cd D:\projects\voice-bridge
-bun install
+pnpm install
 ```
 
 ### 2. Web 开发模式
 
 ```powershell
-just dev
+pnpm run dev:web
 ```
 
-这会做两件事：
+另开一个终端，再启动本地 Rust 服务：
 
-- 在新 PowerShell 窗口启动 `apps/web` 的 Vite 开发服务器
-- 在当前窗口启动 Rust 本地服务，并使用 `--frontend-mode dev`
+```powershell
+pnpm run dev:server
+```
 
 开发时手机访问：
 
@@ -144,18 +139,18 @@ http://你的电脑局域网IP:5173
 ### 3. Tauri 开发模式
 
 ```powershell
-just dev-tauri
+pnpm run dev:tauri
 ```
 
-这会启动 Tauri 桌面壳。当前 Tauri 壳内部仍然复用同一套 React UI，并在启动时拉起本地 Rust 服务。
+这会启动 Android 端的 Tauri App 壳。它本身只是客户端，不会在手机上启动电脑端的 `server`。
 
 ### 4. 构建独立桌面服务
 
 ```powershell
-just build
+pnpm run build:server
 ```
 
-这会先构建 `apps/web`，再构建 Rust release 可执行文件。
+这会构建 Rust release 版本地 API 服务。
 
 产物位于：
 
@@ -166,7 +161,7 @@ target/release/voice-bridge.exe
 ### 5. 构建 Tauri 应用
 
 ```powershell
-just build-tauri
+pnpm run build:tauri
 ```
 
 ## 运行模式
@@ -180,12 +175,15 @@ just build-tauri
 ### 发布模式
 
 ```text
-手机浏览器 -> Rust (8765)
-                  ├─ /api/*
-                  └─ 内嵌的 apps/web/dist
+手机浏览器 / App -> 独立部署的前端
+                    -> /api -> Rust (8765)
 ```
 
-发布模式下，前端资源会先构建为静态文件，再被嵌入 Rust 可执行文件中。最终发布出来的是一个单独的可执行文件，不依赖额外前端目录。
+发布模式下：
+
+- `server` 只提供 API
+- `web` 需要独立部署
+- `server` 已开启 CORS，允许跨源前端直接访问
 
 ## API
 
@@ -247,15 +245,6 @@ ok
 
 动作键如 Enter、Tab、Backspace、Copy、Paste 则通过 Win32 `SendInput` 模拟。
 
-## 文档
-
-- [文档索引](./doc/README.md)
-- [架构说明](./doc/architecture.md)
-- [前端功能说明](./doc/frontend-features.md)
-- [发布检查清单](./doc/release-checklist.md)
-- [产品文档骨架](./doc/product/README.md)
-- [贡献说明](./CONTRIBUTING.md)
-
 ## 常见问题
 
 ### 为什么开发时改了 React 文件，`apps/web/dist` 没变化？
@@ -263,6 +252,16 @@ ok
 因为 Vite 开发服务器的资源在内存里。
 
 开发时要看最新页面，请直接访问 `5173`。`apps/web/dist` 只有执行构建时才会更新。
+
+### Web 独立部署后，为什么页面不能直接发送到电脑？
+
+因为独立部署后的 Web 页面和本地 `server` 不再同源，前端必须明确知道目标 `server` 的 API 地址。
+
+当前最直接的方式是给页面带上 `endpoint` 参数，例如：
+
+```text
+https://你的前端域名/?endpoint=http://192.168.1.23:8765/api/type-text
+```
 
 ### 为什么手机打不开 `http://你的IP:5173`？
 
@@ -288,7 +287,7 @@ ok
 
 后续可以继续扩展的方向包括：
 
-- 用 Tauri 逐步补齐桌面壳体验
+- 用 Tauri 逐步补齐 Android App 体验
 - 多端共享更多平台桥接能力
 - 设备发现与配对
 - 连接认证

@@ -7,7 +7,7 @@ import type { ConnectionStatus } from '../hooks/useConnectionState';
 interface SettingsModalProps {
   isOpen: boolean;
   status: ConnectionStatus;
-  checkConnection: () => void;
+  checkConnection: (endpoint?: string, token?: string) => void;
   onClose: () => void;
   prefs: Preferences;
   setPrefs: (update: (p: Preferences) => Preferences) => void;
@@ -66,7 +66,7 @@ export function SettingsModal({
   const handleApplyConfig = () => {
     setServerEndpoint(endpointDraft);
     setServerAuthToken(tokenDraft);
-    void checkConnection();
+    void checkConnection(endpointDraft, tokenDraft);
   };
 
   const toggleDockButton = (key: keyof DockButtons) => {
@@ -104,6 +104,7 @@ export function SettingsModal({
             <h3>Server 配置</h3>
             {status === 'checking' && <span className="status-badge checking">检查中...</span>}
             {status === 'workable' && <span className="status-badge ok">配置正常</span>}
+            {status === 'unconfigured' && <span className="status-badge unconfigured">未配置完整</span>}
           </div>
           
           <label className="settings-text-field">
@@ -131,12 +132,15 @@ export function SettingsModal({
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="可选的访问密钥"
+              placeholder="必填的访问密钥"
               value={tokenDraft}
               onChange={(event) => setTokenDraft(event.target.value)}
               onBlur={handleApplyConfig}
             />
           </label>
+          {status === 'unconfigured' && (
+            <p className="settings-error">请同时填写 Server 地址和 Token，然后再重试连接。</p>
+          )}
           {status === 'auth_error' && (
             <p className="settings-error">认证失败，请检查 Token 是否匹配。</p>
           )}
@@ -198,22 +202,28 @@ export function SettingsModal({
         </section>
 
         <section className="settings-group">
-          <h3>悬浮岛按键显示</h3>
+          <h3>快捷动作显示</h3>
           <div className="compact-toggles">
-            <button type="button" className={prefs.dockButtons.copy ? 'active' : ''} onClick={() => toggleDockButton('copy')}>
-              复制
-            </button>
-            <button type="button" className={prefs.dockButtons.paste ? 'active' : ''} onClick={() => toggleDockButton('paste')}>
-              粘贴
+            <button type="button" className={prefs.dockButtons.enter ? 'active' : ''} onClick={() => toggleDockButton('enter')}>
+              Enter
             </button>
             <button type="button" className={prefs.dockButtons.tab ? 'active' : ''} onClick={() => toggleDockButton('tab')}>
-              Tab 缩进
+              Tab
             </button>
-            <button type="button" className={prefs.dockButtons.newline ? 'active' : ''} onClick={() => toggleDockButton('newline')}>
-              插入换行
+            <button type="button" className={prefs.dockButtons.shiftTab ? 'active' : ''} onClick={() => toggleDockButton('shiftTab')}>
+              Shift+Tab
+            </button>
+            <button type="button" className={prefs.dockButtons.ctrlC ? 'active' : ''} onClick={() => toggleDockButton('ctrlC')}>
+              Ctrl+C
+            </button>
+            <button type="button" className={prefs.dockButtons.ctrlV ? 'active' : ''} onClick={() => toggleDockButton('ctrlV')}>
+              Ctrl+V
+            </button>
+            <button type="button" className={prefs.dockButtons.pasteNewline ? 'active' : ''} onClick={() => toggleDockButton('pasteNewline')}>
+              粘贴换行
             </button>
             <button type="button" className={prefs.dockButtons.backspace ? 'active' : ''} onClick={() => toggleDockButton('backspace')}>
-              实体退格
+              Backspace
             </button>
           </div>
         </section>

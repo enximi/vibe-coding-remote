@@ -9,10 +9,12 @@ export type HistoryItem = {
 };
 
 export type DockButtons = {
-  copy: boolean;
-  paste: boolean;
+  enter: boolean;
   tab: boolean;
-  newline: boolean;
+  shiftTab: boolean;
+  ctrlC: boolean;
+  ctrlV: boolean;
+  pasteNewline: boolean;
   backspace: boolean;
 };
 
@@ -32,10 +34,12 @@ const defaultPreferences: Preferences = {
   theme: 'system',
   enterBehavior: 'send',
   dockButtons: {
-    copy: true,
-    paste: true,
+    enter: true,
     tab: true,
-    newline: true,
+    shiftTab: true,
+    ctrlC: true,
+    ctrlV: true,
+    pasteNewline: true,
     backspace: true,
   },
   history: [],

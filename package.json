@@ -1,18 +1,19 @@
 {
   "name": "voice-bridge",
   "private": true,
-  "packageManager": "bun@1.2.6",
+  "packageManager": "pnpm@10.11.1",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "bun --filter @voice-bridge/web dev --host",
-    "dev:server": "cargo run -p voice-bridge-server -- --frontend-mode dev",
-    "dev:tauri": "bun --filter @voice-bridge/tauri tauri dev",
-    "build:web": "bun --filter @voice-bridge/web build",
-    "build:server": "bun run build:web && cargo build -p voice-bridge-server --release",
-    "build:tauri-ui": "bun --filter @voice-bridge/tauri build",
-    "build:tauri": "bun --filter @voice-bridge/tauri tauri build"
+    "dev:web": "pnpm --filter @voice-bridge/web run dev -- --host",
+    "dev:server": "cargo run -p voice-bridge-server",
+    "dev:tauri": "pnpm --filter @voice-bridge/tauri tauri android dev",
+    "build:web": "pnpm --filter @voice-bridge/web run build",
+    "build:server": "cargo build -p voice-bridge-server --release",
+    "build:tauri-ui": "pnpm --filter @voice-bridge/tauri run build",
+    "build:tauri": "pnpm --filter @voice-bridge/tauri tauri android build",
+    "init:tauri": "pnpm --filter @voice-bridge/tauri tauri android init"
   }
 }

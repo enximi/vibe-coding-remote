@@ -238,6 +238,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       <textarea
         ref={inputRef}
         id="composerInput"
+        style={{ fontSize: `${prefs.fontSize}px` }}
         defaultValue={text}
         onChange={(event) => {
           setComposerText(event.target.value);

@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --text: #000000;
+  --placeholder: #9b9b9b;
+  --dock-bg: rgba(255, 255, 255, 0.82);
+  --dock-border: rgba(0, 0, 0, 0.08);
+  --btn-bg: transparent;
+  --btn-hover: rgba(0, 0, 0, 0.05);
+  --primary-bg: #000000;
+  --primary-color: #ffffff;
+  --divider: rgba(0, 0, 0, 0.1);
+  --selection: rgba(0, 0, 0, 0.15);
+  --keyboard-offset: 0px;
+  font-family:
+    'LXGW WenKai',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Inter',
+    'SF Pro Display',
+    'PingFang SC',
+    'Helvetica Neue',
+    sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --bg: #000000;
+  --text: #ffffff;
+  --placeholder: #6e6e73;
+  --dock-bg: rgba(28, 28, 30, 0.76);
+  --dock-border: rgba(255, 255, 255, 0.12);
+  --btn-hover: rgba(255, 255, 255, 0.1);
+  --primary-bg: #ffffff;
+  --primary-color: #000000;
+  --divider: rgba(255, 255, 255, 0.15);
+  --selection: rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #000000;
+    --text: #ffffff;
+    --placeholder: #6e6e73;
+    --dock-bg: rgba(28, 28, 30, 0.76);
+    --dock-border: rgba(255, 255, 255, 0.12);
+    --btn-hover: rgba(255, 255, 255, 0.1);
+    --primary-bg: #ffffff;
+    --primary-color: #000000;
+    --divider: rgba(255, 255, 255, 0.15);
+    --selection: rgba(255, 255, 255, 0.25);
+  }
+}

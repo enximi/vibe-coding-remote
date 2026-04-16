@@ -12,6 +12,7 @@ function App() {
     setPrefs,
     addHistory,
     clearHistory,
+    removeHistory,
     serverEndpoint,
     setServerEndpoint,
     serverAuthToken,
@@ -23,6 +24,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);
   const [hasText, setHasText] = useState(false);
+  const [visibleDockActionCount, setVisibleDockActionCount] = useState<number | null>(null);
   const composerRef = useRef<ComposerHandle>(null);
 
   // Automatically open modal when there is a connection issue
@@ -95,6 +97,7 @@ function App() {
         status={status}
         hasText={hasText}
         isSendingSuccess={isSendingSuccess}
+        onVisibleActionCountChange={setVisibleDockActionCount}
         onMenuClick={() => setIsModalOpen(true)}
         onSendClick={handleSendClick}
       />
@@ -111,7 +114,9 @@ function App() {
         serverAuthToken={serverAuthToken}
         setServerAuthToken={setServerAuthToken}
         clearHistory={clearHistory}
+        removeHistory={removeHistory}
         onHistorySelect={handleHistorySelect}
+        visibleDockActionCount={visibleDockActionCount}
       />
     </div>
   );

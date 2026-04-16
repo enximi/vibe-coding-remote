@@ -1,0 +1,252 @@
+.dock {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 20px) + 20px + var(--keyboard-offset));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 24px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--dock-bg);
+  border: 1px solid var(--dock-border);
+  border-radius: 999px;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.dock--measure {
+  top: -9999px;
+  bottom: auto;
+  left: -9999px;
+  transform: none;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock {
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.6),
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+}
+
+.dock-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: var(--btn-bg);
+  color: var(--text);
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  transition:
+    transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.dock-btn:active {
+  transform: scale(0.85);
+  background: var(--btn-hover);
+}
+
+.dock-btn--action {
+  position: relative;
+}
+
+.dock-btn--active {
+  background: var(--btn-hover);
+}
+
+.dock-btn--primary {
+  background: var(--primary-bg);
+  color: var(--primary-color);
+  width: 52px;
+  height: 52px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.dock-btn--primary:active {
+  transform: scale(0.9);
+}
+
+.dock-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dock-btn--disabled:active {
+  transform: none;
+  background: var(--primary-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-btn--primary {
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+  }
+}
+
+.dock-btn--sent {
+  animation: pop-success 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes pop-success {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+    color: #34c759;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.dock-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 28px;
+  background: var(--divider);
+  margin: 0 4px;
+  border-radius: 1px;
+}
+
+.combo-counter {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  will-change: opacity, transform;
+  z-index: 20;
+}
+
+.combo-counter.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.combo-number {
+  display: inline-block;
+  animation: combo-bump 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes combo-bump {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.dock-btn--attention {
+  position: relative;
+}
+
+.dock-btn--attention::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--placeholder);
+  border-radius: 50%;
+  border: 1.5px solid var(--dock-bg);
+}
+
+.dock-overflow-anchor {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.dock-overflow-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  padding: 10px;
+  border: 1px solid var(--dock-border);
+  border-radius: 22px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 12;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-overflow-popover {
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.58),
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+}
+
+.dock-overflow-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.dock-btn--popover {
+  width: 44px;
+  height: 44px;
+}
+
+.dock-btn--popover svg {
+  transform: scale(0.92);
+}
+
+.combo-counter--popover {
+  top: -32px;
+  left: auto;
+  right: 0;
+  transform: translateY(10px);
+}
+
+.combo-counter--popover.visible {
+  transform: translateY(0);
+}

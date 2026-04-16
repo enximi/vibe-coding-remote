@@ -8,6 +8,15 @@ export type HistoryItem = {
   time: number;
 };
 
+export type DockButtonKey =
+  | 'enter'
+  | 'tab'
+  | 'shiftTab'
+  | 'ctrlC'
+  | 'ctrlV'
+  | 'pasteNewline'
+  | 'backspace';
+
 export type DockButtons = {
   enter: boolean;
   tab: boolean;
@@ -21,18 +30,32 @@ export type DockButtons = {
 export type Preferences = {
   theme: 'system' | 'light' | 'dark';
   enterBehavior: 'send' | 'newline';
+  fontSize: number;
   dockButtons: DockButtons;
+  dockButtonOrder: DockButtonKey[];
   history: HistoryItem[];
 };
 
 type StoredPreferences = Partial<Preferences> & {
   history?: Array<HistoryItem | string>;
   dockButtons?: Partial<DockButtons>;
+  dockButtonOrder?: DockButtonKey[];
 };
+
+export const DEFAULT_DOCK_BUTTON_ORDER: DockButtonKey[] = [
+  'backspace',
+  'enter',
+  'tab',
+  'shiftTab',
+  'ctrlC',
+  'ctrlV',
+  'pasteNewline',
+];
 
 const defaultPreferences: Preferences = {
   theme: 'system',
   enterBehavior: 'send',
+  fontSize: 24,
   dockButtons: {
     enter: true,
     tab: true,
@@ -42,6 +65,7 @@ const defaultPreferences: Preferences = {
     pasteNewline: true,
     backspace: true,
   },
+  dockButtonOrder: DEFAULT_DOCK_BUTTON_ORDER,
   history: [],
 };
 
@@ -82,6 +106,13 @@ export function usePreferences() {
     });
   };
 
+  const removeHistory = (time: number) => {
+    setPrefs((prev) => {
+      const history = prev.history.filter((item) => item.time !== time);
+      return { ...prev, history };
+    });
+  };
+
   const clearHistory = () => {
     setPrefs((prev) => ({ ...prev, history: [] }));
   };
@@ -112,6 +143,7 @@ export function usePreferences() {
     prefs,
     setPrefs,
     addHistory,
+    removeHistory,
     clearHistory,
     serverEndpoint,
     setServerEndpoint,
@@ -131,15 +163,37 @@ function loadPreferences(): Preferences {
     return {
       ...defaultPreferences,
       ...parsed,
+      fontSize: typeof parsed.fontSize === 'number' ? Math.max(16, Math.min(64, parsed.fontSize)) : defaultPreferences.fontSize,
       dockButtons: {
         ...defaultPreferences.dockButtons,
         ...parsed.dockButtons,
       },
+      dockButtonOrder: normalizeDockButtonOrder(parsed.dockButtonOrder),
       history: normalizeHistory(parsed.history),
     };
   } catch {
     return defaultPreferences;
   }
+}
+
+export function normalizeDockButtonOrder(order: StoredPreferences['dockButtonOrder']): DockButtonKey[] {
+  const normalizedOrder: DockButtonKey[] = [];
+
+  if (Array.isArray(order)) {
+    for (const key of order) {
+      if (DEFAULT_DOCK_BUTTON_ORDER.includes(key) && !normalizedOrder.includes(key)) {
+        normalizedOrder.push(key);
+      }
+    }
+  }
+
+  for (const key of DEFAULT_DOCK_BUTTON_ORDER) {
+    if (!normalizedOrder.includes(key)) {
+      normalizedOrder.push(key);
+    }
+  }
+
+  return normalizedOrder;
 }
 
 function normalizeHistory(history: StoredPreferences['history']): HistoryItem[] {

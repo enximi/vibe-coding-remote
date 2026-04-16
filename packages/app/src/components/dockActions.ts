@@ -1,0 +1,62 @@
+import type { DockAction } from '../hooks/useContinuousTrigger';
+import type { DockButtonKey } from '../hooks/usePreferences';
+
+export type DockActionDefinition = {
+  key: DockButtonKey;
+  actionKey: DockAction;
+  ariaLabel: string;
+  settingsLabel: string;
+  isContinuous: boolean;
+};
+
+export const DOCK_ACTION_DEFINITIONS: DockActionDefinition[] = [
+  {
+    key: 'enter',
+    actionKey: 'enter',
+    ariaLabel: '发送 Enter',
+    settingsLabel: 'Enter',
+    isContinuous: false,
+  },
+  {
+    key: 'tab',
+    actionKey: 'tab',
+    ariaLabel: '发送 Tab',
+    settingsLabel: 'Tab',
+    isContinuous: true,
+  },
+  {
+    key: 'shiftTab',
+    actionKey: 'shift-tab',
+    ariaLabel: '发送 Shift+Tab',
+    settingsLabel: 'Shift+Tab',
+    isContinuous: true,
+  },
+  {
+    key: 'ctrlC',
+    actionKey: 'ctrl-c',
+    ariaLabel: '发送 Ctrl+C',
+    settingsLabel: 'Ctrl+C',
+    isContinuous: false,
+  },
+  {
+    key: 'ctrlV',
+    actionKey: 'ctrl-v',
+    ariaLabel: '发送 Ctrl+V',
+    settingsLabel: 'Ctrl+V',
+    isContinuous: false,
+  },
+  {
+    key: 'pasteNewline',
+    actionKey: 'paste-newline',
+    ariaLabel: '粘贴换行',
+    settingsLabel: '粘贴换行',
+    isContinuous: true,
+  },
+  {
+    key: 'backspace',
+    actionKey: 'backspace',
+    ariaLabel: '发送 Backspace',
+    settingsLabel: 'Backspace',
+    isContinuous: true,
+  },
+];

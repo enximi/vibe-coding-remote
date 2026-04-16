@@ -1,0 +1,412 @@
+.settings-group {
+  margin-bottom: 32px;
+  flex-shrink: 0;
+}
+
+.settings-group h3 {
+  font-size: 15px;
+  color: var(--placeholder);
+  margin: 0 0 12px 6px;
+  font-weight: 500;
+}
+
+.settings-card {
+  background: var(--btn-hover);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-card {
+    background: color-mix(in srgb, var(--btn-hover) 80%, transparent);
+  }
+}
+
+.settings-card-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 16px;
+}
+
+.settings-card-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 60px;
+}
+
+.settings-card-row input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  padding: 0;
+}
+
+.settings-card-row input::placeholder {
+  color: var(--placeholder);
+}
+
+.settings-card-row input[type="number"]::-webkit-inner-spin-button,
+.settings-card-row input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.settings-card-row input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.settings-card-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--divider) 60%, transparent);
+  margin-left: 16px;
+}
+
+.settings-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.settings-slider-label {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  color: var(--placeholder);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.settings-slider {
+  -webkit-appearance: none;
+  flex: 1;
+  height: 4px;
+  background: color-mix(in srgb, var(--placeholder) 30%, transparent);
+  border-radius: 2px;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+}
+
+.settings-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.settings-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+}
+
+.settings-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.settings-card-btn {
+  width: 100%;
+  display: block;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text) 85%, transparent);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.settings-card-btn:active {
+  background: color-mix(in srgb, var(--btn-hover) 50%, transparent);
+}
+
+.settings-hint {
+  margin: 10px 6px 0;
+  color: var(--placeholder);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.segmented-control {
+  display: flex;
+  background: var(--btn-hover);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented-control button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--placeholder);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.segmented-control button.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .segmented-control button.active {
+    background: #2a2a2c;
+  }
+}
+
+:root[data-theme='dark'] .segmented-control button.active {
+  background: #2a2a2c;
+}
+
+.connection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.connection-header h3 {
+  margin: 0;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.checking {
+  background: color-mix(in srgb, #007aff 15%, transparent);
+  color: #007aff;
+}
+
+.status-badge.ok {
+  background: color-mix(in srgb, #34c759 15%, transparent);
+  color: #34c759;
+}
+
+.status-badge.unconfigured {
+  background: color-mix(in srgb, #ff9f0a 18%, transparent);
+  color: #ff9f0a;
+}
+
+.settings-error {
+  margin: 10px 6px 0;
+  color: #ff3b30;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.disconnected-notice {
+  color: #ff3b30;
+  font-weight: 500;
+}
+
+.dock-order-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--btn-hover);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-order-list {
+    background: color-mix(in srgb, var(--btn-hover) 80%, transparent);
+  }
+}
+
+.dock-order-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 12px 6px;
+  background: transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--divider) 60%, transparent);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dock-order-item:last-child {
+  border-bottom: none;
+}
+
+.dock-order-item.dragging {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  background: var(--bg);
+  border-bottom-color: transparent;
+  border-radius: 16px;
+  z-index: 2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-order-item.dragging {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    background: #1c1c1e;
+  }
+}
+
+.dock-order-handle {
+  width: 32px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.dock-order-handle:hover,
+.dock-order-handle:active {
+  opacity: 1;
+}
+
+.dock-order-handle:active {
+  cursor: grabbing;
+}
+
+.dock-order-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.dock-order-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-order-icon-wrapper {
+    background: transparent;
+  }
+}
+
+:root[data-theme='dark'] .dock-order-icon-wrapper {
+  background: transparent;
+}
+
+.dock-order-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.dock-order-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.dock-order-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--placeholder);
+  line-height: 1.2;
+}
+
+.settings-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 16px;
+  background: var(--placeholder);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.25s ease;
+  opacity: 0.6;
+}
+
+.settings-switch[aria-checked='true'] {
+  background: #34c759;
+  opacity: 1;
+}
+
+.settings-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+}
+
+.settings-switch[aria-checked='true'] .settings-switch-thumb {
+  transform: translateX(18px);
+}
+

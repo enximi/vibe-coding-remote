@@ -1,4 +1,4 @@
-use crate::cli::{CliOptions, parse_cli_options};
+use crate::cli::{CliCommand, ExportTypesCliOptions, ServeCliOptions, parse_cli};
 use config::{Config, Environment, File, FileFormat};
 use serde::Deserialize;
 use std::{
@@ -10,6 +10,12 @@ use thiserror::Error;
 const DEFAULT_CONFIG_PATH: &str = "config.toml";
 const DEFAULT_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 const DEFAULT_PORT: u16 = 8765;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RuntimeCommand {
+    RunServer(RuntimeOptions),
+    ExportTypes { output_path: Option<PathBuf> },
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RuntimeOptions {
@@ -45,17 +51,34 @@ pub enum RuntimeError {
     MissingAuthToken,
 }
 
-pub fn parse_runtime_options() -> Result<RuntimeOptions, RuntimeError> {
-    let cli = parse_cli_options();
-    load_runtime_options(cli)
+pub fn parse_runtime_command() -> Result<RuntimeCommand, RuntimeError> {
+    let cli = parse_cli();
+
+    match cli.command {
+        CliCommand::Serve(options) => load_runtime_options(options).map(RuntimeCommand::RunServer),
+        CliCommand::ExportTypes(ExportTypesCliOptions { output }) => {
+            Ok(RuntimeCommand::ExportTypes {
+                output_path: output,
+            })
+        }
+    }
 }
 
-fn load_runtime_options(cli: CliOptions) -> Result<RuntimeOptions, RuntimeError> {
+pub fn parse_runtime_options() -> Result<RuntimeOptions, RuntimeError> {
+    match parse_runtime_command()? {
+        RuntimeCommand::RunServer(options) => Ok(options),
+        RuntimeCommand::ExportTypes { .. } => {
+            unreachable!("export-types does not produce runtime options")
+        }
+    }
+}
+
+fn load_runtime_options(cli: ServeCliOptions) -> Result<RuntimeOptions, RuntimeError> {
     let base_config = load_base_config(&cli)?;
     build_runtime_options(cli, base_config)
 }
 
-fn load_base_config(cli: &CliOptions) -> Result<BaseConfig, RuntimeError> {
+fn load_base_config(cli: &ServeCliOptions) -> Result<BaseConfig, RuntimeError> {
     let config_path = cli
         .config
         .clone()
@@ -85,7 +108,7 @@ fn load_base_config(cli: &CliOptions) -> Result<BaseConfig, RuntimeError> {
 }
 
 fn build_runtime_options(
-    cli: CliOptions,
+    cli: ServeCliOptions,
     base_config: BaseConfig,
 ) -> Result<RuntimeOptions, RuntimeError> {
     let auth_token = cli

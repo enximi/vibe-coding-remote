@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use std::{net::IpAddr, path::PathBuf};
 
 #[derive(Debug, Clone, Parser)]
@@ -6,7 +6,19 @@ use std::{net::IpAddr, path::PathBuf};
     name = "voice-bridge",
     about = "Run the local Voice Bridge API server on your computer."
 )]
-pub(crate) struct CliOptions {
+pub(crate) struct Cli {
+    #[command(subcommand)]
+    pub command: CliCommand,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub(crate) enum CliCommand {
+    Serve(ServeCliOptions),
+    ExportTypes(ExportTypesCliOptions),
+}
+
+#[derive(Debug, Clone, Args)]
+pub(crate) struct ServeCliOptions {
     #[arg(long, help = "Path to a TOML config file")]
     pub config: Option<PathBuf>,
 
@@ -20,6 +32,12 @@ pub(crate) struct CliOptions {
     pub auth_token: Option<String>,
 }
 
-pub(crate) fn parse_cli_options() -> CliOptions {
-    CliOptions::parse()
+#[derive(Debug, Clone, Args)]
+pub(crate) struct ExportTypesCliOptions {
+    #[arg(long, help = "Output path for exported TypeScript types")]
+    pub output: Option<PathBuf>,
+}
+
+pub(crate) fn parse_cli() -> Cli {
+    Cli::parse()
 }

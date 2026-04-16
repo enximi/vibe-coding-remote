@@ -2,17 +2,30 @@
 async fn main() {
     init_logging();
 
-    let options = match voice_bridge_server::parse_runtime_options() {
-        Ok(options) => options,
+    let command = match voice_bridge_server::parse_runtime_command() {
+        Ok(command) => command,
         Err(error) => {
             tracing::error!("{error}");
             std::process::exit(1);
         }
     };
 
-    if let Err(error) = voice_bridge_server::run(options).await {
-        tracing::error!("{error}");
-        std::process::exit(1);
+    match command {
+        voice_bridge_server::RuntimeCommand::RunServer(options) => {
+            if let Err(error) = voice_bridge_server::run(options).await {
+                tracing::error!("{error}");
+                std::process::exit(1);
+            }
+        }
+        voice_bridge_server::RuntimeCommand::ExportTypes { output_path } => {
+            match voice_bridge_server::export_typescript_bindings(output_path) {
+                Ok(path) => tracing::info!(path = %path.display(), "exported TypeScript bindings"),
+                Err(error) => {
+                    tracing::error!("{error}");
+                    std::process::exit(1);
+                }
+            }
+        }
     }
 }
 

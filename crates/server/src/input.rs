@@ -1,4 +1,4 @@
-use crate::action::{Action, KeyName, Shortcut};
+use crate::protocol::{ServerAction, ServerKeyName, ServerShortcut};
 use arboard::Clipboard;
 use std::{thread, time::Duration};
 use thiserror::Error;
@@ -18,11 +18,11 @@ pub enum InputError {
     UnsupportedPlatform,
 }
 
-pub fn execute_action(action: Action) -> Result<(), InputError> {
+pub fn execute_action(action: ServerAction) -> Result<(), InputError> {
     match action {
-        Action::SendKey { key } => send_key(key),
-        Action::SendShortcut { shortcut } => send_shortcut(shortcut),
-        Action::PasteText { text } => paste_text(&text),
+        ServerAction::SendKey { key } => send_key(key),
+        ServerAction::SendShortcut { shortcut } => send_shortcut(shortcut),
+        ServerAction::PasteText { text } => paste_text(&text),
     }
 }
 
@@ -33,22 +33,22 @@ fn paste_text(text: &str) -> Result<(), InputError> {
         .map_err(InputError::ClipboardWriteFailed)?;
 
     thread::sleep(Duration::from_millis(CLIPBOARD_SETTLE_DELAY_MS));
-    send_shortcut(Shortcut::CtrlV)
+    send_shortcut(ServerShortcut::CtrlV)
 }
 
-fn send_key(key: KeyName) -> Result<(), InputError> {
+fn send_key(key: ServerKeyName) -> Result<(), InputError> {
     match key {
-        KeyName::Tab => platform::send_tab(),
-        KeyName::Enter => platform::send_enter(),
-        KeyName::Backspace => platform::send_backspace(),
+        ServerKeyName::Tab => platform::send_tab(),
+        ServerKeyName::Enter => platform::send_enter(),
+        ServerKeyName::Backspace => platform::send_backspace(),
     }
 }
 
-fn send_shortcut(shortcut: Shortcut) -> Result<(), InputError> {
+fn send_shortcut(shortcut: ServerShortcut) -> Result<(), InputError> {
     match shortcut {
-        Shortcut::CtrlC => platform::send_ctrl_c(),
-        Shortcut::CtrlV => platform::send_ctrl_v(),
-        Shortcut::ShiftTab => platform::send_shift_tab(),
+        ServerShortcut::CtrlC => platform::send_ctrl_c(),
+        ServerShortcut::CtrlV => platform::send_ctrl_v(),
+        ServerShortcut::ShiftTab => platform::send_shift_tab(),
     }
 }
 

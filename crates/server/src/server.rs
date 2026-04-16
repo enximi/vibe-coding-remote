@@ -1,7 +1,6 @@
 use crate::{
-    RuntimeOptions,
-    action::{ActionRequest, ActionValidationError},
-    input, network,
+    RuntimeOptions, input, network,
+    protocol::{ActionValidationError, ApiResponse, ServerActionRequest},
 };
 use axum::{
     Json, Router,
@@ -10,7 +9,6 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tower_http::cors::CorsLayer;
@@ -20,11 +18,6 @@ const MAX_REQUEST_BODY_BYTES: usize = 64 * 1024;
 #[derive(Debug, Clone)]
 struct AppState {
     auth_token: Arc<str>,
-}
-
-#[derive(Debug, Serialize)]
-struct ApiResponse {
-    ok: bool,
 }
 
 #[derive(Debug, Error)]
@@ -99,7 +92,7 @@ async fn auth_check(
 async fn execute_action(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(payload): Json<ActionRequest>,
+    Json(payload): Json<ServerActionRequest>,
 ) -> Result<Json<ApiResponse>, AppError> {
     authorize(&headers, state.auth_token.as_ref())?;
 

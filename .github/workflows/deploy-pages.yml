@@ -31,11 +31,11 @@ jobs:
         with:
           node-version: lts/*
           check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable corepack
-        run: corepack enable
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.11.1 --activate
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

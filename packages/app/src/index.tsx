@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
-import { AppProviders } from './app/AppProviders';
-import { AppShell } from './app/AppShell';
+import { AppProviders } from './app/providers/AppProviders';
+import { AppShell } from './app/ui/AppShell';
 import type { VibeCodingRemoteBridge } from './types/bridge';
 import './styles/index.css';
 

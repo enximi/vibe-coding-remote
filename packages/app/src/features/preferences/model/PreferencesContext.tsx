@@ -1,5 +1,5 @@
 import { createContext, type PropsWithChildren, useContext } from 'react';
-import { type PreferencesStore, usePreferencesStore } from './usePreferences';
+import { type PreferencesStore, usePreferencesStore } from './usePreferencesStore';
 
 const PreferencesContext = createContext<PreferencesStore | null>(null);
 

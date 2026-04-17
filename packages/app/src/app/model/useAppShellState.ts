@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ComposerHandle } from '../features/composer/ui/Composer';
-import { useConnection } from '../features/runtime/model/ConnectionContext';
+import type { ComposerHandle } from '../../features/composer/ui/Composer';
+import { useConnection } from '../../features/runtime/model/ConnectionContext';
 
-export function useAppShellController() {
+export function useAppShellState() {
   const { status } = useConnection();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);

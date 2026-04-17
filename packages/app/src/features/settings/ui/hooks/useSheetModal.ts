@@ -67,7 +67,6 @@ export function useSheetModal(onClose: () => void) {
       }
 
       const deltaY = event.changedTouches[0].clientY - touchStartY.current;
-
       if (scrollStartY.current <= 0 && deltaY > 100) {
         requestClose();
         return;

@@ -1,11 +1,11 @@
-import { Composer } from '../features/composer/ui/Composer';
-import { Dock } from '../features/dock/ui/Dock';
-import { useViewportOffset } from '../features/runtime/model/useViewportOffset';
-import { SettingsModal } from '../features/settings/ui/SettingsModal';
-import { useAppShellController } from './useAppShellController';
+import { Composer } from '../../features/composer/ui/Composer';
+import { Dock } from '../../features/dock/ui/Dock';
+import { useViewportOffset } from '../../features/runtime/model/useViewportOffset';
+import { SettingsModal } from '../../features/settings/ui/SettingsModal';
+import { useAppShellState } from '../model/useAppShellState';
 
 export function AppShell() {
-  const controller = useAppShellController();
+  const controller = useAppShellState();
   useViewportOffset();
 
   return (

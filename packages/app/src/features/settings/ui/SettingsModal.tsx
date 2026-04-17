@@ -3,6 +3,7 @@ import { CloseIcon } from '../../../ui/icons';
 import { usePreferences } from '../../preferences/model/PreferencesContext';
 import { useConnection } from '../../runtime/model/ConnectionContext';
 import { parseImportUrl } from '../model/importConfig';
+import { useSheetModal } from './hooks/useSheetModal';
 import { QrScannerModal } from './QrScannerModal';
 import {
   AppearanceSettingsSection,
@@ -12,8 +13,7 @@ import {
   FeedbackSettingsSection,
   FontSizeSettingsSection,
   HistorySettingsSection,
-} from './SettingsSections';
-import { useSheetModal } from './useSheetModal';
+} from './sections';
 
 interface SettingsModalProps {
   isOpen: boolean;

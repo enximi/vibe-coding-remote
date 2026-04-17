@@ -1,4 +1,4 @@
-import type { VibeCodingRemoteBridge } from '@vibe-coding-remote/shared';
+import type { VibeCodingRemoteBridge } from './types/bridge';
 import { StrictMode } from 'react';
 import { AppShell } from './app/AppShell';
 import { BridgeProvider } from './features/runtime/bridge/BridgeContext';
@@ -13,3 +13,10 @@ export function VibeCodingRemoteApp({ bridge }: { bridge: VibeCodingRemoteBridge
     </StrictMode>
   );
 }
+
+export * from './constants/network';
+export * from './constants/storage';
+export * from './types/bridge';
+export * from './types/server';
+export * from './utils/action';
+export * from './utils/endpoint';

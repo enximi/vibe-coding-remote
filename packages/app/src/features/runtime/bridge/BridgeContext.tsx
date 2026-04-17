@@ -1,4 +1,4 @@
-import type { VibeCodingRemoteBridge } from '@vibe-coding-remote/shared';
+import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import { createContext, type PropsWithChildren, useContext } from 'react';
 
 const BridgeContext = createContext<VibeCodingRemoteBridge | null>(null);

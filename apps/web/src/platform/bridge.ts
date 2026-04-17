@@ -12,7 +12,7 @@ import {
   type ServerCode,
   type VibeCodingRemoteBridge,
   type VibrationPattern,
-} from '@vibe-coding-remote/shared';
+} from '@vibe-coding-remote/app';
 
 export function createWebBridge(): VibeCodingRemoteBridge {
   return {

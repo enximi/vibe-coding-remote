@@ -72,7 +72,7 @@ vibe-coding-remote export-types
 默认输出路径：
 
 ```text
-packages/shared/src/types/server.ts
+packages/app/src/types/server.ts
 ```
 
 ---

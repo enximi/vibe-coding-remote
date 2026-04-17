@@ -2,7 +2,7 @@ import {
   PREFERENCES_STORAGE_KEY,
   SERVER_AUTH_TOKEN_STORAGE_KEY,
   SERVER_ENDPOINT_STORAGE_KEY,
-} from '@vibe-coding-remote/shared';
+} from '../../../constants/storage';
 
 const MAX_HISTORY_ITEMS = 50;
 

@@ -53,7 +53,7 @@ fn default_output_path() -> PathBuf {
         .join("..")
         .join("..")
         .join("packages")
-        .join("shared")
+        .join("app")
         .join("src")
         .join("types")
         .join("server.ts")

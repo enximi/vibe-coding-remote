@@ -23,6 +23,7 @@ lerna-debug.log*
 .env
 .env.*
 !.env.example
+/.cert/
 /mise.local.toml
 
 # OS / editor noise

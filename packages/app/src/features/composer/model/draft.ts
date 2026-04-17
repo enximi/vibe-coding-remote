@@ -1,4 +1,4 @@
-import { COMPOSER_DRAFT_STORAGE_KEY } from '@vibe-coding-remote/shared';
+import { COMPOSER_DRAFT_STORAGE_KEY } from '../../../constants/storage';
 
 export function loadComposerDraft(): string {
   try {

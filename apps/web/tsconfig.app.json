@@ -17,8 +17,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@vibe-coding-remote/app": ["../../packages/app/src/index.tsx"],
-      "@vibe-coding-remote/shared": ["../../packages/shared/src/index.ts"]
+      "@vibe-coding-remote/app": ["../../packages/app/src/index.tsx"]
     },
 
     /* Linting */
@@ -27,5 +26,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "../../packages/app/src", "../../packages/shared/src"]
+  "include": ["src", "../../packages/app/src"]
 }

@@ -172,7 +172,7 @@ sequenceDiagram
     Generator->>Generator: specta register protocol types
     Generator->>Generator: specta_serde apply serde wire format
     Generator->>Generator: specta_typescript export bindings
-    Export->>Export: 写入 packages/shared/src/types/server.ts
+    Export->>Export: 写入 packages/app/src/types/server.ts
 ```
 
 ---

@@ -1,4 +1,4 @@
-import { resolveAuthCheckEndpoint, resolveHealthcheckEndpoint } from '@vibe-coding-remote/shared';
+import { resolveAuthCheckEndpoint, resolveHealthcheckEndpoint } from '../../../utils/endpoint';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type ConnectionStatus =

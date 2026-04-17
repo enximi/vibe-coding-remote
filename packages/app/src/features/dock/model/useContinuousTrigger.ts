@@ -1,4 +1,4 @@
-import type { VibeCodingRemoteBridge } from '@vibe-coding-remote/shared';
+import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBridge } from '../../runtime/bridge/BridgeContext';
 

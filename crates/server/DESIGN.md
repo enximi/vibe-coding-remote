@@ -58,6 +58,13 @@ vibe-coding-remote export-types
 
 导出 TypeScript 类型定义，供前端和共享包复用。
 
+当前导出实现：
+
+- 基于 Rust 协议类型生成
+- 通过 `specta` 导出 TypeScript
+- 通过 `specta-serde` 对齐 `serde` 序列化语义
+- 当前默认输出到共享包内的单个 `server.ts`
+
 支持参数：
 
 - `--output <path>`
@@ -151,6 +158,7 @@ enum ServerAction {
   - 用于发送任意按键、组合键和按键序列
   - 按键名直接采用 `keyboard-types::Code`
   - `Code` 表示物理键位，不表示字符值
+  - 导出的共享 TypeScript 中，`ServerCode` 当前被表示为 `string`
   - 每一步按键组合由 `KeyChord` 显式表示，而不是直接使用裸数组
   - server 只实现当前平台支持的 `Code` 子集，可通过 `/api/capabilities` 获取
 
@@ -289,6 +297,12 @@ Windows 上的目标实现方式：
 - server 在本地把 `Code` 映射到 Windows 输入事件
 - 一个 chord 内先按下所有键，再按相反顺序释放
 - 一个 sequence 中的各个 chord 顺序执行
+
+共享类型导出约束：
+
+- `ServerAction`、`KeyChord`、`ApiResponse` 等协议结构从 Rust 类型生成
+- `ServerCode` 不在静态类型里展开为完整键名联合类型
+- 前端应通过 `/api/capabilities` 获取当前 server 实际支持的键集合
 
 当前平台现状：
 

@@ -122,7 +122,7 @@ flowchart TD
 - `export.rs`
   - 导出 TypeScript 类型文件
 - `export/typescript.rs`
-  - TS 文本模板
+  - 基于 `specta` / `specta-serde` 生成共享 TypeScript 类型
 - `network.rs`
   - 本机地址探测和访问 URL 推荐
 - `import_config.rs`
@@ -163,12 +163,15 @@ sequenceDiagram
     participant Main as main.rs
     participant Runtime as runtime.rs
     participant Export as export.rs
-    participant Template as export/typescript.rs
+    participant Generator as export/typescript.rs
 
     Main->>Runtime: parse_runtime_command()
     Runtime-->>Main: RuntimeCommand::ExportTypes
     Main->>Export: export_typescript_bindings(output_path)
-    Export->>Template: render_typescript_bindings()
+    Export->>Generator: render_typescript_bindings()
+    Generator->>Generator: specta register protocol types
+    Generator->>Generator: specta_serde apply serde wire format
+    Generator->>Generator: specta_typescript export bindings
     Export->>Export: 写入 packages/shared/src/types/server.ts
 ```
 
@@ -308,11 +311,13 @@ HTTP 映射统一收敛在：
 - HTTP 层和输入层已经分层
 - Windows 平台细节已被压到 `input/windows.rs`
 - 类型导出、导入配置、二维码等辅助能力不再和请求处理代码混在一起
+- 共享 TypeScript 类型由 Rust 协议类型生成，而不是单独手写维护
 
 当前仍然保留的一个现实选择：
 
 - `keyboard_types::Code` 到 Windows 事件的映射现在仍是平台映射表驱动
 - `input/keymap.rs` 同时承担“支持的键集合”和“Windows 虚拟键映射表”的单一真相来源
+- `ServerCode` 在共享 TypeScript 中仍被导出为宽泛字符串，真实支持子集通过 `/api/capabilities` 暴露
 - 如果后续要进一步严格贴近“物理键位”语义，可以继续把 `input/keymap.rs` 和 `input/windows.rs` 演进到 scan code 路线
 
 ---

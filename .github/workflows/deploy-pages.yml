@@ -37,9 +37,6 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.11.1 --activate
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -48,10 +45,25 @@ jobs:
           GITHUB_ACTIONS: 'true'
         run: pnpm --filter @vibe-coding-remote/web run build
 
+      - name: Package Pages artifact
+        run: |
+          tar \
+            --dereference \
+            --hard-dereference \
+            --directory apps/web/dist \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=".[^/]*" \
+            .
+
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: apps/web/dist
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
     needs: build

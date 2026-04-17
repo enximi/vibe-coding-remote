@@ -13,6 +13,7 @@ pub(super) fn build_router(auth_token: String) -> Router {
     Router::new()
         .route("/api/action", post(handlers::execute_action))
         .route("/api/auth-check", get(handlers::auth_check))
+        .route("/api/capabilities", get(handlers::capabilities))
         .route("/health", get(handlers::health))
         .layer(CorsLayer::permissive())
         .layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES))

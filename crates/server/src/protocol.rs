@@ -1,13 +1,14 @@
-use keyboard_types::Code;
+use keyboard_types::Code as KeyboardCode;
 use serde::{Deserialize, Serialize};
+use specta::Type;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct ServerActionRequest {
     pub action: ServerAction,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum ServerAction {
     InputText { text: String },
@@ -31,23 +32,34 @@ impl ServerAction {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct KeyChord {
-    pub keys: Vec<Code>,
+    #[specta(type = Vec<ServerCode>)]
+    pub keys: Vec<KeyboardCode>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct ApiResponse {
     pub ok: bool,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
+pub struct ServerCapabilitiesResponse {
+    #[specta(type = Vec<ServerCode>)]
+    pub supported_codes: Vec<KeyboardCode>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct ImportPayload {
     #[serde(rename = "v")]
     pub version: u8,
     pub endpoint: String,
     pub token: String,
 }
+
+#[derive(Debug, Clone, Type)]
+#[specta(type = String)]
+pub struct ServerCode;
 
 #[derive(Debug, Clone, Copy, Error)]
 pub enum ActionValidationError {

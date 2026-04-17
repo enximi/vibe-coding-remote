@@ -23,6 +23,8 @@ pub enum ExportError {
         #[source]
         source: std::io::Error,
     },
+    #[error("failed to render TypeScript bindings: {0}")]
+    Render(String),
 }
 
 pub fn export_typescript_bindings(output_path: Option<PathBuf>) -> Result<PathBuf, ExportError> {
@@ -36,11 +38,12 @@ pub fn export_typescript_bindings(output_path: Option<PathBuf>) -> Result<PathBu
         source,
     })?;
 
-    fs::write(&output_path, render_typescript_bindings()).map_err(|source| {
-        ExportError::WriteOutput {
-            path: output_path.display().to_string(),
-            source,
-        }
+    let bindings =
+        render_typescript_bindings().map_err(|error| ExportError::Render(error.to_string()))?;
+
+    fs::write(&output_path, bindings).map_err(|source| ExportError::WriteOutput {
+        path: output_path.display().to_string(),
+        source,
     })?;
 
     Ok(output_path)

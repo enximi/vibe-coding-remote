@@ -1,8 +1,15 @@
-import type { ApiResponse, KeyChord, ServerAction, ServerCode } from './server';
+import type {
+  ApiResponse,
+  KeyChord,
+  ServerAction,
+  ServerCapabilitiesResponse,
+  ServerCode,
+} from './server';
 
 export type VibrationPattern = number | number[];
 
 export interface VibeCodingRemoteBridge {
+  getServerCapabilities(): Promise<ServerCapabilitiesResponse>;
   executeAction(action: ServerAction): Promise<ApiResponse>;
   inputText(text: string): Promise<ApiResponse>;
   sendKeySequence(sequence: KeyChord[]): Promise<ApiResponse>;

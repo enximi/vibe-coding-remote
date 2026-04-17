@@ -8,8 +8,9 @@ pub(super) fn log_startup_guide(options: &RuntimeOptions) {
     let access_status = network::log_access_urls(host, api_port);
     tracing::info!(url = %format!("http://127.0.0.1:{api_port}/health"), "health endpoint");
     tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/auth-check"), "auth check endpoint");
+    tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/capabilities"), "capabilities endpoint");
     tracing::info!(url = %format!("http://127.0.0.1:{api_port}/api/action"), "action endpoint");
-    tracing::info!("Bearer token required for /api/auth-check and /api/action");
+    tracing::info!("Bearer token required for /api/auth-check, /api/capabilities, and /api/action");
     tracing::info!("CORS enabled for cross-origin frontend clients");
     log_import_guide(options, access_status);
 }

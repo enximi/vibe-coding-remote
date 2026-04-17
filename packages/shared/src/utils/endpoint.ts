@@ -1,6 +1,7 @@
 import {
   DEFAULT_ACTION_API_PATH,
   DEFAULT_AUTH_CHECK_API_PATH,
+  DEFAULT_CAPABILITIES_API_PATH,
   DEFAULT_HEALTHCHECK_PATH,
   SERVER_AUTH_TOKEN_QUERY_PARAM,
   SERVER_ENDPOINT_QUERY_PARAM,
@@ -26,6 +27,13 @@ export function resolveConfiguredHealthcheckEndpoint(): string | null {
     readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
   return resolveHealthcheckEndpoint(candidate);
+}
+
+export function resolveConfiguredCapabilitiesEndpoint(): string | null {
+  const candidate =
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
+
+  return resolveCapabilitiesEndpoint(candidate);
 }
 
 export function resolveConfiguredAuthToken(): string | null {
@@ -55,13 +63,20 @@ export function resolveHealthcheckEndpoint(value: string | null | undefined): st
   return resolveDerivedEndpoint(value, DEFAULT_HEALTHCHECK_PATH);
 }
 
+export function resolveCapabilitiesEndpoint(value: string | null | undefined): string | null {
+  return resolveDerivedEndpoint(value, DEFAULT_CAPABILITIES_API_PATH);
+}
+
 export function normalizeActionEndpoint(value: string): string | null {
   return resolveActionEndpoint(value);
 }
 
 function resolveDerivedEndpoint(
   value: string | null | undefined,
-  targetPath: typeof DEFAULT_AUTH_CHECK_API_PATH | typeof DEFAULT_HEALTHCHECK_PATH,
+  targetPath:
+    | typeof DEFAULT_AUTH_CHECK_API_PATH
+    | typeof DEFAULT_CAPABILITIES_API_PATH
+    | typeof DEFAULT_HEALTHCHECK_PATH,
 ): string | null {
   const actionEndpoint = resolveActionEndpoint(value);
 
@@ -134,6 +149,13 @@ function normalizeActionPath(pathname: string): string {
   if (basePath.endsWith(DEFAULT_AUTH_CHECK_API_PATH)) {
     return (
       basePath.slice(0, basePath.length - DEFAULT_AUTH_CHECK_API_PATH.length) +
+      DEFAULT_ACTION_API_PATH
+    );
+  }
+
+  if (basePath.endsWith(DEFAULT_CAPABILITIES_API_PATH)) {
+    return (
+      basePath.slice(0, basePath.length - DEFAULT_CAPABILITIES_API_PATH.length) +
       DEFAULT_ACTION_API_PATH
     );
   }

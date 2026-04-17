@@ -5,8 +5,10 @@ import {
   createKeySequenceAction,
   type KeyChord,
   resolveConfiguredActionEndpoint,
+  resolveConfiguredCapabilitiesEndpoint,
   resolveConfiguredAuthToken,
   type ServerAction,
+  type ServerCapabilitiesResponse,
   type ServerCode,
   type VibeCodingRemoteBridge,
   type VibrationPattern,
@@ -14,6 +16,9 @@ import {
 
 export function createWebBridge(): VibeCodingRemoteBridge {
   return {
+    getServerCapabilities() {
+      return fetchServerCapabilities();
+    },
     executeAction(action) {
       return postAction(action);
     },
@@ -40,19 +45,39 @@ export function createWebBridge(): VibeCodingRemoteBridge {
   };
 }
 
-function getRequiredActionEndpoint(): string {
-  const endpoint = resolveConfiguredActionEndpoint();
+function getRequiredServerEndpoint(
+  resolveEndpoint: () => string | null,
+  label: 'action' | 'capabilities',
+): string {
+  const endpoint = resolveEndpoint();
   if (!endpoint) {
     throw new Error(
-      'No Vibe Coding Remote server action endpoint is configured. Provide a valid server address before sending.',
+      `No Vibe Coding Remote server ${label} endpoint is configured. Provide a valid server address before sending.`,
     );
   }
 
   return endpoint;
 }
 
+async function fetchServerCapabilities(): Promise<ServerCapabilitiesResponse> {
+  const response = await fetch(
+    getRequiredServerEndpoint(resolveConfiguredCapabilitiesEndpoint, 'capabilities'),
+    {
+      method: 'GET',
+      cache: 'no-store',
+      headers: buildHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Fetching server capabilities failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function postAction(action: ServerAction): Promise<ApiResponse> {
-  const response = await fetch(getRequiredActionEndpoint(), {
+  const response = await fetch(getRequiredServerEndpoint(resolveConfiguredActionEndpoint, 'action'), {
     method: 'POST',
     headers: buildHeaders(),
     body: JSON.stringify({ action }),

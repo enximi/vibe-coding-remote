@@ -8,6 +8,7 @@ use keyboard_types::Code;
 use thiserror::Error;
 
 pub use executor::execute_action;
+pub(crate) use keymap::supported_codes;
 
 #[derive(Debug, Error)]
 pub enum InputError {

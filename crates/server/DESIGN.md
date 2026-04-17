@@ -4,6 +4,8 @@
 
 本文优先描述对外协议和目标结构；实现应向这里收敛。
 
+架构分层、模块关系和运行链路见 [ARCHITECTURE.md](./ARCHITECTURE.md)。
+
 ## 定位
 
 `server` 是运行在电脑上的本地控制服务，负责把来自前端或客户端的动作请求落到当前桌面焦点位置。
@@ -70,17 +72,18 @@ packages/shared/src/types/server.ts
 
 ## API 概览
 
-当前对外暴露 3 个 HTTP 接口：
+当前对外暴露 4 个 HTTP 接口：
 
 ```http
 POST /api/action
 GET /api/auth-check
+GET /api/capabilities
 GET /health
 ```
 
 附加运行时约束：
 
-- `/api/action` 和 `/api/auth-check` 需要 Bearer token
+- `/api/action`、`/api/auth-check` 和 `/api/capabilities` 需要 Bearer token
 - `/health` 不需要认证
 - 已启用 permissive CORS，允许跨源前端访问
 - 请求体大小限制为 `64 KiB`
@@ -96,6 +99,14 @@ ok
 ```json
 {
   "ok": true
+}
+```
+
+`/api/capabilities` 成功时返回：
+
+```json
+{
+  "supported_codes": ["Enter", "Tab", "ControlLeft"]
 }
 ```
 
@@ -141,6 +152,7 @@ enum ServerAction {
   - 按键名直接采用 `keyboard-types::Code`
   - `Code` 表示物理键位，不表示字符值
   - 每一步按键组合由 `KeyChord` 显式表示，而不是直接使用裸数组
+  - server 只实现当前平台支持的 `Code` 子集，可通过 `/api/capabilities` 获取
 
 `sequence` 的语义：
 
@@ -231,6 +243,7 @@ Authorization: Bearer <token>
 
 - `/api/action` 必须认证
 - `/api/auth-check` 必须认证
+- `/api/capabilities` 必须认证
 - `/health` 不认证
 
 认证失败当前返回：
@@ -376,6 +389,7 @@ VIBE_CODING_REMOTE_
   - `input-text.text` 为空
   - `key-sequence.sequence` 为空
   - `key-sequence.sequence[].keys` 为空
+  - `key-sequence` 使用了当前平台尚未支持的 `keyboard-types::Code`
   - 请求结构不合法
 - `401 Unauthorized`
   - 缺少 token

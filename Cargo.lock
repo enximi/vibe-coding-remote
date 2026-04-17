@@ -1956,6 +1956,7 @@ dependencies = [
  "qrcode",
  "serde",
  "specta",
+ "specta-macros",
  "specta-serde",
  "specta-typescript",
  "thiserror",

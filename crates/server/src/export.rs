@@ -1,14 +1,11 @@
-use crate::protocol::{
-    ApiResponse, ImportPayload, ServerAction, ServerActionRequest, ServerKeyName, ServerShortcut,
-};
-use specta::Types;
-use specta_serde::apply;
-use specta_typescript::Typescript;
+mod typescript;
+
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 use thiserror::Error;
+use typescript::render_typescript_bindings;
 
 #[derive(Debug, Error)]
 pub enum ExportError {
@@ -20,10 +17,12 @@ pub enum ExportError {
         #[source]
         source: std::io::Error,
     },
-    #[error("failed to apply serde transformations for exported bindings: {0}")]
-    ApplySerde(#[from] specta_serde::Error),
-    #[error("failed to export TypeScript bindings: {0}")]
-    ExportTypescript(#[from] specta_typescript::Error),
+    #[error("failed to write TypeScript bindings to {path}: {source}")]
+    WriteOutput {
+        path: String,
+        #[source]
+        source: std::io::Error,
+    },
 }
 
 pub fn export_typescript_bindings(output_path: Option<PathBuf>) -> Result<PathBuf, ExportError> {
@@ -37,20 +36,15 @@ pub fn export_typescript_bindings(output_path: Option<PathBuf>) -> Result<PathBu
         source,
     })?;
 
-    let types = Types::default()
-        .register::<ApiResponse>()
-        .register::<ImportPayload>()
-        .register::<ServerActionRequest>()
-        .register::<ServerAction>()
-        .register::<ServerKeyName>()
-        .register::<ServerShortcut>();
-    let resolved_types = apply(types)?;
-
-    Typescript::default().export_to(&output_path, &resolved_types)?;
+    fs::write(&output_path, render_typescript_bindings()).map_err(|source| {
+        ExportError::WriteOutput {
+            path: output_path.display().to_string(),
+            source,
+        }
+    })?;
 
     Ok(output_path)
 }
-
 fn default_output_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")

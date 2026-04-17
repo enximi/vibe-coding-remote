@@ -18,6 +18,7 @@ arboard.workspace = true
 axum.workspace = true
 clap.workspace = true
 config.workspace = true
+keyboard-types.workspace = true
 local-ip-address.workspace = true
 qrcode.workspace = true
 serde.workspace = true

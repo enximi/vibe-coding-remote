@@ -1,22 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComposerHandle } from '../features/composer/ui/Composer';
-import { usePreferences } from '../features/preferences/model/usePreferences';
-import { useConnectionState } from '../features/runtime/model/useConnectionState';
+import { useConnection } from '../features/runtime/model/ConnectionContext';
 
 export function useAppShellController() {
-  const {
-    prefs,
-    setPrefs,
-    addHistory,
-    clearHistory,
-    removeHistory,
-    serverEndpoint,
-    setServerEndpoint,
-    serverAuthToken,
-    setServerAuthToken,
-  } = usePreferences();
-
-  const { status, checkConnection } = useConnectionState(serverEndpoint, serverAuthToken);
+  const { status } = useConnection();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSendingSuccess, setIsSendingSuccess] = useState(false);
   const [hasText, setHasText] = useState(false);
@@ -86,17 +73,7 @@ export function useAppShellController() {
   }, []);
 
   return {
-    prefs,
-    setPrefs,
-    addHistory,
-    clearHistory,
-    removeHistory,
-    serverEndpoint,
-    setServerEndpoint,
-    serverAuthToken,
-    setServerAuthToken,
     status,
-    checkConnection,
     composerRef,
     isSettingsOpen,
     isSendingSuccess,

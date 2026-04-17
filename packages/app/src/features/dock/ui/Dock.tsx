@@ -10,9 +10,9 @@ import {
   SettingsIcon,
   ShiftTabIcon,
   TabIcon,
-} from '../../../shared/ui/icons';
-import type { Preferences } from '../../preferences/model/preferences';
-import type { ConnectionStatus } from '../../runtime/model/useConnectionState';
+} from '../../../ui/icons';
+import { usePreferences } from '../../preferences/model/PreferencesContext';
+import { useConnection } from '../../runtime/model/ConnectionContext';
 import { DOCK_ACTION_DEFINITIONS } from '../model/dockActions';
 import { type DockAction, useContinuousTrigger } from '../model/useContinuousTrigger';
 
@@ -25,8 +25,6 @@ type DockActionConfig = {
 };
 
 interface DockProps {
-  prefs: Preferences;
-  status?: ConnectionStatus;
   onVisibleActionCountChange?: (count: number) => void;
   onMenuClick: () => void;
   onSendClick: () => Promise<void>;
@@ -35,14 +33,14 @@ interface DockProps {
 }
 
 export function Dock({
-  prefs,
-  status,
   onVisibleActionCountChange,
   onMenuClick,
   onSendClick,
   isSendingSuccess,
   hasText,
 }: DockProps) {
+  const { prefs } = usePreferences();
+  const { status } = useConnection();
   const [isSending, setIsSending] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const [dockVisibleActionCount, setDockVisibleActionCount] = useState(0);
@@ -56,7 +54,7 @@ export function Dock({
   const measureActionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const actionButtons = useMemo<DockActionConfig[]>(() => {
-    const iconByKey: Record<keyof Preferences['dockButtons'], React.ReactNode> = {
+    const iconByKey: Record<keyof typeof prefs.dockButtons, React.ReactNode> = {
       enter: <EnterIcon width={20} height={20} />,
       tab: <TabIcon width={20} height={20} />,
       shiftTab: <ShiftTabIcon width={20} height={20} />,

@@ -20,9 +20,6 @@ export function AppShell() {
       >
         <Composer
           ref={controller.composerRef}
-          prefs={controller.prefs}
-          status={controller.status}
-          addHistory={controller.addHistory}
           onTextChange={controller.setHasText}
           onSendActionStart={controller.startSendFeedback}
           onSendActionEnd={controller.stopSendFeedback}
@@ -33,8 +30,6 @@ export function AppShell() {
       </form>
 
       <Dock
-        prefs={controller.prefs}
-        status={controller.status}
         hasText={controller.hasText}
         isSendingSuccess={controller.isSendingSuccess}
         onVisibleActionCountChange={controller.setVisibleDockActionCount}
@@ -44,17 +39,7 @@ export function AppShell() {
 
       <SettingsModal
         isOpen={controller.isSettingsOpen}
-        status={controller.status}
-        checkConnection={controller.checkConnection}
         onClose={controller.closeSettings}
-        prefs={controller.prefs}
-        setPrefs={controller.setPrefs}
-        serverEndpoint={controller.serverEndpoint}
-        setServerEndpoint={controller.setServerEndpoint}
-        serverAuthToken={controller.serverAuthToken}
-        setServerAuthToken={controller.setServerAuthToken}
-        clearHistory={controller.clearHistory}
-        removeHistory={controller.removeHistory}
         onHistorySelect={controller.handleHistorySelect}
         visibleDockActionCount={controller.visibleDockActionCount}
       />

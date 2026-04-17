@@ -14,7 +14,9 @@ import {
 
 export type SetPreferences = (update: Preferences | ((prev: Preferences) => Preferences)) => void;
 
-export function usePreferences() {
+export type PreferencesStore = ReturnType<typeof usePreferencesStore>;
+
+export function usePreferencesStore() {
   const [prefs, setPrefsState] = useState<Preferences>(loadPreferences);
   const [serverEndpoint, setServerEndpointState] = useState(loadServerEndpoint);
   const [serverAuthToken, setServerAuthTokenState] = useState(loadServerAuthToken);

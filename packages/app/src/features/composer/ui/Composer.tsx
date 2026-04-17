@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import type { Preferences } from '../../preferences/model/preferences';
-import { useBridge } from '../../runtime/bridge/BridgeContext';
-import type { ConnectionStatus } from '../../runtime/model/useConnectionState';
+import { usePreferences } from '../../preferences/model/PreferencesContext';
+import { useBridge } from '../../runtime/model/BridgeContext';
+import { useConnection } from '../../runtime/model/ConnectionContext';
 import { clearComposerDraft, loadComposerDraft, saveComposerDraft } from '../model/draft';
 
 type NavigatorWithVirtualKeyboard = Navigator & {
@@ -11,9 +11,6 @@ type NavigatorWithVirtualKeyboard = Navigator & {
 };
 
 interface ComposerProps {
-  prefs: Preferences;
-  status: ConnectionStatus;
-  addHistory: (text: string) => void;
   onTextChange?: (hasText: boolean) => void;
   onSendActionStart?: () => void;
   onSendActionEnd?: () => void;
@@ -26,10 +23,12 @@ export interface ComposerHandle {
 }
 
 export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer(
-  { prefs, status, addHistory, onTextChange, onSendActionStart, onSendActionEnd },
+  { onTextChange, onSendActionStart, onSendActionEnd },
   ref,
 ) {
   const bridge = useBridge();
+  const { prefs, addHistory } = usePreferences();
+  const { status } = useConnection();
   const [text, setText] = useState(loadComposerDraft);
   const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);

@@ -1,6 +1,6 @@
-import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useBridge } from '../../runtime/bridge/BridgeContext';
+import type { VibeCodingRemoteBridge } from '../../../types/bridge';
+import { useBridge } from '../../runtime/model/BridgeContext';
 
 const CONTINUOUS_TRIGGER_DELAY_MS = 450;
 const CONTINUOUS_TRIGGER_INTERVAL_MS = 100;

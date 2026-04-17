@@ -1,5 +1,5 @@
-import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import { createContext, type PropsWithChildren, useContext } from 'react';
+import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 
 const BridgeContext = createContext<VibeCodingRemoteBridge | null>(null);
 

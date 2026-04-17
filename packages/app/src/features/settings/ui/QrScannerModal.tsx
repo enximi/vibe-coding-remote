@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CloseIcon } from '../../../shared/ui/icons';
+import { CloseIcon } from '../../../ui/icons';
 
 interface QrScannerModalProps {
   isOpen: boolean;

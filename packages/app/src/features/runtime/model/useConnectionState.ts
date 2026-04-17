@@ -1,5 +1,5 @@
-import { resolveAuthCheckEndpoint, resolveHealthcheckEndpoint } from '../../../utils/endpoint';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { resolveAuthCheckEndpoint, resolveHealthcheckEndpoint } from '../../../utils/endpoint';
 
 export type ConnectionStatus =
   | 'checking'

@@ -1,15 +1,15 @@
-import type { VibeCodingRemoteBridge } from './types/bridge';
 import { StrictMode } from 'react';
+import { AppProviders } from './app/AppProviders';
 import { AppShell } from './app/AppShell';
-import { BridgeProvider } from './features/runtime/bridge/BridgeContext';
+import type { VibeCodingRemoteBridge } from './types/bridge';
 import './styles/index.css';
 
 export function VibeCodingRemoteApp({ bridge }: { bridge: VibeCodingRemoteBridge }) {
   return (
     <StrictMode>
-      <BridgeProvider bridge={bridge}>
+      <AppProviders bridge={bridge}>
         <AppShell />
-      </BridgeProvider>
+      </AppProviders>
     </StrictMode>
   );
 }

@@ -1,6 +1,5 @@
 [env]
 ANDROID_HOME = "{{ get_env(name='LOCALAPPDATA') }}/Android/Sdk"
-ANDROID_SDK_ROOT = "{{ env.ANDROID_HOME }}"
 JAVA_HOME = "{{ get_env(name='USERPROFILE') }}/scoop/apps/android-studio/current/jbr"
 NDK_HOME = "{{ env.ANDROID_HOME }}/ndk/30.0.14904198"
 _.path = ["{{ env.JAVA_HOME }}/bin"]

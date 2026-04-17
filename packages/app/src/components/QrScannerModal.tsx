@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { BrowserQRCodeReader } from '@zxing/browser';
 import { CloseIcon } from './icons';
 
 interface QrScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onScan: (text: string) => void;
+  onScan: (text: string) => boolean;
 }
 
 export function QrScannerModal({ isOpen, onClose, onScan }: QrScannerModalProps) {
@@ -27,27 +26,65 @@ export function QrScannerModal({ isOpen, onClose, onScan }: QrScannerModalProps)
       return;
     }
 
-    const codeReader = new BrowserQRCodeReader();
     let isMounted = true;
-
-    const streamPromise = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(stream => {
-        if (!isMounted) return;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-
-          codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
-            if (!isMounted) return;
-            if (result) {
-              onScan(result.getText());
-            }
-            if (err && err.name === 'NotAllowedError') {
-              setError('请允许使用摄像头权限');
-            }
-          });
+    let isScanAccepted = false;
+    let scannerControls:
+      | {
+          stop: () => void;
         }
-      return stream;
+      | null = null;
+    let lastRejectedValue = '';
+
+    const constraints: MediaStreamConstraints = {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    };
+
+    const scannerPromise = Promise.all([
+      import('@zxing/browser'),
+      import('@zxing/library'),
+    ])
+      .then(([{ BrowserQRCodeReader }, { BarcodeFormat, DecodeHintType }]) => {
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+
+        return new BrowserQRCodeReader(hints, {
+          delayBetweenScanAttempts: 120,
+          delayBetweenScanSuccess: 400,
+          tryPlayVideoTimeout: 8000,
+        });
+      })
+      .then(async (codeReader) => {
+        if (!isMounted || !videoRef.current) {
+          return;
+        }
+
+        scannerControls = await codeReader.decodeFromConstraints(constraints, videoRef.current, (result, err) => {
+          if (!isMounted) return;
+
+          if (result) {
+            const rawValue = result.getText();
+            if (onScan(rawValue)) {
+              isScanAccepted = true;
+              scannerControls?.stop();
+              return;
+            }
+
+            if (rawValue !== lastRejectedValue) {
+              lastRejectedValue = rawValue;
+              setError('识别到了二维码，但不是 Vibe Coding Remote 配置二维码');
+            }
+          }
+
+          if (err && err.name === 'NotAllowedError') {
+            setError('请允许使用摄像头权限');
+          }
+        });
       })
       .catch((err) => {
         if (!isMounted) return;
@@ -57,11 +94,11 @@ export function QrScannerModal({ isOpen, onClose, onScan }: QrScannerModalProps)
 
     return () => {
       isMounted = false;
-      streamPromise.then(stream => {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-      });
+      scannerControls?.stop();
+      if (!isScanAccepted) {
+        setError(null);
+      }
+      void scannerPromise;
     };
   }, [isOpen, onScan]);
 

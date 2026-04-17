@@ -1,8 +1,8 @@
 {
-  "name": "@voice-bridge/web",
+  "name": "@vibe-coding-remote/web",
   "private": true,
   "version": "0.1.1",
-  "description": "Web shell for Voice Bridge.",
+  "description": "Web shell for Vibe Coding Remote.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@voice-bridge/app": "workspace:*",
-    "@voice-bridge/shared": "workspace:*",
+    "@vibe-coding-remote/app": "workspace:*",
+    "@vibe-coding-remote/shared": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

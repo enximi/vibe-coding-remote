@@ -1,16 +1,16 @@
 [package]
-name = "voice-bridge-server"
+name = "vibe-coding-remote-server"
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Desktop API server and input bridge for Voice Bridge."
+description = "Desktop API server and input bridge for Vibe Coding Remote."
 
 [lib]
-name = "voice_bridge_server"
+name = "vibe_coding_remote_server"
 
 [[bin]]
-name = "voice-bridge"
+name = "vibe-coding-remote"
 path = "src/main.rs"
 
 [dependencies]

@@ -1,4 +1,4 @@
-import { COMPOSER_DRAFT_STORAGE_KEY } from '@voice-bridge/shared';
+import { COMPOSER_DRAFT_STORAGE_KEY } from '@vibe-coding-remote/shared';
 
 export function loadComposerDraft(): string {
   try {

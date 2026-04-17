@@ -10,9 +10,6 @@
 **/.tmp/
 **/*.tsbuildinfo
 
-# Tauri generated files
-/apps/tauri/src-tauri/gen/
-
 # Logs
 *.log
 npm-debug.log*

@@ -2,7 +2,7 @@ use crate::protocol::ImportPayload;
 use thiserror::Error;
 use url::Url;
 
-const IMPORT_SCHEME_URL: &str = "voicebridge://import";
+const IMPORT_SCHEME_URL: &str = "vibecodingremote://import";
 const IMPORT_PAYLOAD_VERSION: u8 = 1;
 
 #[derive(Debug, Clone)]

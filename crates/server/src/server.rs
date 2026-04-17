@@ -37,7 +37,7 @@ pub async fn run(options: RuntimeOptions) -> Result<(), ServerError> {
     let addr = SocketAddr::new(options.host, options.port);
     let app = build_router(options.auth_token.clone());
 
-    tracing::info!("Voice Bridge server is starting");
+    tracing::info!("Vibe Coding Remote server is starting");
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .map_err(|source| ServerError::Bind { addr, source })?;
@@ -117,7 +117,7 @@ fn log_import_guide(options: &RuntimeOptions, access_status: network::ImportEndp
 
 async fn shutdown_signal() {
     let _ = tokio::signal::ctrl_c().await;
-    tracing::info!("Voice Bridge server stopped");
+    tracing::info!("Vibe Coding Remote server stopped");
 }
 
 async fn health() -> &'static str {

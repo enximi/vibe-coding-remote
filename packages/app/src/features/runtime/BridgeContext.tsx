@@ -1,19 +1,19 @@
 import { createContext, useContext, type PropsWithChildren } from 'react';
-import type { VoiceBridgeBridge } from '@voice-bridge/shared';
+import type { VibeCodingRemoteBridge } from '@vibe-coding-remote/shared';
 
-const BridgeContext = createContext<VoiceBridgeBridge | null>(null);
+const BridgeContext = createContext<VibeCodingRemoteBridge | null>(null);
 
 export function BridgeProvider({
   bridge,
   children,
-}: PropsWithChildren<{ bridge: VoiceBridgeBridge }>) {
+}: PropsWithChildren<{ bridge: VibeCodingRemoteBridge }>) {
   return <BridgeContext.Provider value={bridge}>{children}</BridgeContext.Provider>;
 }
 
 export function useBridge() {
   const bridge = useContext(BridgeContext);
   if (!bridge) {
-    throw new Error('VoiceBridge bridge is not available in the current app shell.');
+    throw new Error('VibeCodingRemote bridge is not available in the current app shell.');
   }
 
   return bridge;

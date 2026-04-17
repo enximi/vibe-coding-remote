@@ -3,8 +3,8 @@ use std::{net::IpAddr, path::PathBuf};
 
 #[derive(Debug, Clone, Parser)]
 #[command(
-    name = "voice-bridge",
-    about = "Run the local Voice Bridge API server on your computer."
+    name = "vibe-coding-remote",
+    about = "Run the local Vibe Coding Remote API server on your computer."
 )]
 pub(crate) struct Cli {
     #[command(subcommand)]

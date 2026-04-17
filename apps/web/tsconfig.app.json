@@ -17,8 +17,8 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@voice-bridge/app": ["../../packages/app/src/index.tsx"],
-      "@voice-bridge/shared": ["../../packages/shared/src/index.ts"]
+      "@vibe-coding-remote/app": ["../../packages/app/src/index.tsx"],
+      "@vibe-coding-remote/shared": ["../../packages/shared/src/index.ts"]
     },
 
     /* Linting */

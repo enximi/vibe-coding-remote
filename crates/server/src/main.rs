@@ -2,7 +2,7 @@
 async fn main() {
     init_logging();
 
-    let command = match voice_bridge_server::parse_runtime_command() {
+    let command = match vibe_coding_remote_server::parse_runtime_command() {
         Ok(command) => command,
         Err(error) => {
             tracing::error!("{error}");
@@ -11,14 +11,14 @@ async fn main() {
     };
 
     match command {
-        voice_bridge_server::RuntimeCommand::RunServer(options) => {
-            if let Err(error) = voice_bridge_server::run(options).await {
+        vibe_coding_remote_server::RuntimeCommand::RunServer(options) => {
+            if let Err(error) = vibe_coding_remote_server::run(options).await {
                 tracing::error!("{error}");
                 std::process::exit(1);
             }
         }
-        voice_bridge_server::RuntimeCommand::ExportTypes { output_path } => {
-            match voice_bridge_server::export_typescript_bindings(output_path) {
+        vibe_coding_remote_server::RuntimeCommand::ExportTypes { output_path } => {
+            match vibe_coding_remote_server::export_typescript_bindings(output_path) {
                 Ok(path) => tracing::info!(path = %path.display(), "exported TypeScript bindings"),
                 Err(error) => {
                     tracing::error!("{error}");
@@ -31,7 +31,7 @@ async fn main() {
 
 fn init_logging() {
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("voice_bridge_server=info"));
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("vibe_coding_remote_server=info"));
 
     tracing_subscriber::fmt()
         .with_env_filter(env_filter)

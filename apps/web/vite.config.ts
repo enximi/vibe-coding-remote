@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@voice-bridge/app': fileURLToPath(new URL('../../packages/app/src/index.tsx', import.meta.url)),
-      '@voice-bridge/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
+      '@vibe-coding-remote/app': fileURLToPath(new URL('../../packages/app/src/index.tsx', import.meta.url)),
+      '@vibe-coding-remote/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
     },
     dedupe: ['react', 'react-dom'],
   },

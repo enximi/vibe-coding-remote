@@ -46,7 +46,7 @@ pub enum RuntimeError {
     #[error("failed to deserialize runtime configuration: {0}")]
     DeserializeConfig(#[source] config::ConfigError),
     #[error(
-        "missing required auth token; set it with --auth-token, VOICE_BRIDGE_AUTH_TOKEN, or config.toml"
+        "missing required auth token; set it with --auth-token, VIBE_CODING_REMOTE_AUTH_TOKEN, or config.toml"
     )]
     MissingAuthToken,
 }
@@ -100,7 +100,7 @@ fn load_base_config(cli: &ServeCliOptions) -> Result<BaseConfig, RuntimeError> {
             source,
         })?
         .add_source(File::new(config_path, FileFormat::Toml).required(required))
-        .add_source(Environment::with_prefix("VOICE_BRIDGE"))
+        .add_source(Environment::with_prefix("VIBE_CODING_REMOTE"))
         .build()
         .map_err(RuntimeError::LoadConfig)?
         .try_deserialize()

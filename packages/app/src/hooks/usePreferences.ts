@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PREFERENCES_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY, SERVER_AUTH_TOKEN_STORAGE_KEY } from '@voice-bridge/shared';
+import { PREFERENCES_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY, SERVER_AUTH_TOKEN_STORAGE_KEY } from '@vibe-coding-remote/shared';
 
 const MAX_HISTORY_ITEMS = 50;
 

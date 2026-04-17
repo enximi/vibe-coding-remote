@@ -1,5 +1,5 @@
 {
-  "name": "voice-bridge",
+  "name": "vibe-coding-remote",
   "private": true,
   "packageManager": "pnpm@10.11.1",
   "workspaces": [
@@ -7,16 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "pnpm --filter @voice-bridge/web run dev -- --host",
-    "dev:server": "cargo run -p voice-bridge-server -- serve",
-    "gen:types": "cargo run -p voice-bridge-server -- export-types",
-    "dev:tauri": "pnpm --filter @voice-bridge/tauri tauri android dev",
-    "typecheck": "pnpm -w exec tsc -p packages/shared/tsconfig.json --noEmit && pnpm -w exec tsc -p packages/app/tsconfig.json --noEmit && pnpm --filter @voice-bridge/web run typecheck && pnpm --filter @voice-bridge/tauri run typecheck",
-    "build:web": "pnpm --filter @voice-bridge/web run build",
-    "build:server": "cargo build -p voice-bridge-server --release",
-    "build:tauri-ui": "pnpm --filter @voice-bridge/tauri run build",
-    "build:tauri": "pnpm --filter @voice-bridge/tauri tauri android build",
-    "init:tauri": "pnpm --filter @voice-bridge/tauri tauri android init"
+    "dev:web": "pnpm --filter @vibe-coding-remote/web run dev -- --host",
+    "dev:server": "cargo run -p vibe-coding-remote-server -- serve",
+    "gen:types": "cargo run -p vibe-coding-remote-server -- export-types",
+    "typecheck": "pnpm -w exec tsc -p packages/shared/tsconfig.json --noEmit && pnpm -w exec tsc -p packages/app/tsconfig.json --noEmit && pnpm --filter @vibe-coding-remote/web run typecheck",
+    "build:web": "pnpm --filter @vibe-coding-remote/web run build",
+    "build:server": "cargo build -p vibe-coding-remote-server --release"
   },
   "devDependencies": {
     "typescript": "~6.0.2"

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   resolveAuthCheckEndpoint,
   resolveHealthcheckEndpoint,
-} from '@voice-bridge/shared';
+} from '@vibe-coding-remote/shared';
 
 export type ConnectionStatus =
   | 'checking'

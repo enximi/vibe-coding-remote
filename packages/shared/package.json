@@ -1,8 +1,8 @@
 {
-  "name": "@voice-bridge/shared",
+  "name": "@vibe-coding-remote/shared",
   "private": true,
   "version": "0.1.1",
-  "description": "Shared types and constants for Voice Bridge frontends.",
+  "description": "Shared types and constants for Vibe Coding Remote frontends.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

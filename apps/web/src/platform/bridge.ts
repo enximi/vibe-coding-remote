@@ -7,10 +7,10 @@ import {
   type ApiResponse,
   type ServerAction,
   type VibrationPattern,
-  type VoiceBridgeBridge,
-} from '@voice-bridge/shared';
+  type VibeCodingRemoteBridge,
+} from '@vibe-coding-remote/shared';
 
-export function createWebBridge(): VoiceBridgeBridge {
+export function createWebBridge(): VibeCodingRemoteBridge {
   return {
     executeAction(action) {
       return postAction(action);
@@ -42,7 +42,7 @@ function getRequiredActionEndpoint(): string {
   const endpoint = resolveConfiguredActionEndpoint();
   if (!endpoint) {
     throw new Error(
-      'No Voice Bridge server action endpoint is configured. Provide a valid server address before sending.',
+      'No Vibe Coding Remote server action endpoint is configured. Provide a valid server address before sending.',
     );
   }
 

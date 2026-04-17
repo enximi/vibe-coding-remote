@@ -1,6 +1,6 @@
-# 声桥 / Voice Bridge
+# Vibe Coding 遥控器 / Vibe Coding Remote
 
-声桥是一个把手机输入体验桥接到电脑当前焦点位置的小工具。
+Vibe Coding 遥控器是一个把手机输入体验桥接到电脑当前焦点位置的小工具。
 
 它的核心思路很直接：不再试图重新发明一套电脑端语音输入，而是复用手机上已经很好用的输入法，尤其是语音输入、联想输入和中文输入生态。
 
@@ -30,7 +30,7 @@
 
 ## 体验目标
 
-声桥从一开始追求的就不只是“能用”，而是“顺手”。
+Vibe Coding 遥控器从一开始追求的就不只是“能用”，而是“顺手”。
 
 目前这套交互重点在于：
 
@@ -41,7 +41,7 @@
 
 一个典型 AI 编程场景会是这样：
 
-1. 手机打开声桥页面，键盘弹出。
+1. 手机打开Vibe Coding 遥控器页面，键盘弹出。
 2. 按住空格开始语音输入。
 3. 等输入法完成最终整理。
 4. 点击发送，把文本插到电脑当前光标处。
@@ -78,18 +78,14 @@
 - Windows 焦点窗口输入
 - Windows 剪贴板
 
-不过前端已经重构成了 monorepo 结构，后续可以用同一套 React UI 同时支撑：
-
-- 浏览器里的 Web 壳
-- Android 上的 Tauri App 壳
+不过前端已经重构成了 monorepo 结构，当前由同一套 React UI 支撑 Web 壳，后续也方便继续扩展其他客户端。
 
 ## 仓库结构
 
 ```text
-voice-bridge/
+vibe-coding-remote/
 ├─ apps/
 │  ├─ web/                  # Web 壳：Vite dev server + 手机浏览器入口
-│  └─ tauri/                # Tauri 壳：Android App 入口
 ├─ packages/
 │  ├─ app/                  # 共享 React UI、组件、hooks、样式
 │  └─ shared/               # 共享类型、常量、桥接接口
@@ -101,7 +97,7 @@ voice-bridge/
 这套结构的原则是：
 
 - `packages/app` 只关心产品 UI 和交互，不关心运行平台
-- `apps/web` 和 `apps/tauri` 只做“壳”和平台桥接
+- `apps/web` 只做“壳”和平台桥接
 - `crates/server` 负责本地 API 与桌面输入执行
 
 ## 快速开始
@@ -109,7 +105,7 @@ voice-bridge/
 ### 1. 安装依赖
 
 ```powershell
-cd D:\projects\voice-bridge
+cd D:\projects\vibe-coding-remote
 pnpm install
 ```
 
@@ -136,15 +132,7 @@ http://你的电脑局域网IP:5173
 - 页面资源来自 Vite
 - `/api` 由 Vite 代理到 Rust `8765`
 
-### 3. Tauri 开发模式
-
-```powershell
-pnpm run dev:tauri
-```
-
-这会启动 Android 端的 Tauri App 壳。它本身只是客户端，不会在手机上启动电脑端的 `server`。
-
-### 4. 构建独立桌面服务
+### 3. 构建独立桌面服务
 
 ```powershell
 pnpm run build:server
@@ -155,13 +143,7 @@ pnpm run build:server
 产物位于：
 
 ```text
-target/release/voice-bridge.exe
-```
-
-### 5. 构建 Tauri 应用
-
-```powershell
-pnpm run build:tauri
+target/release/vibe-coding-remote.exe
 ```
 
 ## 运行模式
@@ -281,13 +263,13 @@ https://你的前端域名/?endpoint=http://192.168.1.23:8765/api/type-text
 - 模拟键盘输入
 - 或者通过剪贴板 + 粘贴
 
-声桥目前主要选择后者。
+Vibe Coding 遥控器目前主要选择后者。
 
 ## 路线
 
 后续可以继续扩展的方向包括：
 
-- 用 Tauri 逐步补齐 Android App 体验
+- 补齐移动端客户端体验
 - 多端共享更多平台桥接能力
 - 设备发现与配对
 - 连接认证

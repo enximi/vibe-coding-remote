@@ -201,7 +201,7 @@ export function SettingsModal({
     (rawValue: string) => {
       const parsed = parseImportUrl(rawValue);
       if (!parsed) {
-        return;
+        return false;
       }
 
       setEndpointDraft(parsed.endpoint);
@@ -210,6 +210,7 @@ export function SettingsModal({
       setServerAuthToken(parsed.token);
       void checkConnection(parsed.endpoint, parsed.token);
       setIsScannerOpen(false);
+      return true;
     },
     [checkConnection, setServerAuthToken, setServerEndpoint],
   );
@@ -349,7 +350,7 @@ export function SettingsModal({
           )}
 
           <p className="settings-hint">
-            填写电脑上 Voice Bridge server 的地址和 Token。留空时默认状态为“未配置”。修改后自动测试连接。
+            填写电脑上 Vibe Coding Remote server 的地址和 Token。留空时默认状态为“未配置”。修改后自动测试连接。
           </p>
         </section>
 
@@ -637,19 +638,23 @@ type ParsedImportConfig = {
 function parseImportUrl(rawValue: string): ParsedImportConfig | null {
   try {
     const url = new URL(rawValue.trim());
-    if (url.protocol !== 'voicebridge:' || url.hostname !== 'import') {
+    if (url.protocol !== 'vibecodingremote:' || url.hostname !== 'import') {
       return null;
     }
 
     const endpoint = url.searchParams.get('endpoint')?.trim() ?? '';
+    const compactEndpoint = url.searchParams.get('e')?.trim() ?? '';
     const token = url.searchParams.get('token')?.trim() ?? '';
+    const compactToken = url.searchParams.get('t')?.trim() ?? '';
     const version = url.searchParams.get('v')?.trim() ?? '';
+    const resolvedEndpoint = endpoint || compactEndpoint;
+    const resolvedToken = token || compactToken;
 
-    if (version !== '1' || !endpoint || !token) {
+    if (version !== '1' || !resolvedEndpoint || !resolvedToken) {
       return null;
     }
 
-    return { endpoint, token };
+    return { endpoint: resolvedEndpoint, token: resolvedToken };
   } catch {
     return null;
   }

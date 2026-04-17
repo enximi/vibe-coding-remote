@@ -2,7 +2,7 @@ import type { ApiResponse, ServerAction, ServerKeyName, ServerShortcut } from '.
 
 export type VibrationPattern = number | number[];
 
-export interface VoiceBridgeBridge {
+export interface VibeCodingRemoteBridge {
   executeAction(action: ServerAction): Promise<ApiResponse>;
   sendKey(key: ServerKeyName): Promise<ApiResponse>;
   sendShortcut(shortcut: ServerShortcut): Promise<ApiResponse>;

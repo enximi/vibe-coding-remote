@@ -13,17 +13,11 @@
   --selection: rgba(0, 0, 0, 0.15);
   --keyboard-offset: 0px;
   font-family:
-    'LXGW WenKai',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Inter',
-    'SF Pro Display',
-    'PingFang SC',
-    'Helvetica Neue',
-    sans-serif;
+    "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "PingFang SC",
+    "Helvetica Neue", sans-serif;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --bg: #000000;
   --text: #ffffff;
   --placeholder: #6e6e73;
@@ -37,7 +31,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme="light"]) {
     --bg: #000000;
     --text: #ffffff;
     --placeholder: #6e6e73;

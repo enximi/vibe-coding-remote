@@ -1,19 +1,8 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
-import type { Preferences } from '../hooks/usePreferences';
-import { useBridge } from '../features/runtime/BridgeContext';
-import type { ConnectionStatus } from '../hooks/useConnectionState';
-import {
-  clearComposerDraft,
-  loadComposerDraft,
-  saveComposerDraft,
-} from '../features/editor/draft';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { Preferences } from '../../preferences/model/preferences';
+import { useBridge } from '../../runtime/bridge/BridgeContext';
+import type { ConnectionStatus } from '../../runtime/model/useConnectionState';
+import { clearComposerDraft, loadComposerDraft, saveComposerDraft } from '../model/draft';
 
 type NavigatorWithVirtualKeyboard = Navigator & {
   virtualKeyboard?: {
@@ -102,13 +91,10 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
   }, [prefs.enterBehavior]);
 
-  const setComposerText = useCallback(
-    (value: string) => {
-      textRef.current = value;
-      setText(value);
-    },
-    [],
-  );
+  const setComposerText = useCallback((value: string) => {
+    textRef.current = value;
+    setText(value);
+  }, []);
 
   const submitCurrentText = useCallback(async () => {
     if (status !== 'workable') {
@@ -117,7 +103,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     if (text.length === 0) {
       try {
         if (prefs.vibrationEnabled) bridge.vibrate(30);
-        await bridge.sendKey('enter');
+        await bridge.sendKeyChord(['Enter']);
       } catch (error) {
         console.error(error);
         if (prefs.vibrationEnabled) bridge.vibrate([50, 50, 50]);
@@ -130,7 +116,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     try {
       if (prefs.vibrationEnabled) bridge.vibrate([20, 30, 20]);
       onSendActionStart?.();
-      await bridge.pasteText(text);
+      await bridge.inputText(text);
       addHistory(text);
       setComposerText('');
       clearComposerDraft();
@@ -147,14 +133,16 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     }
   }, [
     addHistory,
+    bridge,
     focusInput,
     onSendActionEnd,
     onSendActionStart,
+    prefs.vibrationEnabled,
     setComposerText,
     syncEnterKeyHint,
+    syncTextareaHeight,
+    status,
     text,
-    bridge,
-    prefs.vibrationEnabled,
   ]);
 
   useImperativeHandle(
@@ -172,12 +160,19 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         }, 0);
       },
     }),
-    [focusInput, moveCaretToEnd, setComposerText, submitCurrentText, syncEnterKeyHint],
+    [
+      focusInput,
+      moveCaretToEnd,
+      setComposerText,
+      submitCurrentText,
+      syncEnterKeyHint,
+      syncTextareaHeight,
+    ],
   );
 
   useEffect(() => {
     syncTextareaHeight();
-  }, [syncTextareaHeight, text]);
+  }, [syncTextareaHeight]);
 
   useEffect(() => {
     onTextChange?.(text.length > 0);
@@ -195,7 +190,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     if (!isComposing) {
       syncEnterKeyHint();
     }
-  }, [isComposing, prefs.enterBehavior, syncEnterKeyHint]);
+  }, [isComposing, syncEnterKeyHint]);
 
   useEffect(() => {
     const persistCurrentDraft = () => {
@@ -240,7 +235,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       }
       event.preventDefault();
       if (prefs.vibrationEnabled) bridge.vibrate(30);
-      void bridge.sendKey('backspace').catch(() => undefined);
+      void bridge.sendKeyChord(['Backspace']).catch(() => undefined);
       return;
     }
 
@@ -290,11 +285,17 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       />
       <div className={`watermark-placeholder ${text.length > 0 ? 'hidden' : ''}`}>
         {status !== 'workable' && status !== 'checking' && (
-          <p className="disconnected-notice">当前服务器处于断开状态。可以继续在这里输入并写草稿，待网络恢复后即可发送。</p>
+          <p className="disconnected-notice">
+            当前服务器处于断开状态。可以继续在这里输入并写草稿，待网络恢复后即可发送。
+          </p>
         )}
         <p>这是一个把手机输入发送到电脑的小工具。</p>
-        <p>先在电脑上把光标放到你想输入的位置，然后在这里输入文字，或直接使用手机输入法的语音输入。</p>
-        <p>点击发送后，内容会出现在电脑当前光标处。回车可以根据设置用于发送或换行；当输入框为空时，退格会直接作用到电脑。底部按钮也可以帮助你发送换行、退格等常用操作。</p>
+        <p>
+          先在电脑上把光标放到你想输入的位置，然后在这里输入文字，或直接使用手机输入法的语音输入。
+        </p>
+        <p>
+          点击发送后，内容会出现在电脑当前光标处。回车可以根据设置用于发送或换行；当输入框为空时，退格会直接作用到电脑。底部按钮也可以帮助你发送换行、退格等常用操作。
+        </p>
       </div>
     </div>
   );

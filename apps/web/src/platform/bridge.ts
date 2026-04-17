@@ -1,13 +1,15 @@
 import {
-  createPasteTextAction,
-  createSendKeyAction,
-  createSendShortcutAction,
+  type ApiResponse,
+  createInputTextAction,
+  createKeyChordAction,
+  createKeySequenceAction,
+  type KeyChord,
   resolveConfiguredActionEndpoint,
   resolveConfiguredAuthToken,
-  type ApiResponse,
   type ServerAction,
-  type VibrationPattern,
+  type ServerCode,
   type VibeCodingRemoteBridge,
+  type VibrationPattern,
 } from '@vibe-coding-remote/shared';
 
 export function createWebBridge(): VibeCodingRemoteBridge {
@@ -15,14 +17,14 @@ export function createWebBridge(): VibeCodingRemoteBridge {
     executeAction(action) {
       return postAction(action);
     },
-    sendKey(key) {
-      return postAction(createSendKeyAction(key));
+    inputText(text) {
+      return postAction(createInputTextAction(text));
     },
-    sendShortcut(shortcut) {
-      return postAction(createSendShortcutAction(shortcut));
+    sendKeySequence(sequence: KeyChord[]) {
+      return postAction(createKeySequenceAction(sequence));
     },
-    pasteText(text) {
-      return postAction(createPasteTextAction(text));
+    sendKeyChord(keys: ServerCode[]) {
+      return postAction(createKeyChordAction(keys));
     },
     vibrate(pattern: VibrationPattern = 50) {
       if (!navigator.vibrate) {
@@ -60,7 +62,7 @@ async function postAction(action: ServerAction): Promise<ApiResponse> {
     throw new Error(`Executing action failed: ${response.status}`);
   }
 
-  return response.json().catch(() => ({ ok: true } as ApiResponse));
+  return response.json().catch(() => ({ ok: true }) as ApiResponse);
 }
 
 function buildHeaders(): HeadersInit {

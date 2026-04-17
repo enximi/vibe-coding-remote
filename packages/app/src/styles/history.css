@@ -68,6 +68,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
 }
 
@@ -79,7 +83,7 @@
   font-size: 13px;
   color: var(--placeholder);
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
 .history-text {
@@ -101,7 +105,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .history-delete-btn:hover,
@@ -109,5 +115,3 @@
   background-color: var(--btn-hover);
   color: #ff453a;
 }
-
-

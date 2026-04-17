@@ -1,8 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { Preferences } from '../hooks/usePreferences';
-import type { ConnectionStatus } from '../hooks/useConnectionState';
-import { useContinuousTrigger, type DockAction } from '../hooks/useContinuousTrigger';
-import { DOCK_ACTION_DEFINITIONS } from './dockActions';
 import {
   BackspaceIcon,
   CtrlCIcon,
@@ -14,7 +10,11 @@ import {
   SettingsIcon,
   ShiftTabIcon,
   TabIcon,
-} from './icons';
+} from '../../../shared/ui/icons';
+import type { Preferences } from '../../preferences/model/preferences';
+import type { ConnectionStatus } from '../../runtime/model/useConnectionState';
+import { DOCK_ACTION_DEFINITIONS } from '../model/dockActions';
+import { type DockAction, useContinuousTrigger } from '../model/useContinuousTrigger';
 
 type DockActionConfig = {
   actionKey: DockAction;
@@ -55,38 +55,37 @@ export function Dock({
   const measureSendRef = useRef<HTMLButtonElement>(null);
   const measureActionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const actionButtons = useMemo<DockActionConfig[]>(
-    () => {
-      const iconByKey: Record<keyof Preferences['dockButtons'], React.ReactNode> = {
-        enter: <EnterIcon width={20} height={20} />,
-        tab: <TabIcon width={20} height={20} />,
-        shiftTab: <ShiftTabIcon width={20} height={20} />,
-        ctrlC: <CtrlCIcon width={20} height={20} />,
-        ctrlV: <CtrlVIcon width={20} height={20} />,
-        pasteNewline: <PasteNewlineIcon width={20} height={20} />,
-        backspace: <BackspaceIcon width={20} height={20} />,
-      };
-      const definitionByKey = new Map(DOCK_ACTION_DEFINITIONS.map((definition) => [definition.key, definition]));
+  const actionButtons = useMemo<DockActionConfig[]>(() => {
+    const iconByKey: Record<keyof Preferences['dockButtons'], React.ReactNode> = {
+      enter: <EnterIcon width={20} height={20} />,
+      tab: <TabIcon width={20} height={20} />,
+      shiftTab: <ShiftTabIcon width={20} height={20} />,
+      ctrlC: <CtrlCIcon width={20} height={20} />,
+      ctrlV: <CtrlVIcon width={20} height={20} />,
+      pasteNewline: <PasteNewlineIcon width={20} height={20} />,
+      backspace: <BackspaceIcon width={20} height={20} />,
+    };
+    const definitionByKey = new Map(
+      DOCK_ACTION_DEFINITIONS.map((definition) => [definition.key, definition]),
+    );
 
-      return prefs.dockButtonOrder
-        .map((key) => {
-          const definition = definitionByKey.get(key);
-          if (!definition) {
-            return null;
-          }
+    return prefs.dockButtonOrder
+      .map((key) => {
+        const definition = definitionByKey.get(key);
+        if (!definition) {
+          return null;
+        }
 
-          return {
-            actionKey: definition.actionKey,
-            ariaLabel: definition.ariaLabel,
-            isContinuous: definition.isContinuous,
-            isVisible: prefs.dockButtons[key] !== false,
-            icon: iconByKey[key],
-          };
-        })
-        .filter((button): button is DockActionConfig => button !== null);
-    },
-    [prefs.dockButtons, prefs.dockButtonOrder],
-  );
+        return {
+          actionKey: definition.actionKey,
+          ariaLabel: definition.ariaLabel,
+          isContinuous: definition.isContinuous,
+          isVisible: prefs.dockButtons[key] !== false,
+          icon: iconByKey[key],
+        };
+      })
+      .filter((button): button is DockActionConfig => button !== null);
+  }, [prefs.dockButtons, prefs.dockButtonOrder]);
   const visibleActionButtons = actionButtons.filter((button) => button.isVisible);
   const dockActionButtons = visibleActionButtons.slice(0, dockVisibleActionCount);
   const overflowActionButtons = visibleActionButtons.slice(dockVisibleActionCount);
@@ -105,7 +104,9 @@ export function Dock({
     const gap = getGapWidth(measureDock);
     const settingsWidth = getOuterWidth(settingsButton);
     const firstDividerWidth = visibleActionButtons.length > 0 ? getOuterWidth(firstDivider) : 0;
-    const actionWidths = visibleActionButtons.map((_, index) => getOuterWidth(measureActionRefs.current[index]));
+    const actionWidths = visibleActionButtons.map((_, index) =>
+      getOuterWidth(measureActionRefs.current[index]),
+    );
     const overflowWidth = getOuterWidth(measureOverflowRef.current);
     const sendDividerWidth = hasSendButton ? getOuterWidth(measureSendDividerRef.current) : 0;
     const sendWidth = hasSendButton ? getOuterWidth(measureSendRef.current) : 0;
@@ -135,12 +136,14 @@ export function Dock({
       }
     }
 
-    setDockVisibleActionCount((currentCount) => (currentCount === nextVisibleCount ? currentCount : nextVisibleCount));
+    setDockVisibleActionCount((currentCount) =>
+      currentCount === nextVisibleCount ? currentCount : nextVisibleCount,
+    );
   }, [hasSendButton, visibleActionButtons]);
 
   useLayoutEffect(() => {
     setDockVisibleActionCount(visibleActionButtons.length);
-  }, [visibleActionButtons.length, hasSendButton]);
+  }, [visibleActionButtons.length]);
 
   useLayoutEffect(() => {
     measureDockVisibleActionCount();
@@ -223,7 +226,13 @@ export function Dock({
         {visibleActionButtons.length > 0 && <div className="dock-divider" />}
 
         {dockActionButtons.map((button) => (
-          <DockActionButton key={button.actionKey} {...button} disabled={status !== 'workable'} variant="dock" vibrationEnabled={prefs.vibrationEnabled} />
+          <DockActionButton
+            key={button.actionKey}
+            {...button}
+            disabled={status !== 'workable'}
+            variant="dock"
+            vibrationEnabled={prefs.vibrationEnabled}
+          />
         ))}
 
         {overflowActionButtons.length > 0 && (
@@ -249,7 +258,7 @@ export function Dock({
             </button>
 
             {isOverflowOpen && (
-              <div className="dock-overflow-popover" role="group" aria-label="更多快捷操作">
+              <div className="dock-overflow-popover">
                 <div
                   className="dock-overflow-grid"
                   style={{
@@ -331,7 +340,12 @@ export function Dock({
           <MoreIcon width={20} height={20} />
         </button>
         <div ref={measureSendDividerRef} className="dock-divider" />
-        <button ref={measureSendRef} className="dock-btn dock-btn--primary" type="button" tabIndex={-1}>
+        <button
+          ref={measureSendRef}
+          className="dock-btn dock-btn--primary"
+          type="button"
+          tabIndex={-1}
+        >
           <SendIcon width={20} height={20} />
         </button>
       </div>
@@ -347,8 +361,16 @@ function DockActionButton({
   disabled,
   variant,
   vibrationEnabled,
-}: DockActionConfig & { disabled?: boolean; variant: 'dock' | 'popover'; vibrationEnabled: boolean }) {
-  const { triggerCount, ...triggerProps } = useContinuousTrigger(actionKey, isContinuous, vibrationEnabled);
+}: DockActionConfig & {
+  disabled?: boolean;
+  variant: 'dock' | 'popover';
+  vibrationEnabled: boolean;
+}) {
+  const { triggerCount, ...triggerProps } = useContinuousTrigger(
+    actionKey,
+    isContinuous,
+    vibrationEnabled,
+  );
 
   const mergedProps = disabled ? {} : triggerProps;
 
@@ -368,7 +390,9 @@ function DockActionButton({
       {...mergedProps}
     >
       {icon}
-      <div className={`combo-counter ${variant === 'popover' ? 'combo-counter--popover' : ''} ${triggerCount > 1 ? 'visible' : ''}`}>
+      <div
+        className={`combo-counter ${variant === 'popover' ? 'combo-counter--popover' : ''} ${triggerCount > 1 ? 'visible' : ''}`}
+      >
         {triggerCount > 1 && <span className="combo-number">x{triggerCount}</span>}
       </div>
     </button>

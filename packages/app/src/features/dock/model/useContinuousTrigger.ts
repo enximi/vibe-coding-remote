@@ -1,5 +1,6 @@
+import type { VibeCodingRemoteBridge } from '@vibe-coding-remote/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useBridge } from '../features/runtime/BridgeContext';
+import { useBridge } from '../../runtime/bridge/BridgeContext';
 
 const CONTINUOUS_TRIGGER_DELAY_MS = 450;
 const CONTINUOUS_TRIGGER_INTERVAL_MS = 100;
@@ -16,7 +17,11 @@ export type DockAction =
   | 'paste-newline'
   | 'backspace';
 
-export function useContinuousTrigger(action: DockAction, isContinuous: boolean, vibrationEnabled: boolean = true) {
+export function useContinuousTrigger(
+  action: DockAction,
+  isContinuous: boolean,
+  vibrationEnabled: boolean = true,
+) {
   const bridge = useBridge();
   const [triggerCount, setTriggerCount] = useState(0);
   const intervalRef = useRef<number | null>(null);
@@ -33,10 +38,10 @@ export function useContinuousTrigger(action: DockAction, isContinuous: boolean, 
     };
   }, []);
 
-  const incrementCount = () => {
+  const incrementCount = useCallback(() => {
     countRef.current += 1;
     setTriggerCount(countRef.current);
-  };
+  }, []);
 
   const fireAction = useCallback(
     (vibration: number | number[]) => {
@@ -46,7 +51,7 @@ export function useContinuousTrigger(action: DockAction, isContinuous: boolean, 
       void executeDockAction(bridge, action).catch(() => undefined);
       incrementCount();
     },
-    [action, bridge, vibrationEnabled],
+    [action, bridge, incrementCount, vibrationEnabled],
   );
 
   const start = useCallback(
@@ -67,10 +72,7 @@ export function useContinuousTrigger(action: DockAction, isContinuous: boolean, 
         window.setTimeout(() => {
           isFiringRef.current = false;
         }, SINGLE_TRIGGER_LOCK_MS);
-        fadeoutRef.current = window.setTimeout(
-          () => setTriggerCount(0),
-          SINGLE_TRIGGER_FADEOUT_MS,
-        );
+        fadeoutRef.current = window.setTimeout(() => setTriggerCount(0), SINGLE_TRIGGER_FADEOUT_MS);
         return;
       }
 
@@ -121,31 +123,28 @@ export function useContinuousTrigger(action: DockAction, isContinuous: boolean, 
   };
 }
 
-async function executeDockAction(
-  bridge: ReturnType<typeof useBridge>,
-  action: DockAction,
-) {
+async function executeDockAction(bridge: VibeCodingRemoteBridge, action: DockAction) {
   switch (action) {
     case 'enter':
-      await bridge.sendKey('enter');
+      await bridge.sendKeyChord(['Enter']);
       break;
     case 'tab':
-      await bridge.sendKey('tab');
+      await bridge.sendKeyChord(['Tab']);
       break;
     case 'shift-tab':
-      await bridge.sendShortcut('shift-tab');
+      await bridge.sendKeyChord(['ShiftLeft', 'Tab']);
       break;
     case 'ctrl-c':
-      await bridge.sendShortcut('ctrl-c');
+      await bridge.sendKeyChord(['ControlLeft', 'KeyC']);
       break;
     case 'ctrl-v':
-      await bridge.sendShortcut('ctrl-v');
+      await bridge.sendKeyChord(['ControlLeft', 'KeyV']);
       break;
     case 'paste-newline':
-      await bridge.pasteText('\n');
+      await bridge.inputText('\n');
       break;
     case 'backspace':
-      await bridge.sendKey('backspace');
+      await bridge.sendKeyChord(['Backspace']);
       break;
   }
 }

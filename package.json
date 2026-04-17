@@ -11,10 +11,13 @@
     "dev:server": "cargo run -p vibe-coding-remote-server -- serve",
     "gen:types": "cargo run -p vibe-coding-remote-server -- export-types",
     "typecheck": "pnpm -w exec tsc -p packages/shared/tsconfig.json --noEmit && pnpm -w exec tsc -p packages/app/tsconfig.json --noEmit && pnpm --filter @vibe-coding-remote/web run typecheck",
+    "lint:frontend": "pnpm exec biome check apps packages package.json",
+    "format:frontend": "pnpm exec biome check --write apps packages package.json",
     "build:web": "pnpm --filter @vibe-coding-remote/web run build",
     "build:server": "cargo build -p vibe-coding-remote-server --release"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
     "typescript": "~6.0.2"
   }
 }

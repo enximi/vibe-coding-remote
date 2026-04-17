@@ -1,13 +1,17 @@
-import type { ServerAction, ServerKeyName, ServerShortcut } from '../types/server';
+import type { KeyChord, ServerAction, ServerCode } from '../types/server';
 
-export function createSendKeyAction(key: ServerKeyName): ServerAction {
-  return { type: 'send-key', key };
+export function createInputTextAction(text: string): ServerAction {
+  return { type: 'input-text', text };
 }
 
-export function createSendShortcutAction(shortcut: ServerShortcut): ServerAction {
-  return { type: 'send-shortcut', shortcut };
+export function createKeyChord(keys: ServerCode[]): KeyChord {
+  return { keys };
 }
 
-export function createPasteTextAction(text: string): ServerAction {
-  return { type: 'paste-text', text };
+export function createKeySequenceAction(sequence: KeyChord[]): ServerAction {
+  return { type: 'key-sequence', sequence };
+}
+
+export function createKeyChordAction(keys: ServerCode[]): ServerAction {
+  return createKeySequenceAction([createKeyChord(keys)]);
 }

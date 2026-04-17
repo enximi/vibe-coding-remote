@@ -5,39 +5,32 @@ import {
   SERVER_AUTH_TOKEN_QUERY_PARAM,
   SERVER_ENDPOINT_QUERY_PARAM,
 } from '../constants/network';
-import {
-  SERVER_AUTH_TOKEN_STORAGE_KEY,
-  SERVER_ENDPOINT_STORAGE_KEY,
-} from '../constants/storage';
+import { SERVER_AUTH_TOKEN_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY } from '../constants/storage';
 
 export function resolveConfiguredActionEndpoint(): string | null {
   const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
-    readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
   return resolveActionEndpoint(candidate);
 }
 
 export function resolveConfiguredAuthCheckEndpoint(): string | null {
   const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
-    readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
   return resolveAuthCheckEndpoint(candidate);
 }
 
 export function resolveConfiguredHealthcheckEndpoint(): string | null {
   const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ??
-    readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
+    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
 
   return resolveHealthcheckEndpoint(candidate);
 }
 
 export function resolveConfiguredAuthToken(): string | null {
   return (
-    readPresetValue(SERVER_AUTH_TOKEN_QUERY_PARAM) ??
-    readStoredValue(SERVER_AUTH_TOKEN_STORAGE_KEY)
+    readPresetValue(SERVER_AUTH_TOKEN_QUERY_PARAM) ?? readStoredValue(SERVER_AUTH_TOKEN_STORAGE_KEY)
   );
 }
 
@@ -147,8 +140,7 @@ function normalizeActionPath(pathname: string): string {
 
   if (basePath.endsWith(DEFAULT_HEALTHCHECK_PATH)) {
     return (
-      basePath.slice(0, basePath.length - DEFAULT_HEALTHCHECK_PATH.length) +
-      DEFAULT_ACTION_API_PATH
+      basePath.slice(0, basePath.length - DEFAULT_HEALTHCHECK_PATH.length) + DEFAULT_ACTION_API_PATH
     );
   }
 

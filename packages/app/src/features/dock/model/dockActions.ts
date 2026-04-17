@@ -1,5 +1,5 @@
-import type { DockAction } from '../hooks/useContinuousTrigger';
-import type { DockButtonKey } from '../hooks/usePreferences';
+import type { DockButtonKey } from '../../preferences/model/preferences';
+import type { DockAction } from './useContinuousTrigger';
 
 export type DockActionDefinition = {
   key: DockButtonKey;

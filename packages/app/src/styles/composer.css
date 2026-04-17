@@ -19,7 +19,7 @@
 }
 
 .composer-wrapper::after {
-  content: '';
+  content: "";
   flex: 1;
 }
 

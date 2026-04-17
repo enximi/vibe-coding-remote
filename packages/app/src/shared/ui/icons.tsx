@@ -1,18 +1,18 @@
 import {
+  ClipboardPaste,
+  Copy,
   CornerDownLeft,
   Delete,
   Ellipsis,
   GripVertical,
-  SendHorizontal,
-  Settings2,
-  X,
-  Copy,
-  ClipboardPaste,
+  type LucideProps,
   Monitor,
-  Sun,
   Moon,
   ScanLine,
-  type LucideProps,
+  SendHorizontal,
+  Settings2,
+  Sun,
+  X,
 } from 'lucide-react';
 
 type IconProps = LucideProps;
@@ -50,6 +50,8 @@ export function CtrlVIcon(props: IconProps) {
 export function TabIcon(props: IconProps) {
   return (
     <svg
+      aria-hidden="true"
+      focusable="false"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -72,6 +74,8 @@ export function EnterIcon(props: IconProps) {
 export function ShiftTabIcon(props: IconProps) {
   return (
     <svg
+      aria-hidden="true"
+      focusable="false"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -90,6 +94,8 @@ export function ShiftTabIcon(props: IconProps) {
 export function PasteNewlineIcon(props: IconProps) {
   return (
     <svg
+      aria-hidden="true"
+      focusable="false"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -125,4 +131,3 @@ export function GripIcon(props: IconProps) {
 export function MoreIcon(props: IconProps) {
   return <Ellipsis strokeWidth={STROKE_WIDTH} {...props} />;
 }
-

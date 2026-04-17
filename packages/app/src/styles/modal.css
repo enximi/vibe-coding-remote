@@ -55,7 +55,7 @@ dialog.modal.modal-closing::backdrop {
   }
 }
 
-:root[data-theme='dark'] .modal-content {
+:root[data-theme="dark"] .modal-content {
   box-shadow:
     0 -12px 48px rgba(0, 0, 0, 0.5),
     0 -4px 16px rgba(0, 0, 0, 0.3);
@@ -65,17 +65,27 @@ dialog.modal.modal-closing::backdrop {
   display: none;
 }
 
-.qr-modal-backdrop {
+.qr-modal-layer {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+
+.qr-modal-backdrop {
+  position: absolute;
+  inset: 0;
   background: rgba(0, 0, 0, 0.36);
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .qr-modal-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   width: 100%;

@@ -1,10 +1,10 @@
 @import url("https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.1.0/style.css");
 
-@import './tokens.css';
-@import './base.css';
-@import './composer.css';
-@import './dock.css';
-@import './modal.css';
-@import './settings.css';
-@import './history.css';
-@import './responsive.css';
+@import "./tokens.css";
+@import "./base.css";
+@import "./composer.css";
+@import "./dock.css";
+@import "./modal.css";
+@import "./settings.css";
+@import "./history.css";
+@import "./responsive.css";

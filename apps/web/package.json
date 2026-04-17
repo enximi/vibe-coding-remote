@@ -1,7 +1,7 @@
 {
   "name": "@vibe-coding-remote/web",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Web shell for Vibe Coding Remote.",
   "type": "module",
   "scripts": {

@@ -82,8 +82,7 @@ vibe-coding-remote/
 ├─ apps/
 │  ├─ web/                  # Web 壳：Vite dev server + 手机浏览器入口
 ├─ packages/
-│  ├─ app/                  # 共享 React UI、组件、hooks、样式
-│  └─ shared/               # 共享类型、常量、桥接接口
+│  ├─ app/                  # 共享 React UI、状态模型、组件、样式
 ├─ crates/
 │  └─ server/               # Rust 本地服务：API、输入执行、局域网访问地址输出
 └─ ...
@@ -119,13 +118,14 @@ pnpm run dev:server
 开发时手机访问：
 
 ```text
-http://你的电脑局域网IP:5173
+https://你的电脑局域网IP:5173
 ```
 
 这时：
 
 - 页面资源来自 Vite
 - `/api` 由 Vite 代理到 Rust `8765`
+- 如果本地不存在 `.cert/dev-cert.pem` 和 `.cert/dev-key.pem`，Vite 会回退为普通 HTTP 开发模式
 
 ### 3. 构建独立桌面服务
 
@@ -161,6 +161,50 @@ target/release/vibe-coding-remote.exe
 - `server` 只提供 API
 - `web` 需要独立部署
 - `server` 已开启 CORS，允许跨源前端直接访问
+
+### GitHub Pages 部署
+
+仓库已经包含 GitHub Pages workflow：
+
+- [.github/workflows/deploy-pages.yml](./.github/workflows/deploy-pages.yml)
+
+默认行为是：
+
+1. push 到 `main`
+2. GitHub Actions 自动构建 `apps/web`
+3. 产物部署到 GitHub Pages
+
+第一次使用时，还需要在 GitHub 仓库设置里把 Pages 的构建来源切到：
+
+```text
+Settings -> Pages -> Source -> GitHub Actions
+```
+
+如果仓库地址是：
+
+```text
+https://github.com/enximi/vibe-coding-remote
+```
+
+那么默认 Pages 地址会是：
+
+```text
+https://enximi.github.io/vibe-coding-remote/
+```
+
+当前 `vite.config.ts` 会在 GitHub Actions 中自动把 `base` 设置为仓库名路径，因此项目页模式可以直接工作。
+
+如果以后改成自定义域名，可以在构建时传入：
+
+```text
+VITE_BASE_PATH=/
+```
+
+需要注意：
+
+- GitHub Pages 是 HTTPS
+- 浏览器通常不允许 HTTPS 页面直接请求 HTTP 的本地 API
+- 所以如果前端部署在 Pages，上游 `server` 最好也提供 HTTPS，或者通过 HTTPS 隧道暴露给手机浏览器
 
 ## API
 

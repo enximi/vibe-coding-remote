@@ -139,7 +139,13 @@ pnpm run dev:web
 另开一个终端，再启动本地 Rust 服务：
 
 ```powershell
-pnpm run dev:server
+just dev-server
+```
+
+如果要让手机从局域网访问本机 server，可以用：
+
+```powershell
+just dev-server-lan
 ```
 
 开发时手机访问：
@@ -157,7 +163,7 @@ https://你的电脑局域网IP:5173
 ### 3. 构建独立桌面服务
 
 ```powershell
-pnpm run build:server
+just build-server
 ```
 
 这会构建 Rust release 版本地 API 服务。

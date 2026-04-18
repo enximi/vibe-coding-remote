@@ -4,7 +4,7 @@ import { useComposerInput } from '../model/useComposerInput';
 interface ComposerProps {
   onTextChange?: (hasText: boolean) => void;
   onSendActionStart?: () => void;
-  onSendActionEnd?: () => void;
+  onSendActionComplete?: (success: boolean) => void;
 }
 
 export interface ComposerHandle {
@@ -14,11 +14,11 @@ export interface ComposerHandle {
 }
 
 export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer(
-  { onTextChange, onSendActionStart, onSendActionEnd },
+  { onTextChange, onSendActionStart, onSendActionComplete },
   ref,
 ) {
   const composerInput = useComposerInput({
-    onSendActionEnd,
+    onSendActionComplete,
     onSendActionStart,
     onTextChange,
   });

@@ -27,22 +27,22 @@ import {
 import { DOCK_ACTION_DEFINITIONS } from '../../../dock/model/dockActions';
 import {
   type DockButtonKey,
-  type DockButtons,
   normalizeDockButtonOrder,
   type Preferences,
 } from '../../../preferences/model/preferences';
-import type { SetPreferences } from '../../../preferences/model/usePreferencesStore';
 
 interface DockSettingsSectionProps {
   prefs: Preferences;
-  setPrefs: SetPreferences;
   visibleDockActionCount: number | null;
+  onDockButtonOrderChange: (order: DockButtonKey[]) => void;
+  onToggleDockButton: (key: DockButtonKey) => void;
 }
 
 export function DockSettingsSection({
   prefs,
-  setPrefs,
   visibleDockActionCount,
+  onDockButtonOrderChange,
+  onToggleDockButton,
 }: DockSettingsSectionProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const dockActionDefinitions = useMemo(
@@ -68,35 +68,20 @@ export function DockSettingsSection({
   const pinnedDockButtonCount = visibleDockActionCount ?? enabledDockButtons.length;
   const pinnedDockButtons = new Set(enabledDockButtons.slice(0, pinnedDockButtonCount));
 
-  const toggleDockButton = (key: keyof DockButtons) => {
-    setPrefs((prev) => ({
-      ...prev,
-      dockButtons: {
-        ...prev.dockButtons,
-        [key]: !prev.dockButtons[key],
-      },
-    }));
-  };
-
   const handleDockOrderDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) {
       return;
     }
 
-    setPrefs((prev) => {
-      const currentOrder = normalizeDockButtonOrder(prev.dockButtonOrder);
-      const oldIndex = currentOrder.indexOf(active.id as DockButtonKey);
-      const newIndex = currentOrder.indexOf(over.id as DockButtonKey);
+    const currentOrder = normalizeDockButtonOrder(prefs.dockButtonOrder);
+    const oldIndex = currentOrder.indexOf(active.id as DockButtonKey);
+    const newIndex = currentOrder.indexOf(over.id as DockButtonKey);
 
-      if (oldIndex === -1 || newIndex === -1) {
-        return prev;
-      }
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
 
-      return {
-        ...prev,
-        dockButtonOrder: arrayMove(currentOrder, oldIndex, newIndex),
-      };
-    });
+    onDockButtonOrderChange(arrayMove(currentOrder, oldIndex, newIndex));
   };
 
   return (
@@ -132,7 +117,7 @@ export function DockSettingsSection({
                         : 'overflow'
                       : 'hidden'
                   }
-                  onToggle={() => toggleDockButton(key)}
+                  onToggle={() => onToggleDockButton(key)}
                 />
               );
             })}

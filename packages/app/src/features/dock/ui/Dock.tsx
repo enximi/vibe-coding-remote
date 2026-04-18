@@ -10,6 +10,7 @@ interface DockProps {
   onVisibleActionCountChange?: (count: number) => void;
   onMenuClick: () => void;
   onSendClick: () => Promise<void>;
+  isSendPending: boolean;
   isSendingSuccess: boolean;
   hasText: boolean;
 }
@@ -18,12 +19,12 @@ export function Dock({
   onVisibleActionCountChange,
   onMenuClick,
   onSendClick,
+  isSendPending,
   isSendingSuccess,
   hasText,
 }: DockProps) {
   const { prefs } = usePreferences();
   const { status } = useConnection();
-  const [isSending, setIsSending] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const dockRef = useRef<HTMLElement>(null);
 
@@ -83,19 +84,6 @@ export function Dock({
       setIsOverflowOpen(false);
     }
   }, [overflowActionButtons.length, status]);
-
-  const handleSend = async (
-    event: React.PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.preventDefault();
-    if (isSending || !hasText) {
-      return;
-    }
-
-    setIsSending(true);
-    await onSendClick();
-    window.setTimeout(() => setIsSending(false), 350);
-  };
 
   return (
     <>
@@ -176,27 +164,24 @@ export function Dock({
                 'dock-btn',
                 'dock-btn--primary',
                 isSendingSuccess ? 'dock-btn--sent' : '',
-                !hasText ? 'dock-btn--disabled' : '',
+                !hasText || isSendPending ? 'dock-btn--disabled' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
               id="sendBtn"
               type="button"
               aria-label="发送"
-              aria-disabled={!hasText}
+              aria-busy={isSendPending}
+              aria-disabled={!hasText || isSendPending}
               onPointerDown={(event) => {
-                if (hasText) {
-                  void handleSend(event);
-                } else {
-                  event.preventDefault();
-                }
+                event.preventDefault();
               }}
               onClick={(event) => {
-                if (hasText) {
-                  void handleSend(event);
-                } else {
+                if (!hasText || isSendPending) {
                   event.preventDefault();
+                  return;
                 }
+                void onSendClick();
               }}
             >
               <SendIcon width={20} height={20} />

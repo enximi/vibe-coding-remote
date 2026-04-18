@@ -1,12 +1,11 @@
 import type { Preferences } from '../../../preferences/model/preferences';
-import type { SetPreferences } from '../../../preferences/model/usePreferencesStore';
 
 export function FontSizeSettingsSection({
   prefs,
-  setPrefs,
+  onFontSizeChange,
 }: {
   prefs: Preferences;
-  setPrefs: SetPreferences;
+  onFontSizeChange: (fontSize: number) => void;
 }) {
   return (
     <section className="settings-group">
@@ -22,10 +21,7 @@ export function FontSizeSettingsSection({
             value={prefs.fontSize || ''}
             onChange={(event) => {
               const value = parseInt(event.target.value, 10);
-              setPrefs((prev) => ({
-                ...prev,
-                fontSize: Number.isNaN(value) ? 0 : value,
-              }));
+              onFontSizeChange(Number.isNaN(value) ? 0 : value);
             }}
             onBlur={(event) => {
               let value = parseInt(event.target.value, 10);
@@ -33,7 +29,7 @@ export function FontSizeSettingsSection({
                 value = 24;
               }
               value = Math.max(16, Math.min(64, value));
-              setPrefs((prev) => ({ ...prev, fontSize: value }));
+              onFontSizeChange(value);
             }}
             style={{ textAlign: 'right' }}
             aria-label="输入字体大小数值"
@@ -52,9 +48,7 @@ export function FontSizeSettingsSection({
             max={64}
             step={1}
             value={prefs.fontSize}
-            onChange={(event) =>
-              setPrefs((prev) => ({ ...prev, fontSize: Number(event.target.value) }))
-            }
+            onChange={(event) => onFontSizeChange(Number(event.target.value))}
             aria-label="拖动调整字体大小"
           />
           <span className="settings-slider-label" style={{ fontSize: 24 }}>

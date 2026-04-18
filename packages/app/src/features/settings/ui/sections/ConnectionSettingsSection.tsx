@@ -1,5 +1,5 @@
 import { ScanIcon } from '../../../../ui/icons';
-import type { ConnectionStatus } from '../../../runtime/model/useConnectionState';
+import type { ConnectionStatus } from '../../../runtime/model/connectionMachine';
 
 interface ConnectionSettingsSectionProps {
   status: ConnectionStatus;

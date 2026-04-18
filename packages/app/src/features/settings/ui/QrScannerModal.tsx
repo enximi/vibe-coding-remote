@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { CloseIcon } from '../../../ui/icons';
+import { createQrCodeReader } from '../model/qrScanner';
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -42,18 +43,7 @@ export function QrScannerModal({ isOpen, onClose, onScan }: QrScannerModalProps)
       audio: false,
     };
 
-    const scannerPromise = Promise.all([import('@zxing/browser'), import('@zxing/library')])
-      .then(([{ BrowserQRCodeReader }, { BarcodeFormat, DecodeHintType }]) => {
-        const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
-        hints.set(DecodeHintType.TRY_HARDER, true);
-
-        return new BrowserQRCodeReader(hints, {
-          delayBetweenScanAttempts: 120,
-          delayBetweenScanSuccess: 400,
-          tryPlayVideoTimeout: 8000,
-        });
-      })
+    const scannerPromise = createQrCodeReader()
       .then(async (codeReader) => {
         if (!isMounted || !videoRef.current) {
           return;

@@ -1,13 +1,12 @@
 import { DarkThemeIcon, LightThemeIcon, SystemThemeIcon } from '../../../../ui/icons';
 import type { Preferences } from '../../../preferences/model/preferences';
-import type { SetPreferences } from '../../../preferences/model/usePreferencesStore';
 
 export function AppearanceSettingsSection({
   prefs,
-  setPrefs,
+  onThemeChange,
 }: {
   prefs: Preferences;
-  setPrefs: SetPreferences;
+  onThemeChange: (theme: Preferences['theme']) => void;
 }) {
   return (
     <section className="settings-group">
@@ -16,21 +15,21 @@ export function AppearanceSettingsSection({
         <button
           type="button"
           className={prefs.theme === 'system' ? 'active' : ''}
-          onClick={() => setPrefs((prev) => ({ ...prev, theme: 'system' }))}
+          onClick={() => onThemeChange('system')}
         >
           <SystemThemeIcon width={16} height={16} /> 系统
         </button>
         <button
           type="button"
           className={prefs.theme === 'light' ? 'active' : ''}
-          onClick={() => setPrefs((prev) => ({ ...prev, theme: 'light' }))}
+          onClick={() => onThemeChange('light')}
         >
           <LightThemeIcon width={16} height={16} /> 浅色
         </button>
         <button
           type="button"
           className={prefs.theme === 'dark' ? 'active' : ''}
-          onClick={() => setPrefs((prev) => ({ ...prev, theme: 'dark' }))}
+          onClick={() => onThemeChange('dark')}
         >
           <DarkThemeIcon width={16} height={16} /> 深色
         </button>

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { CloseIcon } from '../../../ui/icons';
 import { usePreferences } from '../../preferences/model/PreferencesContext';
-import { useConnection } from '../../runtime/model/ConnectionContext';
-import { parseImportUrl } from '../model/importConfig';
+import { useConnectionConfigController } from '../model/useConnectionConfigController';
 import { useSheetModal } from './hooks/useSheetModal';
 import { QrScannerModal } from './QrScannerModal';
 import {
@@ -28,17 +27,18 @@ export function SettingsModal({
   onHistorySelect,
   visibleDockActionCount,
 }: SettingsModalProps) {
+  const connection = useConnectionConfigController();
   const {
     prefs,
-    setPrefs,
-    serverEndpoint,
-    setServerEndpoint,
-    serverAuthToken,
-    setServerAuthToken,
     clearHistory,
     removeHistory,
+    reorderDockButtons,
+    setEnterBehavior,
+    setFontSize,
+    setTheme,
+    toggleDockButton,
+    toggleVibration,
   } = usePreferences();
-  const { status, checkConnection } = useConnection();
   const {
     dialogRef,
     contentRef,
@@ -48,10 +48,6 @@ export function SettingsModal({
     handleTouchEnd,
     markOpened,
   } = useSheetModal(onClose);
-
-  const [endpointDraft, setEndpointDraft] = useState(serverEndpoint);
-  const [tokenDraft, setTokenDraft] = useState(serverAuthToken);
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -71,38 +67,6 @@ export function SettingsModal({
       dialog.close();
     }
   }, [dialogRef, isOpen, markOpened]);
-
-  useEffect(() => {
-    setEndpointDraft(serverEndpoint);
-  }, [serverEndpoint]);
-
-  useEffect(() => {
-    setTokenDraft(serverAuthToken);
-  }, [serverAuthToken]);
-
-  const handleApplyConfig = useCallback(() => {
-    setServerEndpoint(endpointDraft);
-    setServerAuthToken(tokenDraft);
-    void checkConnection(endpointDraft, tokenDraft);
-  }, [checkConnection, endpointDraft, setServerAuthToken, setServerEndpoint, tokenDraft]);
-
-  const handleQrScan = useCallback(
-    (rawValue: string) => {
-      const parsed = parseImportUrl(rawValue);
-      if (!parsed) {
-        return false;
-      }
-
-      setEndpointDraft(parsed.endpoint);
-      setTokenDraft(parsed.token);
-      setServerEndpoint(parsed.endpoint);
-      setServerAuthToken(parsed.token);
-      void checkConnection(parsed.endpoint, parsed.token);
-      setIsScannerOpen(false);
-      return true;
-    },
-    [checkConnection, setServerAuthToken, setServerEndpoint],
-  );
 
   return (
     <dialog
@@ -144,22 +108,23 @@ export function SettingsModal({
         </div>
 
         <ConnectionSettingsSection
-          status={status}
-          endpointDraft={endpointDraft}
-          tokenDraft={tokenDraft}
-          onEndpointDraftChange={setEndpointDraft}
-          onTokenDraftChange={setTokenDraft}
-          onApply={handleApplyConfig}
-          onOpenScanner={() => setIsScannerOpen(true)}
+          status={connection.status}
+          endpointDraft={connection.endpointDraft}
+          tokenDraft={connection.tokenDraft}
+          onEndpointDraftChange={connection.setEndpointDraft}
+          onTokenDraftChange={connection.setTokenDraft}
+          onApply={connection.applyDrafts}
+          onOpenScanner={connection.openScanner}
         />
-        <AppearanceSettingsSection prefs={prefs} setPrefs={setPrefs} />
-        <EnterBehaviorSettingsSection prefs={prefs} setPrefs={setPrefs} />
-        <FontSizeSettingsSection prefs={prefs} setPrefs={setPrefs} />
-        <FeedbackSettingsSection prefs={prefs} setPrefs={setPrefs} />
+        <AppearanceSettingsSection prefs={prefs} onThemeChange={setTheme} />
+        <EnterBehaviorSettingsSection prefs={prefs} onEnterBehaviorChange={setEnterBehavior} />
+        <FontSizeSettingsSection prefs={prefs} onFontSizeChange={setFontSize} />
+        <FeedbackSettingsSection prefs={prefs} onToggleVibration={toggleVibration} />
         <DockSettingsSection
           prefs={prefs}
-          setPrefs={setPrefs}
           visibleDockActionCount={visibleDockActionCount}
+          onDockButtonOrderChange={reorderDockButtons}
+          onToggleDockButton={toggleDockButton}
         />
         <HistorySettingsSection
           history={prefs.history}
@@ -170,9 +135,9 @@ export function SettingsModal({
       </div>
 
       <QrScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onScan={handleQrScan}
+        isOpen={connection.isScannerOpen}
+        onClose={connection.closeScanner}
+        onScan={connection.handleQrScan}
       />
     </dialog>
   );

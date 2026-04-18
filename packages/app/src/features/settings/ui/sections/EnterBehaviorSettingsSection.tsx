@@ -1,13 +1,12 @@
 import { EnterIcon, SendIcon } from '../../../../ui/icons';
 import type { Preferences } from '../../../preferences/model/preferences';
-import type { SetPreferences } from '../../../preferences/model/usePreferencesStore';
 
 export function EnterBehaviorSettingsSection({
   prefs,
-  setPrefs,
+  onEnterBehaviorChange,
 }: {
   prefs: Preferences;
-  setPrefs: SetPreferences;
+  onEnterBehaviorChange: (enterBehavior: Preferences['enterBehavior']) => void;
 }) {
   return (
     <section className="settings-group">
@@ -16,14 +15,14 @@ export function EnterBehaviorSettingsSection({
         <button
           type="button"
           className={prefs.enterBehavior === 'send' ? 'active' : ''}
-          onClick={() => setPrefs((prev) => ({ ...prev, enterBehavior: 'send' }))}
+          onClick={() => onEnterBehaviorChange('send')}
         >
           <SendIcon width={16} height={16} /> 直接发送
         </button>
         <button
           type="button"
           className={prefs.enterBehavior === 'newline' ? 'active' : ''}
-          onClick={() => setPrefs((prev) => ({ ...prev, enterBehavior: 'newline' }))}
+          onClick={() => onEnterBehaviorChange('newline')}
         >
           <EnterIcon width={16} height={16} /> 换行编写
         </button>

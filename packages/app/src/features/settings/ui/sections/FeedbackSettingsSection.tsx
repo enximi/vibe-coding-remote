@@ -1,12 +1,11 @@
 import type { Preferences } from '../../../preferences/model/preferences';
-import type { SetPreferences } from '../../../preferences/model/usePreferencesStore';
 
 export function FeedbackSettingsSection({
   prefs,
-  setPrefs,
+  onToggleVibration,
 }: {
   prefs: Preferences;
-  setPrefs: SetPreferences;
+  onToggleVibration: () => void;
 }) {
   return (
     <section className="settings-group">
@@ -23,7 +22,7 @@ export function FeedbackSettingsSection({
             className="settings-switch"
             onClick={(event) => {
               event.preventDefault();
-              setPrefs((prev) => ({ ...prev, vibrationEnabled: !prev.vibrationEnabled }));
+              onToggleVibration();
             }}
             aria-label="开启触感震动反馈"
           >

@@ -64,8 +64,34 @@
   - 组装 `BridgeProvider`、`PreferencesProvider`、`ConnectionProvider`
 - [AppShell.tsx](/D:/projects/vibe-coding-remote/packages/app/src/app/ui/AppShell.tsx)
   - 连接 `Composer`、`Dock`、`SettingsModal`
-- [useAppShellState.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellState.ts)
-  - 处理页面级编排状态，例如设置面板开关、发送成功反馈、输入框 ref 协调
+- [appShellState.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/appShellState.ts)
+  - 定义页面编排状态、action 和 reducer
+- [useAppShellController.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellController.ts)
+  - 连接页面级 reducer、composer imperative handle 和用户意图回调
+- [useAppShellEffects.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellEffects.ts)
+  - 承载页面级 DOM 订阅与发送反馈定时器
+
+---
+
+## 架构思想
+
+当前前端按“声明式 UI + 模块级单向数据流 + 明确 effect 边界”组织。
+
+对应原则：
+
+- UI 组件只声明当前状态下应该显示什么
+- 模块级状态通过 `state -> action -> reducer -> state` 更新
+- 网络请求、localStorage、DOM 订阅、定时器、软键盘唤起等外部行为放在 hook effect 层
+- 明确有阶段的流程使用小型状态机，而不是多个布尔值互相制约
+- 展示组件只接收当前值和意图回调，不直接修改模块内部状态对象
+
+这不是为了引入复杂框架，而是让每一类问题落在合适层次：
+
+- 应用级：provider 装配和运行时上下文
+- 模块级：偏好、连接、页面编排等 reducer / machine
+- 流程级：连接检查状态机
+- 组件级：组合式展示组件
+- 副作用级：bridge、fetch、storage、DOM 生命周期
 
 ---
 
@@ -88,7 +114,15 @@
 由 [PreferencesContext.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/preferences/model/PreferencesContext.tsx) 提供，底层实现位于：
 
 - [preferences.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/preferences/model/preferences.ts)
+- [preferencesState.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/preferences/model/preferencesState.ts)
 - [usePreferencesStore.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/preferences/model/usePreferencesStore.ts)
+
+状态更新方式：
+
+- `preferencesState.ts` 定义偏好领域状态、action 和 reducer
+- `usePreferencesStore.ts` 负责把 UI 意图转换为 action
+- localStorage 持久化和主题同步都通过 effect 执行，不进入 reducer
+- 设置面板 section 不再接收通用 `setPrefs`，而是接收 `setTheme`、`setFontSize`、`toggleDockButton` 这类明确意图
 
 当前持久化内容包括：
 
@@ -104,7 +138,11 @@
 
 ### 3. 连接状态
 
-由 [ConnectionContext.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/ConnectionContext.tsx) 提供，底层检查逻辑位于 [useConnectionState.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/useConnectionState.ts)。
+由 [ConnectionContext.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/ConnectionContext.tsx) 提供，底层流程位于：
+
+- [connectionMachine.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/connectionMachine.ts)
+- [useConnectionState.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/useConnectionState.ts)
+- [connectionTasks.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/runtime/model/connectionTasks.ts)
 
 当前状态值：
 
@@ -121,19 +159,32 @@
 3. 再请求 `/api/auth-check`
 4. 根据结果映射为连接错误、认证错误或可工作
 
+流程规则：
+
+- `connectionMachine.ts` 负责合法状态迁移
+- `useConnectionState.ts` 负责调度连接检查、取消旧请求、把异步结果折回状态机 event
+- `connectionTasks.ts` 负责真正的 fetch task 执行
+- 请求使用 request id 忽略过期结果，避免旧请求覆盖新配置的状态
+
 ### 4. 页面编排状态
 
-由 [useAppShellState.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellState.ts) 管理。
+由 [appShellState.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/appShellState.ts)、[useAppShellController.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellController.ts) 和 [useAppShellEffects.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellEffects.ts) 管理。
 
 当前负责：
 
 - 设置面板开关
-- 发送成功反馈
+- 发送中锁定与成功反馈
 - 当前输入是否为空
 - dock 当前可直接显示的按钮数量
 - composer ref 协调
 - 点击页面空白重新聚焦输入框
 - 历史记录回填后关闭设置并聚焦
+
+职责划分：
+
+- `appShellState.ts` 只保存页面编排视图状态和 reducer
+- `useAppShellController.ts` 负责组合 reducer、composer imperative handle 和页面意图
+- `useAppShellEffects.ts` 负责 DOM 订阅、全局聚焦和发送反馈定时器等副作用边界
 
 ---
 
@@ -145,12 +196,18 @@
 
 - [Composer.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/ui/Composer.tsx)
 - [draft.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/draft.ts)
+- [composerState.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/composerState.ts)
+- [useComposerCommands.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerCommands.ts)
+- [useComposerEffects.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerEffects.ts)
 - [useComposerInput.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerInput.ts)
 
 当前职责：
 
 - `Composer.tsx` 只保留 textarea 渲染和说明文案
-- `useComposerInput.ts` 集中处理编辑区文本、焦点恢复、`enterkeyhint` 同步、发送行为与草稿持久化
+- `composerState.ts` 负责编辑区文本与输入法组合态
+- `useComposerCommands.ts` 负责发送命令、远程按键与本地文本替换
+- `useComposerEffects.ts` 负责草稿持久化、聚焦恢复、`enterkeyhint` 和 textarea 高度同步
+- `useComposerInput.ts` 作为编排层，把状态、effect 与命令接到组件接口上
 - 在空文本时把 `Backspace` 和 `Enter` 直接转发为远程动作
 - 在非空文本时执行 `input-text`
 - 发送成功后写入历史并清空草稿
@@ -187,6 +244,8 @@
 
 文件：
 
+- [useConnectionConfigController.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/model/useConnectionConfigController.ts)
+- [settingsConnectionState.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/model/settingsConnectionState.ts)
 - [SettingsModal.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/ui/SettingsModal.tsx)
 - [sections/](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/ui/sections)
 - [useSheetModal.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/ui/hooks/useSheetModal.ts)
@@ -195,6 +254,18 @@
 - [historyTime.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/settings/model/historyTime.ts)
 
 当前设置面板采用 bottom sheet 形式，内部已拆成独立 section。
+
+连接配置额外约束：
+
+- `settingsConnectionState.ts` 只保存 endpoint/token 草稿和扫码弹层开关
+- `useConnectionConfigController.ts` 负责把草稿保存到 preferences，并触发连接检查
+- `SettingsModal.tsx` 只负责把连接控制器和各个 section 组合起来
+
+设置面板 section 的约束：
+
+- section 只接收当前值和明确意图回调
+- section 不直接拿到通用偏好 setter
+- 偏好更新统一回到 preferences reducer
 
 当前包含：
 
@@ -278,7 +349,9 @@
 
 - 主界面保持单页，不拆出额外“错误页”
 - 高频输入路径优先，设置与配置放进 sheet
-- 运行时状态尽量 provider 化，避免跨层 prop drilling
+- 运行时上下文尽量 provider 化，避免跨层 prop drilling
+- 模块级状态统一走 action / reducer / machine，不让 UI 组件直接改状态对象
+- 外部副作用只放在 hook effect 和 bridge/task 边界里
 - feature 内部保留自己的 `model/` 与 `ui/` 边界
 - 跨 feature 的通用资源放到更明确的基础层，不再保留模糊的 `shared/`
 
@@ -290,7 +363,8 @@
 
 - `styles/` 仍然主要按区域文件拆分，而不是严格按 feature 共置；这是当前有意保留的折中
 - [Dock.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/ui/Dock.tsx) 仍然保留 overflow popover 与发送按钮编排，暂未继续拆成更细的 `ui/` 组件
-- [useComposerInput.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerInput.ts) 现在已经是编辑区行为中心，后续若继续扩展输入法兼容逻辑，可以再按“焦点管理 / 发送执行 / 草稿持久化”进一步分层
+- [useComposerInput.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerInput.ts) 现在只做编排，但输入法兼容和软键盘策略若继续扩展，仍可能再拆出更细的移动端适配层
+- `Composer` 的发送流程目前还没有单独状态机，因为它的阶段较少；如果后续增加排队、失败重试或发送取消，再拆成流程级 machine
 
 ---
 

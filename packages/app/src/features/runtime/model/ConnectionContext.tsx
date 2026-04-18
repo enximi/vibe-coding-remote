@@ -1,6 +1,7 @@
 import { createContext, type PropsWithChildren, useContext } from 'react';
 import { usePreferences } from '../../preferences/model/PreferencesContext';
-import { type ConnectionStatus, useConnectionState } from './useConnectionState';
+import type { ConnectionStatus } from './connectionMachine';
+import { useConnectionState } from './useConnectionState';
 
 export type ConnectionContextValue = {
   status: ConnectionStatus;

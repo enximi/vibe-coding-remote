@@ -2,10 +2,10 @@ import { Composer } from '../../features/composer/ui/Composer';
 import { Dock } from '../../features/dock/ui/Dock';
 import { useViewportOffset } from '../../features/runtime/model/useViewportOffset';
 import { SettingsModal } from '../../features/settings/ui/SettingsModal';
-import { useAppShellState } from '../model/useAppShellState';
+import { useAppShellController } from '../model/useAppShellController';
 
 export function AppShell() {
-  const controller = useAppShellState();
+  const controller = useAppShellController();
   useViewportOffset();
 
   return (
@@ -21,8 +21,8 @@ export function AppShell() {
         <Composer
           ref={controller.composerRef}
           onTextChange={controller.setHasText}
-          onSendActionStart={controller.startSendFeedback}
-          onSendActionEnd={controller.stopSendFeedback}
+          onSendActionStart={controller.handleSendActionStart}
+          onSendActionComplete={controller.handleSendActionComplete}
         />
         <button className="submit-proxy" type="submit" aria-hidden="true" tabIndex={-1}>
           发送
@@ -31,6 +31,7 @@ export function AppShell() {
 
       <Dock
         hasText={controller.hasText}
+        isSendPending={controller.isSendPending}
         isSendingSuccess={controller.isSendingSuccess}
         onVisibleActionCountChange={controller.setVisibleDockActionCount}
         onMenuClick={controller.openSettings}

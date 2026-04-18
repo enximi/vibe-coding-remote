@@ -1,25 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
+import { savePreferences, saveServerAuthToken, saveServerEndpoint } from './preferences';
 import {
-  appendHistory,
-  clearHistoryItems,
-  loadPreferences,
-  loadServerAuthToken,
-  loadServerEndpoint,
-  type Preferences,
-  removeHistoryItem,
-  savePreferences,
-  saveServerAuthToken,
-  saveServerEndpoint,
-} from './preferences';
-
-export type SetPreferences = (update: Preferences | ((prev: Preferences) => Preferences)) => void;
+  createInitialPreferencesState,
+  type PreferencesAction,
+  preferencesReducer,
+} from './preferencesState';
 
 export type PreferencesStore = ReturnType<typeof usePreferencesStore>;
 
 export function usePreferencesStore() {
-  const [prefs, setPrefsState] = useState<Preferences>(loadPreferences);
-  const [serverEndpoint, setServerEndpointState] = useState(loadServerEndpoint);
-  const [serverAuthToken, setServerAuthTokenState] = useState(loadServerAuthToken);
+  const [state, dispatch] = useReducer(
+    preferencesReducer,
+    undefined,
+    createInitialPreferencesState,
+  );
+  const { prefs, serverEndpoint, serverAuthToken } = state;
 
   useEffect(() => {
     if (prefs.theme === 'system') {
@@ -30,49 +25,39 @@ export function usePreferencesStore() {
     document.documentElement.setAttribute('data-theme', prefs.theme);
   }, [prefs.theme]);
 
-  const setPrefs: SetPreferences = (update) => {
-    setPrefsState((prev) => {
-      const next = typeof update === 'function' ? update(prev) : update;
-      savePreferences(next);
-      return next;
-    });
-  };
+  useEffect(() => {
+    savePreferences(prefs);
+  }, [prefs]);
 
-  const addHistory = (text: string) => {
-    setPrefs((prev) => {
-      return { ...prev, history: appendHistory(prev.history, text) };
-    });
-  };
+  useEffect(() => {
+    saveServerEndpoint(serverEndpoint);
+  }, [serverEndpoint]);
 
-  const removeHistory = (time: number) => {
-    setPrefs((prev) => {
-      return { ...prev, history: removeHistoryItem(prev.history, time) };
-    });
-  };
+  useEffect(() => {
+    saveServerAuthToken(serverAuthToken);
+  }, [serverAuthToken]);
 
-  const clearHistory = () => {
-    setPrefs((prev) => ({ ...prev, history: clearHistoryItems() }));
-  };
-
-  const setServerEndpoint = (value: string) => {
-    const normalizedValue = saveServerEndpoint(value);
-    setServerEndpointState(normalizedValue);
-  };
-
-  const setServerAuthToken = (value: string) => {
-    const normalizedValue = saveServerAuthToken(value);
-    setServerAuthTokenState(normalizedValue);
+  const send = (action: PreferencesAction) => {
+    dispatch(action);
   };
 
   return {
     prefs,
-    setPrefs,
-    addHistory,
-    removeHistory,
-    clearHistory,
     serverEndpoint,
-    setServerEndpoint,
     serverAuthToken,
-    setServerAuthToken,
+    addHistory: (text: string) => send({ type: 'history_added', text }),
+    clearHistory: () => send({ type: 'history_cleared' }),
+    removeHistory: (time: number) => send({ type: 'history_removed', time }),
+    reorderDockButtons: (order: typeof prefs.dockButtonOrder) =>
+      send({ type: 'dock_button_order_changed', order }),
+    setEnterBehavior: (enterBehavior: typeof prefs.enterBehavior) =>
+      send({ type: 'enter_behavior_changed', enterBehavior }),
+    setFontSize: (fontSize: number) => send({ type: 'font_size_changed', fontSize }),
+    setServerAuthToken: (token: string) => send({ type: 'server_auth_token_changed', token }),
+    setServerEndpoint: (endpoint: string) => send({ type: 'server_endpoint_changed', endpoint }),
+    setTheme: (theme: typeof prefs.theme) => send({ type: 'theme_changed', theme }),
+    toggleDockButton: (key: keyof typeof prefs.dockButtons) =>
+      send({ type: 'dock_button_toggled', key }),
+    toggleVibration: () => send({ type: 'vibration_toggled' }),
   };
 }

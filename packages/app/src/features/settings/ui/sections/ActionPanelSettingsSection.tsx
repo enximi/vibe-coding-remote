@@ -83,17 +83,27 @@ export function ActionPanelSettingsSection({
         底部面板是一个可滚动的二维按钮区域。拖动动作到格子里，也可以把已有按钮拖到其他格子；空格会保留。
       </p>
 
-      <label className="settings-card-row action-panel-visible-row-control">
+      <div className="settings-card-row action-panel-visible-row-control">
         <span className="settings-card-label">面板高度</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          value={actionPanel.visibleRows}
-          onChange={(event) => onVisibleRowsChange(event.target.valueAsNumber)}
-        />
-        <span className="settings-card-suffix">行</span>
-      </label>
+        <div className="action-panel-stepper" role="group" aria-label="调整面板高度">
+          <button
+            type="button"
+            aria-label="减少面板高度"
+            disabled={actionPanel.visibleRows <= 1}
+            onClick={() => onVisibleRowsChange(actionPanel.visibleRows - 1)}
+          >
+            −
+          </button>
+          <span className="action-panel-stepper-value">{actionPanel.visibleRows} 行</span>
+          <button
+            type="button"
+            aria-label="增加面板高度"
+            onClick={() => onVisibleRowsChange(actionPanel.visibleRows + 1)}
+          >
+            +
+          </button>
+        </div>
+      </div>
 
       <div className="action-panel-layout-tools">
         <button type="button" onClick={() => onRowInsert(0)}>

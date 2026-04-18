@@ -2,11 +2,18 @@
   --action-panel-cell-size: 54px;
   --action-panel-gap: 10px;
   --action-panel-padding: 14px;
+  --action-panel-content-width: calc(
+    (var(--action-panel-columns) * var(--action-panel-cell-size)) +
+      ((var(--action-panel-columns) - 1) * var(--action-panel-gap))
+  );
   position: fixed;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom, 16px) + 16px + var(--keyboard-offset));
   transform: translateX(-50%);
-  width: min(calc(100vw - 24px), 620px);
+  width: min(
+    calc(100vw - 24px),
+    calc(var(--action-panel-content-width) + (var(--action-panel-padding) * 2))
+  );
   padding: calc(var(--action-panel-padding) + 8px) var(--action-panel-padding)
     var(--action-panel-padding);
   background:
@@ -56,6 +63,8 @@
 .action-panel-viewport {
   overflow: auto;
   overscroll-behavior: contain;
+  width: min(100%, var(--action-panel-content-width));
+  margin-inline: auto;
   max-height: calc(
     (var(--action-panel-cell-size) * var(--action-panel-viewport-rows)) +
       (var(--action-panel-gap) * (var(--action-panel-viewport-rows) - 1))
@@ -69,7 +78,8 @@
   grid-template-rows: repeat(var(--action-panel-rows), var(--action-panel-cell-size));
   gap: var(--action-panel-gap);
   width: max-content;
-  min-width: 100%;
+  min-width: var(--action-panel-content-width);
+  margin-inline: auto;
 }
 
 .action-panel-cell {

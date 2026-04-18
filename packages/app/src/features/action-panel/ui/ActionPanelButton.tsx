@@ -74,7 +74,6 @@ function SendActionButton({
       aria-label={definition.ariaLabel}
       aria-busy={isSendPending}
       aria-disabled={isDisabled}
-      onPointerDown={(event) => event.preventDefault()}
       onClick={(event) => {
         if (isDisabled) {
           event.preventDefault();

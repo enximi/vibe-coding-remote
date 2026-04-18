@@ -5,9 +5,9 @@ import type { RemotePanelAction } from './actionPanelActions';
 
 const CONTINUOUS_TRIGGER_DELAY_MS = 450;
 const CONTINUOUS_TRIGGER_INTERVAL_MS = 100;
-const SINGLE_TRIGGER_LOCK_MS = 350;
-const SINGLE_TRIGGER_FADEOUT_MS = 1000;
 const CONTINUOUS_TRIGGER_FADEOUT_MS = 600;
+const TAP_TRIGGER_FADEOUT_MS = 1000;
+const DRAG_DISTANCE_THRESHOLD_PX = 10;
 
 export function useContinuousTrigger(
   action: RemotePanelAction,
@@ -20,7 +20,11 @@ export function useContinuousTrigger(
   const timeoutRef = useRef<number | null>(null);
   const fadeoutRef = useRef<number | null>(null);
   const countRef = useRef(0);
-  const isFiringRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+  const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isDraggingRef = useRef(false);
+  const isLongPressActiveRef = useRef(false);
+  const suppressClickRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -46,71 +50,124 @@ export function useContinuousTrigger(
     [action, bridge, incrementCount, vibrationEnabled],
   );
 
+  const resetGesture = useCallback(() => {
+    pointerIdRef.current = null;
+    pressStartRef.current = null;
+    isDraggingRef.current = false;
+    isLongPressActiveRef.current = false;
+    clearTimer(timeoutRef.current, window.clearTimeout);
+    clearTimer(intervalRef.current, window.clearInterval);
+  }, []);
+
+  const scheduleFadeout = useCallback((delayMs: number) => {
+    clearTimer(fadeoutRef.current, window.clearTimeout);
+    fadeoutRef.current = window.setTimeout(() => setTriggerCount(0), delayMs);
+  }, []);
+
+  const triggerSingle = useCallback(() => {
+    clearTimer(fadeoutRef.current, window.clearTimeout);
+    countRef.current = 0;
+    setTriggerCount(0);
+    fireAction(30);
+    scheduleFadeout(TAP_TRIGGER_FADEOUT_MS);
+  }, [fireAction, scheduleFadeout]);
+
+  const handleLongPressStart = useCallback(() => {
+    if (isDraggingRef.current) {
+      return;
+    }
+
+    clearTimer(fadeoutRef.current, window.clearTimeout);
+    countRef.current = 0;
+    setTriggerCount(0);
+    isLongPressActiveRef.current = true;
+    fireAction(30);
+    intervalRef.current = window.setInterval(() => {
+      fireAction(20);
+    }, CONTINUOUS_TRIGGER_INTERVAL_MS);
+  }, [fireAction]);
+
   const start = useCallback(
-    (event: React.PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      if (isFiringRef.current) {
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) {
         return;
       }
 
-      isFiringRef.current = true;
-      clearTimer(fadeoutRef.current, window.clearTimeout);
-      countRef.current = 0;
-      setTriggerCount(0);
-
-      fireAction(30);
-
-      if (!isContinuous) {
-        window.setTimeout(() => {
-          isFiringRef.current = false;
-        }, SINGLE_TRIGGER_LOCK_MS);
-        fadeoutRef.current = window.setTimeout(() => setTriggerCount(0), SINGLE_TRIGGER_FADEOUT_MS);
-        return;
-      }
-
-      timeoutRef.current = window.setTimeout(() => {
-        intervalRef.current = window.setInterval(() => {
-          fireAction(20);
-        }, CONTINUOUS_TRIGGER_INTERVAL_MS);
-      }, CONTINUOUS_TRIGGER_DELAY_MS);
-    },
-    [fireAction, isContinuous],
-  );
-
-  const stop = useCallback(
-    (event?: React.SyntheticEvent) => {
-      event?.preventDefault();
+      pointerIdRef.current = event.pointerId;
+      pressStartRef.current = { x: event.clientX, y: event.clientY };
+      isDraggingRef.current = false;
+      isLongPressActiveRef.current = false;
+      suppressClickRef.current = false;
       clearTimer(timeoutRef.current, window.clearTimeout);
       clearTimer(intervalRef.current, window.clearInterval);
 
-      if (!isContinuous) {
+      if (isContinuous) {
+        timeoutRef.current = window.setTimeout(handleLongPressStart, CONTINUOUS_TRIGGER_DELAY_MS);
+      }
+    },
+    [handleLongPressStart, isContinuous],
+  );
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (pointerIdRef.current !== event.pointerId || isLongPressActiveRef.current) {
+      return;
+    }
+
+    const pressStart = pressStartRef.current;
+    if (!pressStart) {
+      return;
+    }
+
+    const offsetX = event.clientX - pressStart.x;
+    const offsetY = event.clientY - pressStart.y;
+    if (Math.hypot(offsetX, offsetY) < DRAG_DISTANCE_THRESHOLD_PX) {
+      return;
+    }
+
+    isDraggingRef.current = true;
+    clearTimer(timeoutRef.current, window.clearTimeout);
+  }, []);
+
+  const stop = useCallback(
+    (event?: React.PointerEvent<HTMLButtonElement>) => {
+      if (event && pointerIdRef.current !== null && event.pointerId !== pointerIdRef.current) {
         return;
       }
 
-      isFiringRef.current = false;
-      if (countRef.current > 1) {
-        fadeoutRef.current = window.setTimeout(
-          () => setTriggerCount(0),
-          CONTINUOUS_TRIGGER_FADEOUT_MS,
-        );
-      } else {
-        setTriggerCount(0);
+      const wasLongPressActive = isLongPressActiveRef.current;
+      suppressClickRef.current = wasLongPressActive || isDraggingRef.current;
+      resetGesture();
+
+      if (!wasLongPressActive) {
+        return;
       }
+
+      if (countRef.current > 1) {
+        scheduleFadeout(CONTINUOUS_TRIGGER_FADEOUT_MS);
+        return;
+      }
+
+      setTriggerCount(0);
     },
-    [isContinuous],
+    [resetGesture, scheduleFadeout],
   );
 
   return {
     triggerCount,
     onPointerDown: start,
+    onPointerMove: handlePointerMove,
     onPointerUp: stop,
     onPointerLeave: stop,
     onPointerCancel: stop,
     onContextMenu: preventDefault,
     onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (!isContinuous && !isFiringRef.current) {
-        start(event);
+      if (suppressClickRef.current) {
+        suppressClickRef.current = false;
+        event.preventDefault();
+        return;
       }
+
+      triggerSingle();
     },
   };
 }

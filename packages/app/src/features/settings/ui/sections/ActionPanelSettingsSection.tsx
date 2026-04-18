@@ -8,6 +8,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ACTION_PANEL_ACTION_BY_KEY,
   ACTION_PANEL_ACTION_DEFINITIONS,
@@ -18,6 +19,22 @@ import type {
   ActionPanelCell,
   Preferences,
 } from '../../../preferences/model/preferences';
+
+const ACTION_PANEL_EDITOR_CELL_SIZE = 84;
+const ACTION_PANEL_EDITOR_GAP = 10;
+const ACTION_PANEL_EDITOR_AXIS_SIZE = 28;
+const DRAG_ACTIVATION_DELAY_MS = 220;
+const EMPTY_CELL_LONG_PRESS_MS = 320;
+const EMPTY_CELL_MOVE_THRESHOLD_PX = 10;
+
+type DragData =
+  | { type: 'library'; action: ActionPanelActionKey }
+  | { type: 'cell'; action: ActionPanelActionKey; cellId: string };
+
+type EmptyCellPickerState = {
+  column: number;
+  row: number;
+};
 
 interface ActionPanelSettingsSectionProps {
   prefs: Preferences;
@@ -35,9 +52,16 @@ interface ActionPanelSettingsSectionProps {
   onVisibleRowsChange: (visibleRows: number) => void;
 }
 
-type DragData =
-  | { type: 'library'; action: ActionPanelActionKey }
-  | { type: 'cell'; action: ActionPanelActionKey; cellId: string };
+function getEditorGridWidth(columns: number): number {
+  return (
+    columns * ACTION_PANEL_EDITOR_CELL_SIZE +
+    Math.max(0, columns - 1) * ACTION_PANEL_EDITOR_GAP
+  );
+}
+
+function getEditorGridHeight(rows: number): number {
+  return rows * ACTION_PANEL_EDITOR_CELL_SIZE + Math.max(0, rows - 1) * ACTION_PANEL_EDITOR_GAP;
+}
 
 export function ActionPanelSettingsSection({
   prefs,
@@ -49,13 +73,27 @@ export function ActionPanelSettingsSection({
   onRowRemove,
   onVisibleRowsChange,
 }: ActionPanelSettingsSectionProps) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-  const { actionPanel } = prefs;
-  const cellByPosition = new Map(
-    actionPanel.cells.map((cell) => [`${cell.row}:${cell.column}`, cell]),
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: DRAG_ACTIVATION_DELAY_MS, tolerance: 8 },
+    }),
   );
+  const { actionPanel } = prefs;
+  const [isEditorCollapsed, setIsEditorCollapsed] = useState(false);
+  const [isLibraryCollapsed, setIsLibraryCollapsed] = useState(false);
+  const [pickerState, setPickerState] = useState<EmptyCellPickerState | null>(null);
+  const editorGridWidth = getEditorGridWidth(actionPanel.columns);
+  const editorGridHeight = getEditorGridHeight(actionPanel.rows);
+  const cellByPosition = useMemo(
+    () => new Map(actionPanel.cells.map((cell) => [`${cell.row}:${cell.column}`, cell])),
+    [actionPanel.cells],
+  );
+  const allSectionsCollapsed = isEditorCollapsed && isLibraryCollapsed;
+
+  const closePicker = () => setPickerState(null);
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    closePicker();
     if (!over || typeof over.id !== 'string' || !over.id.startsWith('panel-cell:')) {
       return;
     }
@@ -76,11 +114,32 @@ export function ActionPanelSettingsSection({
     onCellPlace(data.action, row, column, data.cellId);
   };
 
+  const toggleAllSections = () => {
+    if (allSectionsCollapsed) {
+      setIsEditorCollapsed(false);
+      setIsLibraryCollapsed(false);
+      return;
+    }
+
+    setIsEditorCollapsed(true);
+    setIsLibraryCollapsed(true);
+    closePicker();
+  };
+
+  const handlePickerSelect = (action: ActionPanelActionKey) => {
+    if (!pickerState) {
+      return;
+    }
+
+    onCellPlace(action, pickerState.row, pickerState.column);
+    closePicker();
+  };
+
   return (
     <section className="settings-group">
       <h3>快捷面板布局</h3>
       <p className="settings-hint">
-        底部面板是一个可滚动的二维按钮区域。拖动动作到格子里，也可以把已有按钮拖到其他格子；空格会保留。
+        底部面板是一个可滚动的二维按钮区域。轻点按钮会触发动作，长按已有按钮或待选按钮才进入拖动；空白格长按可直接选择要放进去的按钮。
       </p>
 
       <div className="settings-card-row action-panel-visible-row-control">
@@ -105,80 +164,229 @@ export function ActionPanelSettingsSection({
         </div>
       </div>
 
-      <div className="action-panel-layout-tools">
-        <button type="button" onClick={() => onRowInsert(0)}>
-          上方加行
-        </button>
-        <button type="button" onClick={() => onRowInsert(actionPanel.rows)}>
-          下方加行
-        </button>
-        <button type="button" onClick={() => onColumnInsert(0)}>
-          左侧加列
-        </button>
-        <button type="button" onClick={() => onColumnInsert(actionPanel.columns)}>
-          右侧加列
-        </button>
-        <button type="button" onClick={() => onRowRemove(0)} disabled={actionPanel.rows <= 1}>
-          删除上行
-        </button>
-        <button
-          type="button"
-          onClick={() => onRowRemove(actionPanel.rows - 1)}
-          disabled={actionPanel.rows <= 1}
-        >
-          删除下行
-        </button>
-        <button
-          type="button"
-          onClick={() => onColumnRemove(0)}
-          disabled={actionPanel.columns <= 1}
-        >
-          删除左列
-        </button>
-        <button
-          type="button"
-          onClick={() => onColumnRemove(actionPanel.columns - 1)}
-          disabled={actionPanel.columns <= 1}
-        >
-          删除右列
+      <div className="action-panel-editor-overview">
+        <div>
+          <strong>编辑模式</strong>
+          <p>滚动找位置，长按才开始拖动或添加。</p>
+        </div>
+        <button type="button" className="action-panel-panel-toggle" onClick={toggleAllSections}>
+          {allSectionsCollapsed ? '展开全部' : '折叠全部'}
         </button>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="action-panel-editor">
-          <div className="action-panel-editor-grid-wrap">
-            <div
-              className="action-panel-editor-grid"
-              style={
-                {
-                  '--action-panel-editor-columns': actionPanel.columns,
-                  '--action-panel-editor-rows': actionPanel.rows,
-                } as React.CSSProperties
-              }
-            >
-              {Array.from({ length: actionPanel.rows }).map((_, row) =>
-                Array.from({ length: actionPanel.columns }).map((_, column) => {
-                  const cell = cellByPosition.get(`${row}:${column}`);
-
-                  return (
-                    <EditablePanelCell
-                      key={`${row}:${column}`}
-                      cell={cell}
-                      column={column}
-                      row={row}
-                      onRemove={onCellRemove}
-                    />
-                  );
-                }),
-              )}
+          <section className="action-panel-editor-panel">
+            <div className="action-panel-editor-panel-header">
+              <div>
+                <strong>网格编辑区</strong>
+                <p>滑动可滚动，长按按钮才会进入拖拽。</p>
+              </div>
+              <button
+                type="button"
+                className="action-panel-panel-toggle"
+                onClick={() => {
+                  setIsEditorCollapsed((value) => !value);
+                  closePicker();
+                }}
+              >
+                {isEditorCollapsed ? '展开' : '收起'}
+              </button>
             </div>
-          </div>
 
-          <div className="action-panel-library" aria-label="可放置动作">
-            {ACTION_PANEL_ACTION_DEFINITIONS.map((definition) => (
-              <ActionLibraryItem key={definition.action} definition={definition} />
-            ))}
-          </div>
+            {!isEditorCollapsed && (
+              <div className="action-panel-editor-grid-wrap">
+                <div className="action-panel-editor-layout">
+                  <div className="action-panel-editor-corner" aria-hidden="true" />
+
+                  <div
+                    className="action-panel-editor-column-controls"
+                    style={{ width: `${editorGridWidth + ACTION_PANEL_EDITOR_AXIS_SIZE}px` }}
+                  >
+                    <div className="action-panel-editor-column-axis">
+                      {Array.from({ length: actionPanel.columns }).map((_, column) => (
+                        <button
+                          key={`remove-column:${column}`}
+                          type="button"
+                          className="action-panel-editor-axis-btn action-panel-editor-axis-btn--column action-panel-editor-axis-btn--danger"
+                          aria-label={`删除第 ${column + 1} 列`}
+                          disabled={actionPanel.columns <= 1}
+                          onClick={() => {
+                            closePicker();
+                            onColumnRemove(column);
+                          }}
+                          style={{
+                            left: `${column * (ACTION_PANEL_EDITOR_CELL_SIZE + ACTION_PANEL_EDITOR_GAP) + ACTION_PANEL_EDITOR_CELL_SIZE / 2}px`,
+                          }}
+                        >
+                          ×
+                        </button>
+                      ))}
+
+                      {Array.from({ length: actionPanel.columns + 1 }).map((_, index) => (
+                        <button
+                          key={`insert-column:${index}`}
+                          type="button"
+                          className="action-panel-editor-axis-btn action-panel-editor-axis-btn--column action-panel-editor-axis-btn--insert"
+                          aria-label={
+                            index === 0
+                              ? '在最左侧插入一列'
+                              : index === actionPanel.columns
+                                ? '在最右侧插入一列'
+                                : `在第 ${index} 列右侧插入一列`
+                          }
+                          onClick={() => {
+                            closePicker();
+                            onColumnInsert(index);
+                          }}
+                          style={{
+                            left: `${index === 0 ? 0 : index * ACTION_PANEL_EDITOR_CELL_SIZE + (index - 1) * ACTION_PANEL_EDITOR_GAP}px`,
+                          }}
+                        >
+                          +
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    className="action-panel-editor-row-controls"
+                    style={{ height: `${editorGridHeight + ACTION_PANEL_EDITOR_AXIS_SIZE}px` }}
+                  >
+                    <div className="action-panel-editor-row-axis">
+                      {Array.from({ length: actionPanel.rows }).map((_, row) => (
+                        <button
+                          key={`remove-row:${row}`}
+                          type="button"
+                          className="action-panel-editor-axis-btn action-panel-editor-axis-btn--row action-panel-editor-axis-btn--danger"
+                          aria-label={`删除第 ${row + 1} 行`}
+                          disabled={actionPanel.rows <= 1}
+                          onClick={() => {
+                            closePicker();
+                            onRowRemove(row);
+                          }}
+                          style={{
+                            top: `${row * (ACTION_PANEL_EDITOR_CELL_SIZE + ACTION_PANEL_EDITOR_GAP) + ACTION_PANEL_EDITOR_CELL_SIZE / 2}px`,
+                          }}
+                        >
+                          ×
+                        </button>
+                      ))}
+
+                      {Array.from({ length: actionPanel.rows + 1 }).map((_, index) => (
+                        <button
+                          key={`insert-row:${index}`}
+                          type="button"
+                          className="action-panel-editor-axis-btn action-panel-editor-axis-btn--row action-panel-editor-axis-btn--insert"
+                          aria-label={
+                            index === 0
+                              ? '在最上方插入一行'
+                              : index === actionPanel.rows
+                                ? '在最下方插入一行'
+                                : `在第 ${index} 行下方插入一行`
+                          }
+                          onClick={() => {
+                            closePicker();
+                            onRowInsert(index);
+                          }}
+                          style={{
+                            top: `${index === 0 ? 0 : index * ACTION_PANEL_EDITOR_CELL_SIZE + (index - 1) * ACTION_PANEL_EDITOR_GAP}px`,
+                          }}
+                        >
+                          +
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    className="action-panel-editor-grid"
+                    style={
+                      {
+                        '--action-panel-editor-columns': actionPanel.columns,
+                        '--action-panel-editor-rows': actionPanel.rows,
+                      } as React.CSSProperties
+                    }
+                  >
+                    {Array.from({ length: actionPanel.rows }).map((_, row) =>
+                      Array.from({ length: actionPanel.columns }).map((_, column) => {
+                        const cell = cellByPosition.get(`${row}:${column}`);
+
+                        return (
+                          <EditablePanelCell
+                            key={`${row}:${column}`}
+                            cell={cell}
+                            column={column}
+                            row={row}
+                            onLongPressEmpty={() => setPickerState({ row, column })}
+                            onRemove={onCellRemove}
+                          />
+                        );
+                      }),
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="action-panel-editor-panel">
+            <div className="action-panel-editor-panel-header">
+              <div>
+                <strong>待选动作</strong>
+                <p>滑动浏览，长按动作卡片才会开始拖动。</p>
+              </div>
+              <button
+                type="button"
+                className="action-panel-panel-toggle"
+                onClick={() => setIsLibraryCollapsed((value) => !value)}
+              >
+                {isLibraryCollapsed ? '展开' : '收起'}
+              </button>
+            </div>
+
+            {!isLibraryCollapsed && (
+              <div className="action-panel-library" aria-label="可放置动作">
+                {ACTION_PANEL_ACTION_DEFINITIONS.map((definition) => (
+                  <ActionLibraryItem key={definition.action} definition={definition} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {pickerState && (
+            <section className="action-panel-picker-card">
+              <div className="action-panel-picker-header">
+                <div>
+                  <strong>
+                    在第 {pickerState.row + 1} 行第 {pickerState.column + 1} 列添加按钮
+                  </strong>
+                  <p>轻点要放入该空格的动作。</p>
+                </div>
+                <button
+                  type="button"
+                  className="action-panel-panel-toggle"
+                  onClick={closePicker}
+                >
+                  关闭
+                </button>
+              </div>
+
+              <div className="action-panel-picker-options">
+                {ACTION_PANEL_ACTION_DEFINITIONS.map((definition) => (
+                  <button
+                    key={`picker:${definition.action}`}
+                    type="button"
+                    className="action-panel-picker-option"
+                    onClick={() => handlePickerSelect(definition.action)}
+                  >
+                    {definition.icon}
+                    <span>{definition.settingsLabel}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </DndContext>
 
@@ -193,15 +401,67 @@ function EditablePanelCell({
   cell,
   column,
   row,
+  onLongPressEmpty,
   onRemove,
 }: {
   cell?: ActionPanelCell;
   column: number;
   row: number;
+  onLongPressEmpty: () => void;
   onRemove: (cellId: string) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: `panel-cell:${row}:${column}` });
   const definition = cell ? ACTION_PANEL_ACTION_BY_KEY.get(cell.action) : undefined;
+  const timeoutRef = useRef<number | null>(null);
+  const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const firedLongPressRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const clearLongPress = () => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    pressStartRef.current = null;
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (definition || !event.isPrimary) {
+      return;
+    }
+
+    firedLongPressRef.current = false;
+    pressStartRef.current = { x: event.clientX, y: event.clientY };
+    timeoutRef.current = window.setTimeout(() => {
+      firedLongPressRef.current = true;
+      onLongPressEmpty();
+    }, EMPTY_CELL_LONG_PRESS_MS);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (definition || !pressStartRef.current || firedLongPressRef.current) {
+      return;
+    }
+
+    const offsetX = event.clientX - pressStartRef.current.x;
+    const offsetY = event.clientY - pressStartRef.current.y;
+    if (Math.hypot(offsetX, offsetY) < EMPTY_CELL_MOVE_THRESHOLD_PX) {
+      return;
+    }
+
+    clearLongPress();
+  };
+
+  const handlePointerEnd = () => {
+    clearLongPress();
+  };
 
   return (
     <div
@@ -213,6 +473,12 @@ function EditablePanelCell({
       ]
         .filter(Boolean)
         .join(' ')}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerLeave={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onContextMenu={(event) => event.preventDefault()}
     >
       {cell && definition ? (
         <PlacedActionButton cell={cell} definition={definition} onRemove={onRemove} />
@@ -246,7 +512,7 @@ function PlacedActionButton({
       <button
         className="action-panel-placed-main"
         type="button"
-        aria-label={`拖动 ${definition.settingsLabel}`}
+        aria-label={`长按拖动 ${definition.settingsLabel}`}
         {...attributes}
         {...listeners}
       >
@@ -278,6 +544,7 @@ function ActionLibraryItem({ definition }: { definition: ActionPanelActionDefini
       className={`action-panel-library-item ${isDragging ? 'action-panel-library-item--dragging' : ''}`}
       type="button"
       style={{ transform: CSS.Translate.toString(transform) }}
+      aria-label={`长按拖动 ${definition.settingsLabel}`}
       {...attributes}
       {...listeners}
     >

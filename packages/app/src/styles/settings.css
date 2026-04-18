@@ -325,23 +325,54 @@
   font-weight: 600;
 }
 
-.action-panel-layout-tools {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
+.action-panel-editor-overview,
+.action-panel-editor-panel,
+.action-panel-picker-card {
+  padding: 14px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-hover) 86%, transparent), color-mix(in srgb, var(--btn-hover) 68%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--primary-bg) 14%, transparent), transparent 42%);
+  border: 1px solid color-mix(in srgb, var(--divider) 50%, transparent);
 }
 
-.action-panel-layout-tools button {
-  min-height: 42px;
-  border: 1px solid color-mix(in srgb, var(--divider) 60%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--btn-hover) 70%, transparent);
+.action-panel-editor-overview,
+.action-panel-editor-panel-header,
+.action-panel-picker-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-panel-editor-overview strong,
+.action-panel-editor-panel-header strong,
+.action-panel-picker-header strong {
+  display: block;
   color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.action-panel-layout-tools button:disabled {
-  opacity: 0.42;
+.action-panel-editor-overview p,
+.action-panel-editor-panel-header p,
+.action-panel-picker-header p {
+  margin: 4px 0 0;
+  color: var(--placeholder);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.action-panel-panel-toggle {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--divider) 62%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .action-panel-editor {
@@ -351,20 +382,113 @@
 
 .action-panel-editor-grid-wrap {
   overflow: auto;
-  padding: 14px;
-  border-radius: 20px;
+  margin-top: 14px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.action-panel-editor-grid-wrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.action-panel-editor-layout {
+  --action-panel-editor-cell-size: 84px;
+  --action-panel-editor-gap: 10px;
+  --action-panel-editor-axis-size: 28px;
+  --action-panel-editor-axis-stack-size: 40px;
+  display: grid;
+  grid-template-columns: var(--action-panel-editor-axis-stack-size) max-content;
+  grid-template-rows: var(--action-panel-editor-axis-stack-size) max-content;
+  gap: 10px;
+  width: max-content;
+}
+
+.action-panel-editor-corner {
+  border-radius: 16px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--btn-hover) 86%, transparent), color-mix(in srgb, var(--btn-hover) 68%, transparent)),
-    radial-gradient(circle at top right, color-mix(in srgb, var(--primary-bg) 14%, transparent), transparent 42%);
-  border: 1px solid color-mix(in srgb, var(--divider) 50%, transparent);
+    radial-gradient(circle at top left, color-mix(in srgb, var(--primary-bg) 16%, transparent), transparent 62%),
+    color-mix(in srgb, var(--bg) 38%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--divider) 45%, transparent);
+}
+
+.action-panel-editor-column-controls {
+  position: relative;
+  height: var(--action-panel-editor-axis-size);
+  align-self: center;
+}
+
+.action-panel-editor-column-axis {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.action-panel-editor-row-controls {
+  position: relative;
+  width: var(--action-panel-editor-axis-size);
+  justify-self: center;
+}
+
+.action-panel-editor-row-axis {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.action-panel-editor-axis-btn {
+  position: absolute;
+  width: var(--action-panel-editor-axis-size);
+  height: var(--action-panel-editor-axis-size);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--divider) 62%, transparent);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, #ffffff 22%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg) 84%, transparent);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.action-panel-editor-axis-btn--column {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.action-panel-editor-axis-btn--row {
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.action-panel-editor-axis-btn--danger {
+  color: #ff453a;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, #ffffff 22%, transparent), transparent 58%),
+    color-mix(in srgb, #ff453a 10%, var(--bg));
+}
+
+.action-panel-editor-axis-btn--insert {
+  color: color-mix(in srgb, var(--primary-bg) 88%, white 8%);
+}
+
+.action-panel-editor-axis-btn:disabled {
+  opacity: 0.35;
 }
 
 .action-panel-editor-grid {
-  --action-panel-editor-cell-size: 84px;
   display: grid;
   grid-template-columns: repeat(var(--action-panel-editor-columns), var(--action-panel-editor-cell-size));
   grid-template-rows: repeat(var(--action-panel-editor-rows), var(--action-panel-editor-cell-size));
-  gap: 10px;
+  gap: var(--action-panel-editor-gap);
   width: max-content;
 }
 
@@ -378,6 +502,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: pan-x pan-y;
 }
 
 .action-panel-editor-cell--over {
@@ -419,7 +544,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  touch-action: none;
+  touch-action: pan-x pan-y;
   cursor: grab;
 }
 
@@ -449,6 +574,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 10px;
+  margin-top: 14px;
 }
 
 .action-panel-library-item {
@@ -463,10 +589,35 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  touch-action: none;
+  touch-action: pan-x pan-y;
   cursor: grab;
 }
 
 .action-panel-library-item--dragging {
   opacity: 0.68;
+}
+
+.action-panel-picker-card {
+  display: grid;
+  gap: 14px;
+}
+
+.action-panel-picker-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.action-panel-picker-option {
+  min-height: 72px;
+  padding: 12px 10px;
+  border: 1px solid color-mix(in srgb, var(--divider) 60%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }

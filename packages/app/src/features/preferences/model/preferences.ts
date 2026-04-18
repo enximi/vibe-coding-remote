@@ -11,7 +11,8 @@ export type HistoryItem = {
   time: number;
 };
 
-export type DockButtonKey =
+export type ActionPanelActionKey =
+  | 'send'
   | 'enter'
   | 'tab'
   | 'shiftTab'
@@ -20,14 +21,18 @@ export type DockButtonKey =
   | 'pasteNewline'
   | 'backspace';
 
-export type DockButtons = {
-  enter: boolean;
-  tab: boolean;
-  shiftTab: boolean;
-  ctrlC: boolean;
-  ctrlV: boolean;
-  pasteNewline: boolean;
-  backspace: boolean;
+export type ActionPanelCell = {
+  id: string;
+  action: ActionPanelActionKey;
+  column: number;
+  row: number;
+};
+
+export type ActionPanelPreferences = {
+  cells: ActionPanelCell[];
+  columns: number;
+  rows: number;
+  visibleRows: number;
 };
 
 export type Preferences = {
@@ -35,18 +40,16 @@ export type Preferences = {
   enterBehavior: 'send' | 'newline';
   fontSize: number;
   vibrationEnabled: boolean;
-  dockButtons: DockButtons;
-  dockButtonOrder: DockButtonKey[];
+  actionPanel: ActionPanelPreferences;
   history: HistoryItem[];
 };
 
 export type StoredPreferences = Partial<Preferences> & {
   history?: Array<HistoryItem | string>;
-  dockButtons?: Partial<DockButtons>;
-  dockButtonOrder?: DockButtonKey[];
 };
 
-export const DEFAULT_DOCK_BUTTON_ORDER: DockButtonKey[] = [
+export const ACTION_PANEL_ACTION_KEYS: ActionPanelActionKey[] = [
+  'send',
   'backspace',
   'enter',
   'tab',
@@ -56,21 +59,28 @@ export const DEFAULT_DOCK_BUTTON_ORDER: DockButtonKey[] = [
   'pasteNewline',
 ];
 
+export const DEFAULT_ACTION_PANEL: ActionPanelPreferences = {
+  visibleRows: 3,
+  rows: 2,
+  columns: 4,
+  cells: [
+    { id: 'default-send', action: 'send', row: 0, column: 0 },
+    { id: 'default-backspace', action: 'backspace', row: 0, column: 1 },
+    { id: 'default-enter', action: 'enter', row: 0, column: 2 },
+    { id: 'default-tab', action: 'tab', row: 0, column: 3 },
+    { id: 'default-shift-tab', action: 'shiftTab', row: 1, column: 0 },
+    { id: 'default-ctrl-c', action: 'ctrlC', row: 1, column: 1 },
+    { id: 'default-ctrl-v', action: 'ctrlV', row: 1, column: 2 },
+    { id: 'default-paste-newline', action: 'pasteNewline', row: 1, column: 3 },
+  ],
+};
+
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   enterBehavior: 'send',
   fontSize: 24,
   vibrationEnabled: true,
-  dockButtons: {
-    enter: true,
-    tab: true,
-    shiftTab: true,
-    ctrlC: true,
-    ctrlV: true,
-    pasteNewline: true,
-    backspace: true,
-  },
-  dockButtonOrder: DEFAULT_DOCK_BUTTON_ORDER,
+  actionPanel: DEFAULT_ACTION_PANEL,
   history: [],
 };
 
@@ -93,11 +103,7 @@ export function loadPreferences(): Preferences {
         typeof parsed.vibrationEnabled === 'boolean'
           ? parsed.vibrationEnabled
           : DEFAULT_PREFERENCES.vibrationEnabled,
-      dockButtons: {
-        ...DEFAULT_PREFERENCES.dockButtons,
-        ...parsed.dockButtons,
-      },
-      dockButtonOrder: normalizeDockButtonOrder(parsed.dockButtonOrder),
+      actionPanel: normalizeActionPanel(parsed.actionPanel),
       history: normalizeHistory(parsed.history),
     };
   } catch {
@@ -107,28 +113,6 @@ export function loadPreferences(): Preferences {
 
 export function savePreferences(preferences: Preferences): void {
   window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
-}
-
-export function normalizeDockButtonOrder(
-  order: StoredPreferences['dockButtonOrder'],
-): DockButtonKey[] {
-  const normalizedOrder: DockButtonKey[] = [];
-
-  if (Array.isArray(order)) {
-    for (const key of order) {
-      if (DEFAULT_DOCK_BUTTON_ORDER.includes(key) && !normalizedOrder.includes(key)) {
-        normalizedOrder.push(key);
-      }
-    }
-  }
-
-  for (const key of DEFAULT_DOCK_BUTTON_ORDER) {
-    if (!normalizedOrder.includes(key)) {
-      normalizedOrder.push(key);
-    }
-  }
-
-  return normalizedOrder;
 }
 
 export function appendHistory(history: HistoryItem[], text: string): HistoryItem[] {
@@ -199,4 +183,89 @@ function normalizeHistory(history: StoredPreferences['history']): HistoryItem[] 
       return item;
     })
     .filter((item): item is HistoryItem => item !== null);
+}
+
+function normalizeActionPanel(
+  actionPanel: StoredPreferences['actionPanel'],
+): ActionPanelPreferences {
+  if (!actionPanel || typeof actionPanel !== 'object') {
+    return DEFAULT_ACTION_PANEL;
+  }
+
+  const rows = normalizePositiveInteger(actionPanel.rows, DEFAULT_ACTION_PANEL.rows);
+  const columns = normalizePositiveInteger(actionPanel.columns, DEFAULT_ACTION_PANEL.columns);
+  const cells = Array.isArray(actionPanel.cells)
+    ? actionPanel.cells
+        .map((cell): ActionPanelCell | null => {
+          if (!cell || typeof cell !== 'object') {
+            return null;
+          }
+
+          const action = cell.action;
+          if (!ACTION_PANEL_ACTION_KEYS.includes(action)) {
+            return null;
+          }
+
+          const row = normalizeIndex(cell.row);
+          const column = normalizeIndex(cell.column);
+          if (row >= rows || column >= columns) {
+            return null;
+          }
+
+          return {
+            id: typeof cell.id === 'string' && cell.id ? cell.id : createActionPanelCellId(action),
+            action,
+            row,
+            column,
+          };
+        })
+        .filter((cell): cell is ActionPanelCell => cell !== null)
+    : DEFAULT_ACTION_PANEL.cells;
+
+  return {
+    cells: removeDuplicateActionPanelCells(cells),
+    columns,
+    rows,
+    visibleRows: normalizePositiveInteger(
+      actionPanel.visibleRows,
+      DEFAULT_ACTION_PANEL.visibleRows,
+    ),
+  };
+}
+
+export function createActionPanelCellId(action: ActionPanelActionKey): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `${action}-${crypto.randomUUID()}`;
+  }
+
+  return `${action}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function clampActionPanelVisibleRows(value: number): number {
+  return normalizePositiveInteger(value, DEFAULT_ACTION_PANEL.visibleRows);
+}
+
+export function removeDuplicateActionPanelCells(cells: ActionPanelCell[]): ActionPanelCell[] {
+  const occupied = new Set<string>();
+  const normalizedCells: ActionPanelCell[] = [];
+
+  for (const cell of cells) {
+    const key = `${cell.row}:${cell.column}`;
+    if (occupied.has(key)) {
+      continue;
+    }
+
+    occupied.add(key);
+    normalizedCells.push(cell);
+  }
+
+  return normalizedCells;
+}
+
+function normalizePositiveInteger(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(1, Math.floor(value)) : fallback;
+}
+
+function normalizeIndex(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 }

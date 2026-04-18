@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import { useBridge } from '../../runtime/model/BridgeContext';
+import type { RemotePanelAction } from './actionPanelActions';
 
 const CONTINUOUS_TRIGGER_DELAY_MS = 450;
 const CONTINUOUS_TRIGGER_INTERVAL_MS = 100;
@@ -8,17 +9,8 @@ const SINGLE_TRIGGER_LOCK_MS = 350;
 const SINGLE_TRIGGER_FADEOUT_MS = 1000;
 const CONTINUOUS_TRIGGER_FADEOUT_MS = 600;
 
-export type DockAction =
-  | 'enter'
-  | 'tab'
-  | 'shift-tab'
-  | 'ctrl-c'
-  | 'ctrl-v'
-  | 'paste-newline'
-  | 'backspace';
-
 export function useContinuousTrigger(
-  action: DockAction,
+  action: RemotePanelAction,
   isContinuous: boolean,
   vibrationEnabled: boolean = true,
 ) {
@@ -48,7 +40,7 @@ export function useContinuousTrigger(
       if (vibrationEnabled) {
         bridge.vibrate(vibration);
       }
-      void executeDockAction(bridge, action).catch(() => undefined);
+      void executePanelAction(bridge, action).catch(() => undefined);
       incrementCount();
     },
     [action, bridge, incrementCount, vibrationEnabled],
@@ -123,7 +115,7 @@ export function useContinuousTrigger(
   };
 }
 
-async function executeDockAction(bridge: VibeCodingRemoteBridge, action: DockAction) {
+async function executePanelAction(bridge: VibeCodingRemoteBridge, action: RemotePanelAction) {
   switch (action) {
     case 'enter':
       await bridge.sendKeyChord(['Enter']);

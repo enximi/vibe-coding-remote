@@ -1,11 +1,15 @@
 import {
+  type ActionPanelActionKey,
+  type ActionPanelCell,
   appendHistory,
+  clampActionPanelVisibleRows,
   clearHistoryItems,
-  type DockButtonKey,
+  createActionPanelCellId,
   loadPreferences,
   loadServerAuthToken,
   loadServerEndpoint,
   type Preferences,
+  removeDuplicateActionPanelCells,
   removeHistoryItem,
 } from './preferences';
 
@@ -20,8 +24,19 @@ export type PreferencesAction =
   | { type: 'enter_behavior_changed'; enterBehavior: Preferences['enterBehavior'] }
   | { type: 'font_size_changed'; fontSize: number }
   | { type: 'vibration_toggled' }
-  | { type: 'dock_button_toggled'; key: DockButtonKey }
-  | { type: 'dock_button_order_changed'; order: DockButtonKey[] }
+  | { type: 'action_panel_visible_rows_changed'; visibleRows: number }
+  | {
+      type: 'action_panel_cell_placed';
+      action: ActionPanelActionKey;
+      column: number;
+      row: number;
+      sourceCellId?: string;
+    }
+  | { type: 'action_panel_cell_removed'; cellId: string }
+  | { type: 'action_panel_row_inserted'; index: number }
+  | { type: 'action_panel_row_removed'; index: number }
+  | { type: 'action_panel_column_inserted'; index: number }
+  | { type: 'action_panel_column_removed'; index: number }
   | { type: 'history_added'; text: string }
   | { type: 'history_removed'; time: number }
   | { type: 'history_cleared' }
@@ -61,21 +76,73 @@ export function preferencesReducer(
         ...state,
         prefs: { ...state.prefs, vibrationEnabled: !state.prefs.vibrationEnabled },
       };
-    case 'dock_button_toggled':
+    case 'action_panel_visible_rows_changed':
       return {
         ...state,
         prefs: {
           ...state.prefs,
-          dockButtons: {
-            ...state.prefs.dockButtons,
-            [action.key]: !state.prefs.dockButtons[action.key],
+          actionPanel: {
+            ...state.prefs.actionPanel,
+            visibleRows: clampActionPanelVisibleRows(action.visibleRows),
           },
         },
       };
-    case 'dock_button_order_changed':
+    case 'action_panel_cell_placed':
       return {
         ...state,
-        prefs: { ...state.prefs, dockButtonOrder: action.order },
+        prefs: {
+          ...state.prefs,
+          actionPanel: placeActionPanelCell(
+            state.prefs.actionPanel,
+            action.row,
+            action.column,
+            action.action,
+            action.sourceCellId,
+          ),
+        },
+      };
+    case 'action_panel_cell_removed':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: {
+            ...state.prefs.actionPanel,
+            cells: state.prefs.actionPanel.cells.filter((cell) => cell.id !== action.cellId),
+          },
+        },
+      };
+    case 'action_panel_row_inserted':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: insertActionPanelRow(state.prefs.actionPanel, action.index),
+        },
+      };
+    case 'action_panel_row_removed':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: removeActionPanelRow(state.prefs.actionPanel, action.index),
+        },
+      };
+    case 'action_panel_column_inserted':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: insertActionPanelColumn(state.prefs.actionPanel, action.index),
+        },
+      };
+    case 'action_panel_column_removed':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: removeActionPanelColumn(state.prefs.actionPanel, action.index),
+        },
       };
     case 'history_added':
       return {
@@ -107,4 +174,119 @@ export function preferencesReducer(
 
 function clampFontSize(fontSize: number): number {
   return Math.max(16, Math.min(64, fontSize));
+}
+
+function placeActionPanelCell(
+  actionPanel: Preferences['actionPanel'],
+  row: number,
+  column: number,
+  action: ActionPanelActionKey,
+  sourceCellId?: string,
+): Preferences['actionPanel'] {
+  const normalizedRow = Math.max(0, Math.min(actionPanel.rows - 1, Math.floor(row)));
+  const normalizedColumn = Math.max(0, Math.min(actionPanel.columns - 1, Math.floor(column)));
+  const sourceCell = sourceCellId
+    ? actionPanel.cells.find((cell) => cell.id === sourceCellId)
+    : undefined;
+  const targetCell = actionPanel.cells.find(
+    (cell) => cell.row === normalizedRow && cell.column === normalizedColumn,
+  );
+
+  let cells: ActionPanelCell[];
+  if (sourceCell) {
+    cells = actionPanel.cells.map((cell) => {
+      if (cell.id === sourceCell.id) {
+        return { ...cell, row: normalizedRow, column: normalizedColumn };
+      }
+
+      if (targetCell && cell.id === targetCell.id) {
+        return { ...cell, row: sourceCell.row, column: sourceCell.column };
+      }
+
+      return cell;
+    });
+  } else {
+    const nextCell: ActionPanelCell = {
+      id: createActionPanelCellId(action),
+      action,
+      row: normalizedRow,
+      column: normalizedColumn,
+    };
+    cells = [...actionPanel.cells.filter((cell) => cell.id !== targetCell?.id), nextCell];
+  }
+
+  return {
+    ...actionPanel,
+    cells: removeDuplicateActionPanelCells(cells),
+  };
+}
+
+function insertActionPanelRow(
+  actionPanel: Preferences['actionPanel'],
+  index: number,
+): Preferences['actionPanel'] {
+  const normalizedIndex = Math.max(0, Math.min(actionPanel.rows, Math.floor(index)));
+
+  return {
+    ...actionPanel,
+    rows: actionPanel.rows + 1,
+    cells: actionPanel.cells.map((cell) =>
+      cell.row >= normalizedIndex ? { ...cell, row: cell.row + 1 } : cell,
+    ),
+  };
+}
+
+function removeActionPanelRow(
+  actionPanel: Preferences['actionPanel'],
+  index: number,
+): Preferences['actionPanel'] {
+  if (actionPanel.rows <= 1) {
+    return actionPanel;
+  }
+
+  const normalizedIndex = Math.max(0, Math.min(actionPanel.rows - 1, Math.floor(index)));
+
+  return {
+    ...actionPanel,
+    rows: actionPanel.rows - 1,
+    cells: actionPanel.cells
+      .filter((cell) => cell.row !== normalizedIndex)
+      .map((cell) => (cell.row > normalizedIndex ? { ...cell, row: cell.row - 1 } : cell)),
+  };
+}
+
+function insertActionPanelColumn(
+  actionPanel: Preferences['actionPanel'],
+  index: number,
+): Preferences['actionPanel'] {
+  const normalizedIndex = Math.max(0, Math.min(actionPanel.columns, Math.floor(index)));
+
+  return {
+    ...actionPanel,
+    columns: actionPanel.columns + 1,
+    cells: actionPanel.cells.map((cell) =>
+      cell.column >= normalizedIndex ? { ...cell, column: cell.column + 1 } : cell,
+    ),
+  };
+}
+
+function removeActionPanelColumn(
+  actionPanel: Preferences['actionPanel'],
+  index: number,
+): Preferences['actionPanel'] {
+  if (actionPanel.columns <= 1) {
+    return actionPanel;
+  }
+
+  const normalizedIndex = Math.max(0, Math.min(actionPanel.columns - 1, Math.floor(index)));
+
+  return {
+    ...actionPanel,
+    columns: actionPanel.columns - 1,
+    cells: actionPanel.cells
+      .filter((cell) => cell.column !== normalizedIndex)
+      .map((cell) =>
+        cell.column > normalizedIndex ? { ...cell, column: cell.column - 1 } : cell,
+      ),
+  };
 }

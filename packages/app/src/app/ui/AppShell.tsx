@@ -1,5 +1,5 @@
 import { Composer } from '../../features/composer/ui/Composer';
-import { Dock } from '../../features/dock/ui/Dock';
+import { ActionPanel } from '../../features/action-panel/ui/ActionPanel';
 import { useViewportOffset } from '../../features/runtime/model/useViewportOffset';
 import { SettingsModal } from '../../features/settings/ui/SettingsModal';
 import { useAppShellController } from '../model/useAppShellController';
@@ -29,11 +29,10 @@ export function AppShell() {
         </button>
       </form>
 
-      <Dock
+      <ActionPanel
         hasText={controller.hasText}
         isSendPending={controller.isSendPending}
         isSendingSuccess={controller.isSendingSuccess}
-        onVisibleActionCountChange={controller.setVisibleDockActionCount}
         onMenuClick={controller.openSettings}
         onSendClick={controller.handleSendClick}
       />
@@ -42,7 +41,6 @@ export function AppShell() {
         isOpen={controller.isSettingsOpen}
         onClose={controller.closeSettings}
         onHistorySelect={controller.handleHistorySelect}
-        visibleDockActionCount={controller.visibleDockActionCount}
       />
     </div>
   );

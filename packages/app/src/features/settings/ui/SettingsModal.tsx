@@ -6,8 +6,8 @@ import { useSheetModal } from './hooks/useSheetModal';
 import { QrScannerModal } from './QrScannerModal';
 import {
   AppearanceSettingsSection,
+  ActionPanelSettingsSection,
   ConnectionSettingsSection,
-  DockSettingsSection,
   EnterBehaviorSettingsSection,
   FeedbackSettingsSection,
   FontSizeSettingsSection,
@@ -18,25 +18,28 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onHistorySelect: (text: string) => void;
-  visibleDockActionCount: number | null;
 }
 
 export function SettingsModal({
   isOpen,
   onClose,
   onHistorySelect,
-  visibleDockActionCount,
 }: SettingsModalProps) {
   const connection = useConnectionConfigController();
   const {
     prefs,
     clearHistory,
+    insertActionPanelColumn,
+    insertActionPanelRow,
+    placeActionPanelCell,
     removeHistory,
-    reorderDockButtons,
+    removeActionPanelCell,
+    removeActionPanelColumn,
+    removeActionPanelRow,
+    setActionPanelVisibleRows,
     setEnterBehavior,
     setFontSize,
     setTheme,
-    toggleDockButton,
     toggleVibration,
   } = usePreferences();
   const {
@@ -120,11 +123,15 @@ export function SettingsModal({
         <EnterBehaviorSettingsSection prefs={prefs} onEnterBehaviorChange={setEnterBehavior} />
         <FontSizeSettingsSection prefs={prefs} onFontSizeChange={setFontSize} />
         <FeedbackSettingsSection prefs={prefs} onToggleVibration={toggleVibration} />
-        <DockSettingsSection
+        <ActionPanelSettingsSection
           prefs={prefs}
-          visibleDockActionCount={visibleDockActionCount}
-          onDockButtonOrderChange={reorderDockButtons}
-          onToggleDockButton={toggleDockButton}
+          onCellPlace={placeActionPanelCell}
+          onCellRemove={removeActionPanelCell}
+          onColumnInsert={insertActionPanelColumn}
+          onColumnRemove={removeActionPanelColumn}
+          onRowInsert={insertActionPanelRow}
+          onRowRemove={removeActionPanelRow}
+          onVisibleRowsChange={setActionPanelVisibleRows}
         />
         <HistorySettingsSection
           history={prefs.history}

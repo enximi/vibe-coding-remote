@@ -63,9 +63,6 @@ export function useAppShellController() {
     isSettingsOpen: state.isSettingsOpen,
     openSettings,
     setHasText: (hasText: boolean) => dispatch({ type: 'composer_text_presence_changed', hasText }),
-    setVisibleDockActionCount: (count: number | null) =>
-      dispatch({ type: 'dock_visible_action_count_changed', count }),
     status,
-    visibleDockActionCount: state.visibleDockActionCount,
   };
 }

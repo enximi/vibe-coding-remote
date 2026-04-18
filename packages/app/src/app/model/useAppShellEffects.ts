@@ -26,7 +26,7 @@ export function useAppShellEffects({
       }
 
       const isInteractiveOverlay =
-        event.target.closest('.dock') ||
+        event.target.closest('.action-panel-shell') ||
         event.target.closest('.modal') ||
         event.target.closest('#composerInput');
 

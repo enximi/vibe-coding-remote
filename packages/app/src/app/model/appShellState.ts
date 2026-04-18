@@ -4,12 +4,10 @@ export type AppShellState = {
   hasText: boolean;
   isSettingsOpen: boolean;
   sendState: 'idle' | 'sending' | 'success';
-  visibleDockActionCount: number | null;
 };
 
 export type AppShellAction =
   | { type: 'composer_text_presence_changed'; hasText: boolean }
-  | { type: 'dock_visible_action_count_changed'; count: number | null }
   | { type: 'history_selected' }
   | { type: 'send_started' }
   | { type: 'send_completed'; success: boolean }
@@ -23,7 +21,6 @@ export function createInitialAppShellState(): AppShellState {
     hasText: false,
     isSettingsOpen: false,
     sendState: 'idle',
-    visibleDockActionCount: null,
   };
 }
 
@@ -33,11 +30,6 @@ export function appShellReducer(state: AppShellState, action: AppShellAction): A
       return {
         ...state,
         hasText: action.hasText,
-      };
-    case 'dock_visible_action_count_changed':
-      return {
-        ...state,
-        visibleDockActionCount: action.count,
       };
     case 'history_selected':
     case 'settings_closed':

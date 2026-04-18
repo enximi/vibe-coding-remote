@@ -7,7 +7,7 @@
 它负责：
 
 - 编辑区输入体验
-- 底部快捷动作区
+- 底部可滚动快捷面板
 - 设置面板与历史记录
 - 本地偏好、草稿、连接状态
 - 对上层壳层暴露稳定的 React 入口、类型与工具函数
@@ -63,7 +63,7 @@
 - [AppProviders.tsx](/D:/projects/vibe-coding-remote/packages/app/src/app/providers/AppProviders.tsx)
   - 组装 `BridgeProvider`、`PreferencesProvider`、`ConnectionProvider`
 - [AppShell.tsx](/D:/projects/vibe-coding-remote/packages/app/src/app/ui/AppShell.tsx)
-  - 连接 `Composer`、`Dock`、`SettingsModal`
+  - 连接 `Composer`、`ActionPanel`、`SettingsModal`
 - [appShellState.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/appShellState.ts)
   - 定义页面编排状态、action 和 reducer
 - [useAppShellController.ts](/D:/projects/vibe-coding-remote/packages/app/src/app/model/useAppShellController.ts)
@@ -122,7 +122,7 @@
 - `preferencesState.ts` 定义偏好领域状态、action 和 reducer
 - `usePreferencesStore.ts` 负责把 UI 意图转换为 action
 - localStorage 持久化和主题同步都通过 effect 执行，不进入 reducer
-- 设置面板 section 不再接收通用 `setPrefs`，而是接收 `setTheme`、`setFontSize`、`toggleDockButton` 这类明确意图
+- 设置面板 section 不再接收通用 `setPrefs`，而是接收 `setTheme`、`setFontSize`、`placeActionPanelCell` 这类明确意图
 
 当前持久化内容包括：
 
@@ -130,8 +130,8 @@
 - 回车行为
 - 字体大小
 - 震动开关
-- dock 按钮启用状态
-- dock 按钮顺序
+- 快捷面板网格大小与布局
+- 快捷面板最大可见行数
 - 历史记录
 - server endpoint
 - server auth token
@@ -175,7 +175,6 @@
 - 设置面板开关
 - 发送中锁定与成功反馈
 - 当前输入是否为空
-- dock 当前可直接显示的按钮数量
 - composer ref 协调
 - 点击页面空白重新聚焦输入框
 - 历史记录回填后关闭设置并聚焦
@@ -212,26 +211,25 @@
 - 在非空文本时执行 `input-text`
 - 发送成功后写入历史并清空草稿
 
-### Dock
+### ActionPanel
 
 文件：
 
-- [Dock.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/ui/Dock.tsx)
-- [dockActions.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/model/dockActions.ts)
-- [useContinuousTrigger.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/model/useContinuousTrigger.ts)
-- [useDockLayout.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/model/useDockLayout.ts)
-- [DockActionButton.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/ui/DockActionButton.tsx)
-- [dockActionConfigs.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/ui/dockActionConfigs.tsx)
+- [ActionPanel.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/action-panel/ui/ActionPanel.tsx)
+- [ActionPanelButton.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/action-panel/ui/ActionPanelButton.tsx)
+- [actionPanelActions.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/action-panel/model/actionPanelActions.tsx)
+- [useContinuousTrigger.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/action-panel/model/useContinuousTrigger.ts)
 
 当前职责：
 
-- `Dock.tsx` 负责编排设置入口、动作区、overflow 和发送按钮
-- `useDockLayout.ts` 负责根据当前宽度测量可直接显示的动作数量
-- `DockActionButton.tsx` 负责单个动作按钮和连续触发计数展示
-- `dockActionConfigs.tsx` 负责把偏好中的 dock 配置映射成可渲染按钮
+- `ActionPanel.tsx` 负责底部可滚动视窗、二维网格渲染和固定小齿轮入口
+- `ActionPanelButton.tsx` 负责发送按钮和远程动作按钮的展示与交互
+- `actionPanelActions.tsx` 负责定义面板里的动作清单与图标
+- `useContinuousTrigger.ts` 负责连续按压型远程动作的重复触发
 
 当前内置动作：
 
+- `send`
 - `enter`
 - `tab`
 - `shift-tab`
@@ -274,7 +272,7 @@
 - 回车行为切换
 - 字体大小
 - 震动反馈开关
-- dock 动作启用与排序
+- 快捷面板高度与网格编辑
 - 历史记录查看、回填、删除单条、清空全部
 - 扫码导入配置
 
@@ -334,7 +332,7 @@
   - 颜色、字号、字体等 token
 - [base.css](/D:/projects/vibe-coding-remote/packages/app/src/styles/base.css)
   - 基础布局
-- `composer.css` / `dock.css` / `modal.css` / `settings.css` / `history.css`
+- `composer.css` / `action-panel.css` / `modal.css` / `settings.css` / `history.css`
   - 按功能区域拆分
 - [responsive.css](/D:/projects/vibe-coding-remote/packages/app/src/styles/responsive.css)
   - 响应式规则
@@ -362,7 +360,7 @@
 当前 `packages/app` 仍然保留一些后续可继续优化的点：
 
 - `styles/` 仍然主要按区域文件拆分，而不是严格按 feature 共置；这是当前有意保留的折中
-- [Dock.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/dock/ui/Dock.tsx) 仍然保留 overflow popover 与发送按钮编排，暂未继续拆成更细的 `ui/` 组件
+- [ActionPanel.tsx](/D:/projects/vibe-coding-remote/packages/app/src/features/action-panel/ui/ActionPanel.tsx) 目前仍然同时承载了底部视窗、滚动网格和小齿轮入口，后续如果交互继续增加，可以再拆出更细的外壳组件
 - [useComposerInput.ts](/D:/projects/vibe-coding-remote/packages/app/src/features/composer/model/useComposerInput.ts) 现在只做编排，但输入法兼容和软键盘策略若继续扩展，仍可能再拆出更细的移动端适配层
 - `Composer` 的发送流程目前还没有单独状态机，因为它的阶段较少；如果后续增加排队、失败重试或发送取消，再拆成流程级 machine
 

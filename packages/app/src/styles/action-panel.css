@@ -1,0 +1,182 @@
+.action-panel-shell {
+  --action-panel-cell-size: 54px;
+  --action-panel-gap: 10px;
+  --action-panel-padding: 14px;
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 16px + var(--keyboard-offset));
+  transform: translateX(-50%);
+  width: min(calc(100vw - 24px), 620px);
+  padding: calc(var(--action-panel-padding) + 8px) var(--action-panel-padding)
+    var(--action-panel-padding);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--dock-bg) 96%, white 4%), var(--dock-bg)),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--primary-bg) 18%, transparent), transparent 48%);
+  border: 1px solid var(--dock-border);
+  border-radius: 28px;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  z-index: 10;
+}
+
+.action-panel-settings {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--dock-border) 85%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dock-bg) 92%, white 8%);
+  color: var(--placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.action-panel-settings--attention::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3b30;
+}
+
+.action-panel-viewport {
+  overflow: auto;
+  overscroll-behavior: contain;
+  max-height: calc(
+    (var(--action-panel-cell-size) * var(--action-panel-viewport-rows)) +
+      (var(--action-panel-gap) * (var(--action-panel-viewport-rows) - 1))
+  );
+  scrollbar-width: thin;
+}
+
+.action-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--action-panel-columns), var(--action-panel-cell-size));
+  grid-template-rows: repeat(var(--action-panel-rows), var(--action-panel-cell-size));
+  gap: var(--action-panel-gap);
+  width: max-content;
+  min-width: 100%;
+}
+
+.action-panel-cell {
+  width: var(--action-panel-cell-size);
+  height: var(--action-panel-cell-size);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--btn-hover) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--divider) 60%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-panel-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--btn-bg) 84%, transparent);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.action-panel-btn:active {
+  transform: scale(0.92);
+}
+
+.action-panel-btn--send {
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, #ffffff 24%, transparent), transparent 52%),
+    var(--primary-bg);
+  color: var(--primary-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.action-panel-btn--disabled {
+  opacity: 0.38;
+}
+
+.action-panel-btn--sent {
+  animation: pop-success 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.combo-counter {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  z-index: 20;
+}
+
+.combo-counter.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.combo-number {
+  display: inline-block;
+  animation: combo-bump 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes combo-bump {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pop-success {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+    color: #34c759;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

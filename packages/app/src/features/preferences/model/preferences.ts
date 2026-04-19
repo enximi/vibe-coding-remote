@@ -4,7 +4,9 @@ import {
   SERVER_ENDPOINT_STORAGE_KEY,
 } from '../../../constants/storage';
 
-const MAX_HISTORY_ITEMS = 50;
+const DEFAULT_HISTORY_MAX_ITEMS = 50;
+const MIN_HISTORY_MAX_ITEMS = 10;
+const MAX_HISTORY_MAX_ITEMS = 200;
 
 export type HistoryItem = {
   text: string;
@@ -14,12 +16,17 @@ export type HistoryItem = {
 export type ActionPanelActionKey =
   | 'send'
   | 'enter'
+  | 'escape'
   | 'tab'
   | 'shiftTab'
   | 'ctrlC'
   | 'ctrlV'
   | 'pasteNewline'
-  | 'backspace';
+  | 'backspace'
+  | 'arrowUp'
+  | 'arrowDown'
+  | 'arrowLeft'
+  | 'arrowRight';
 
 export type ActionPanelCell = {
   id: string;
@@ -30,8 +37,7 @@ export type ActionPanelCell = {
 
 export type ActionPanelPreferences = {
   cells: ActionPanelCell[];
-  columns: number;
-  rows: number;
+  libraryOrder: ActionPanelActionKey[];
   visibleRows: number;
 };
 
@@ -39,6 +45,7 @@ export type Preferences = {
   theme: 'system' | 'light' | 'dark';
   enterBehavior: 'send' | 'newline';
   fontSize: number;
+  historyMaxItems: number;
   vibrationEnabled: boolean;
   actionPanel: ActionPanelPreferences;
   history: HistoryItem[];
@@ -52,17 +59,21 @@ export const ACTION_PANEL_ACTION_KEYS: ActionPanelActionKey[] = [
   'send',
   'backspace',
   'enter',
+  'escape',
   'tab',
   'shiftTab',
   'ctrlC',
   'ctrlV',
   'pasteNewline',
+  'arrowUp',
+  'arrowDown',
+  'arrowLeft',
+  'arrowRight',
 ];
 
 export const DEFAULT_ACTION_PANEL: ActionPanelPreferences = {
-  visibleRows: 3,
-  rows: 2,
-  columns: 4,
+  visibleRows: 2,
+  libraryOrder: [...ACTION_PANEL_ACTION_KEYS],
   cells: [
     { id: 'default-send', action: 'send', row: 0, column: 0 },
     { id: 'default-backspace', action: 'backspace', row: 0, column: 1 },
@@ -79,6 +90,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   enterBehavior: 'send',
   fontSize: 24,
+  historyMaxItems: DEFAULT_HISTORY_MAX_ITEMS,
   vibrationEnabled: true,
   actionPanel: DEFAULT_ACTION_PANEL,
   history: [],
@@ -99,12 +111,16 @@ export function loadPreferences(): Preferences {
         typeof parsed.fontSize === 'number'
           ? Math.max(16, Math.min(64, parsed.fontSize))
           : DEFAULT_PREFERENCES.fontSize,
+      historyMaxItems: clampHistoryMaxItems(parsed.historyMaxItems),
       vibrationEnabled:
         typeof parsed.vibrationEnabled === 'boolean'
           ? parsed.vibrationEnabled
           : DEFAULT_PREFERENCES.vibrationEnabled,
       actionPanel: normalizeActionPanel(parsed.actionPanel),
-      history: normalizeHistory(parsed.history),
+      history: normalizeHistory(parsed.history).slice(
+        0,
+        clampHistoryMaxItems(parsed.historyMaxItems),
+      ),
     };
   } catch {
     return DEFAULT_PREFERENCES;
@@ -115,7 +131,11 @@ export function savePreferences(preferences: Preferences): void {
   window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
 }
 
-export function appendHistory(history: HistoryItem[], text: string): HistoryItem[] {
+export function appendHistory(
+  history: HistoryItem[],
+  text: string,
+  maxItems: number,
+): HistoryItem[] {
   const normalizedText = text.trim();
   if (!normalizedText) {
     return history;
@@ -123,7 +143,7 @@ export function appendHistory(history: HistoryItem[], text: string): HistoryItem
 
   const nextHistory = history.filter((item) => item.text !== normalizedText);
   nextHistory.unshift({ text: normalizedText, time: Date.now() });
-  nextHistory.length = Math.min(nextHistory.length, MAX_HISTORY_ITEMS);
+  nextHistory.length = Math.min(nextHistory.length, clampHistoryMaxItems(maxItems));
   return nextHistory;
 }
 
@@ -133,6 +153,17 @@ export function removeHistoryItem(history: HistoryItem[], time: number): History
 
 export function clearHistoryItems(): HistoryItem[] {
   return [];
+}
+
+export function clampHistoryMaxItems(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_HISTORY_MAX_ITEMS;
+  }
+
+  return Math.max(
+    MIN_HISTORY_MAX_ITEMS,
+    Math.min(MAX_HISTORY_MAX_ITEMS, Math.floor(value)),
+  );
 }
 
 export function loadServerEndpoint(): string {
@@ -192,8 +223,6 @@ function normalizeActionPanel(
     return DEFAULT_ACTION_PANEL;
   }
 
-  const rows = normalizePositiveInteger(actionPanel.rows, DEFAULT_ACTION_PANEL.rows);
-  const columns = normalizePositiveInteger(actionPanel.columns, DEFAULT_ACTION_PANEL.columns);
   const cells = Array.isArray(actionPanel.cells)
     ? actionPanel.cells
         .map((cell): ActionPanelCell | null => {
@@ -208,9 +237,6 @@ function normalizeActionPanel(
 
           const row = normalizeIndex(cell.row);
           const column = normalizeIndex(cell.column);
-          if (row >= rows || column >= columns) {
-            return null;
-          }
 
           return {
             id: typeof cell.id === 'string' && cell.id ? cell.id : createActionPanelCellId(action),
@@ -221,15 +247,13 @@ function normalizeActionPanel(
         })
         .filter((cell): cell is ActionPanelCell => cell !== null)
     : DEFAULT_ACTION_PANEL.cells;
+  const libraryOrder = normalizeActionPanelLibraryOrder(actionPanel.libraryOrder);
+  const normalizedCells = normalizeActionPanelCells(cells);
 
   return {
-    cells: removeDuplicateActionPanelCells(cells),
-    columns,
-    rows,
-    visibleRows: normalizePositiveInteger(
-      actionPanel.visibleRows,
-      DEFAULT_ACTION_PANEL.visibleRows,
-    ),
+    cells: normalizedCells,
+    libraryOrder,
+    visibleRows: clampActionPanelVisibleRows(actionPanel.visibleRows),
   };
 }
 
@@ -243,6 +267,36 @@ export function createActionPanelCellId(action: ActionPanelActionKey): string {
 
 export function clampActionPanelVisibleRows(value: number): number {
   return normalizePositiveInteger(value, DEFAULT_ACTION_PANEL.visibleRows);
+}
+
+export function normalizeActionPanelLibraryOrder(
+  value: unknown,
+): ActionPanelActionKey[] {
+  if (!Array.isArray(value)) {
+    return [...ACTION_PANEL_ACTION_KEYS];
+  }
+
+  const seen = new Set<ActionPanelActionKey>();
+  const normalized: ActionPanelActionKey[] = [];
+
+  for (const item of value) {
+    if (!ACTION_PANEL_ACTION_KEYS.includes(item) || seen.has(item)) {
+      continue;
+    }
+
+    seen.add(item);
+    normalized.push(item);
+  }
+
+  for (const action of ACTION_PANEL_ACTION_KEYS) {
+    if (seen.has(action)) {
+      continue;
+    }
+
+    normalized.push(action);
+  }
+
+  return normalized;
 }
 
 export function removeDuplicateActionPanelCells(cells: ActionPanelCell[]): ActionPanelCell[] {
@@ -260,6 +314,87 @@ export function removeDuplicateActionPanelCells(cells: ActionPanelCell[]): Actio
   }
 
   return normalizedCells;
+}
+
+export function normalizeActionPanelCells(cells: ActionPanelCell[]): ActionPanelCell[] {
+  const deduplicatedCells = removeDuplicateActionPanelCells(cells);
+  if (deduplicatedCells.length === 0) {
+    return deduplicatedCells;
+  }
+
+  let minRow = Number.POSITIVE_INFINITY;
+  let minColumn = Number.POSITIVE_INFINITY;
+
+  for (const cell of deduplicatedCells) {
+    minRow = Math.min(minRow, cell.row);
+    minColumn = Math.min(minColumn, cell.column);
+  }
+
+  if (minRow === 0 && minColumn === 0) {
+    return deduplicatedCells;
+  }
+
+  return deduplicatedCells.map((cell) => ({
+    ...cell,
+    row: cell.row - minRow,
+    column: cell.column - minColumn,
+  }));
+}
+
+export function getActionPanelDisplayBounds(cells: ActionPanelCell[]) {
+  if (cells.length === 0) {
+    return {
+      columns: 1,
+      rows: 1,
+      startColumn: 0,
+      startRow: 0,
+    };
+  }
+
+  let minRow = Number.POSITIVE_INFINITY;
+  let maxRow = Number.NEGATIVE_INFINITY;
+  let minColumn = Number.POSITIVE_INFINITY;
+  let maxColumn = Number.NEGATIVE_INFINITY;
+
+  for (const cell of cells) {
+    minRow = Math.min(minRow, cell.row);
+    maxRow = Math.max(maxRow, cell.row);
+    minColumn = Math.min(minColumn, cell.column);
+    maxColumn = Math.max(maxColumn, cell.column);
+  }
+
+  return {
+    columns: maxColumn - minColumn + 1,
+    rows: maxRow - minRow + 1,
+    startColumn: minColumn,
+    startRow: minRow,
+  };
+}
+
+export function getActionPanelEditorBounds(cells: ActionPanelCell[]) {
+  if (cells.length === 0) {
+    return {
+      columns: 1,
+      rows: 1,
+      startColumn: 0,
+      startRow: 0,
+    };
+  }
+
+  let maxRow = 0;
+  let maxColumn = 0;
+
+  for (const cell of cells) {
+    maxRow = Math.max(maxRow, cell.row);
+    maxColumn = Math.max(maxColumn, cell.column);
+  }
+
+  return {
+    columns: maxColumn + 3,
+    rows: maxRow + 3,
+    startColumn: -1,
+    startRow: -1,
+  };
 }
 
 function normalizePositiveInteger(value: unknown, fallback: number): number {

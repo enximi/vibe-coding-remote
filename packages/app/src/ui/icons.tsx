@@ -1,4 +1,8 @@
 import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
   ClipboardPaste,
   Copy,
   CornerDownLeft,
@@ -12,6 +16,7 @@ import {
   SendHorizontal,
   Settings2,
   Sun,
+  Trash2,
   X,
 } from 'lucide-react';
 
@@ -71,6 +76,26 @@ export function EnterIcon(props: IconProps) {
   return <CornerDownLeft strokeWidth={STROKE_WIDTH} {...props} />;
 }
 
+export function EscIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={STROKE_WIDTH}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 4a8 8 0 1 1-8 8" />
+      <polyline points="9 4 4 4 4 9" />
+      <line x1="15" y1="15" x2="4" y2="4" />
+    </svg>
+  );
+}
+
 export function ShiftTabIcon(props: IconProps) {
   return (
     <svg
@@ -120,8 +145,28 @@ export function SendIcon(props: IconProps) {
   return <SendHorizontal strokeWidth={STROKE_WIDTH} {...props} />;
 }
 
+export function ArrowUpIcon(props: IconProps) {
+  return <ArrowUp strokeWidth={STROKE_WIDTH} {...props} />;
+}
+
+export function ArrowDownIcon(props: IconProps) {
+  return <ArrowDown strokeWidth={STROKE_WIDTH} {...props} />;
+}
+
+export function ArrowLeftIcon(props: IconProps) {
+  return <ArrowLeft strokeWidth={STROKE_WIDTH} {...props} />;
+}
+
+export function ArrowRightIcon(props: IconProps) {
+  return <ArrowRight strokeWidth={STROKE_WIDTH} {...props} />;
+}
+
 export function CloseIcon(props: IconProps) {
   return <X strokeWidth={STROKE_WIDTH} {...props} />;
+}
+
+export function TrashIcon(props: IconProps) {
+  return <Trash2 strokeWidth={STROKE_WIDTH} {...props} />;
 }
 
 export function GripIcon(props: IconProps) {

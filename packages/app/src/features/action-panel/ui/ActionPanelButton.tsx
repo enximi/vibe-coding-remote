@@ -45,6 +45,10 @@ export function ActionPanelButton({
   );
 }
 
+const preserveComposerFocus = (event: React.SyntheticEvent<HTMLButtonElement>) => {
+  event.preventDefault();
+};
+
 function SendActionButton({
   definition,
   disabled = false,
@@ -71,9 +75,12 @@ function SendActionButton({
         .filter(Boolean)
         .join(' ')}
       type="button"
+      tabIndex={-1}
       aria-label={definition.ariaLabel}
       aria-busy={isSendPending}
       aria-disabled={isDisabled}
+      onPointerDownCapture={preserveComposerFocus}
+      onMouseDown={preserveComposerFocus}
       onClick={(event) => {
         if (isDisabled) {
           event.preventDefault();
@@ -111,8 +118,11 @@ function RemoteActionButton({
         .filter(Boolean)
         .join(' ')}
       type="button"
+      tabIndex={-1}
       aria-label={definition.ariaLabel}
       disabled={disabled}
+      onPointerDownCapture={preserveComposerFocus}
+      onMouseDown={preserveComposerFocus}
       {...mergedProps}
     >
       {definition.icon}

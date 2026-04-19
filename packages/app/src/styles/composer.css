@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 24px 24px 120px;
+  padding: 24px 24px calc(var(--action-panel-avoidance-height) + 24px);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -32,7 +32,8 @@
   font-weight: 500;
   line-height: 1.6;
   outline: none;
-  text-align: left;
+  text-align: justify;
+  text-justify: inter-ideograph;
   caret-color: var(--primary-bg);
   letter-spacing: -0.02em;
   resize: none;
@@ -58,7 +59,8 @@
   pointer-events: none;
   transition: opacity 0.3s ease;
   z-index: 0;
-  text-align: left;
+  text-align: justify;
+  text-justify: inter-ideograph;
 }
 
 .watermark-placeholder p {
@@ -67,6 +69,8 @@
   margin: 0 0 16px 0;
   opacity: 0.5;
   user-select: none;
+  text-align: justify;
+  text-justify: inter-ideograph;
 }
 
 .watermark-placeholder.hidden {

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { SettingsIcon } from '../../../ui/icons';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { usePreferences } from '../../preferences/model/PreferencesContext';
+import { getActionPanelDisplayBounds } from '../../preferences/model/preferences';
 import { useConnection } from '../../runtime/model/ConnectionContext';
 import { ACTION_PANEL_ACTION_BY_KEY } from '../model/actionPanelActions';
 import { ActionPanelButton } from './ActionPanelButton';
@@ -9,7 +9,6 @@ type ActionPanelProps = {
   hasText: boolean;
   isSendPending: boolean;
   isSendingSuccess: boolean;
-  onMenuClick: () => void;
   onSendClick: () => Promise<void>;
 };
 
@@ -17,45 +16,51 @@ export function ActionPanel({
   hasText,
   isSendPending,
   isSendingSuccess,
-  onMenuClick,
   onSendClick,
 }: ActionPanelProps) {
   const { prefs } = usePreferences();
   const { status } = useConnection();
   const { actionPanel } = prefs;
-  const displayBounds = useMemo(() => {
-    if (actionPanel.cells.length === 0) {
-      return {
-        columns: 1,
-        rows: 1,
-        startColumn: 0,
-        startRow: 0,
-      };
-    }
-
-    let minRow = Number.POSITIVE_INFINITY;
-    let maxRow = Number.NEGATIVE_INFINITY;
-    let minColumn = Number.POSITIVE_INFINITY;
-    let maxColumn = Number.NEGATIVE_INFINITY;
-
-    for (const cell of actionPanel.cells) {
-      minRow = Math.min(minRow, cell.row);
-      maxRow = Math.max(maxRow, cell.row);
-      minColumn = Math.min(minColumn, cell.column);
-      maxColumn = Math.max(maxColumn, cell.column);
-    }
-
-    return {
-      columns: maxColumn - minColumn + 1,
-      rows: maxRow - minRow + 1,
-      startColumn: minColumn,
-      startRow: minRow,
-    };
-  }, [actionPanel.cells]);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const displayBounds = useMemo(
+    () => getActionPanelDisplayBounds(actionPanel.cells),
+    [actionPanel.cells],
+  );
   const viewportRows = Math.min(actionPanel.visibleRows, displayBounds.rows);
   const cellByPosition = useMemo(() => {
     return new Map(actionPanel.cells.map((cell) => [`${cell.row}:${cell.column}`, cell]));
   }, [actionPanel.cells]);
+
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+    viewport.scrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+  }, [displayBounds.columns, displayBounds.rows, actionPanel.visibleRows]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const viewport = viewportRef.current;
+      if (!viewport) {
+        return;
+      }
+
+      viewport.scrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+      viewport.scrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  if (actionPanel.cells.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -68,16 +73,11 @@ export function ActionPanel({
         } as React.CSSProperties
       }
     >
-      <button
-        className={`action-panel-settings ${status !== 'workable' && status !== 'checking' ? 'action-panel-settings--attention' : ''}`}
-        type="button"
-        aria-label="设置与历史"
-        onClick={onMenuClick}
+      <div
+        ref={viewportRef}
+        className="action-panel-viewport"
+        aria-label="快捷操作面板"
       >
-        <SettingsIcon width={16} height={16} />
-      </button>
-
-      <div className="action-panel-viewport" aria-label="快捷操作面板">
         <div className="action-panel-grid">
           {Array.from({ length: displayBounds.rows }).map((_, rowOffset) =>
             Array.from({ length: displayBounds.columns }).map((_, columnOffset) => {

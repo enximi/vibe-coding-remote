@@ -19,7 +19,9 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top center, color-mix(in srgb, var(--primary-bg) 5%, transparent), transparent 42%),
+    var(--bg);
   color: var(--text);
   overscroll-behavior-y: auto;
 }
@@ -29,9 +31,66 @@ body {
 }
 
 .app-shell {
+  --action-panel-bottom-offset: calc(
+    env(safe-area-inset-bottom, 4px) + 2px + var(--keyboard-offset)
+  );
+  --action-panel-cell-size: 48px;
+  --action-panel-gap: 4px;
+  --action-panel-padding: 6px;
+  --action-panel-top-extra: 2px;
+  --action-panel-avoidance-height: 0px;
   height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+.floating-settings-trigger {
+  position: fixed;
+  top: max(env(safe-area-inset-top, 14px), 14px);
+  right: max(env(safe-area-inset-right, 16px), 16px);
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--placeholder) 72%, var(--text));
+  opacity: 0.26;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 14;
+  transition:
+    opacity 0.32s ease,
+    color 0.22s ease,
+    transform 0.22s ease;
+}
+
+.floating-settings-trigger:hover,
+.floating-settings-trigger:focus-visible,
+.floating-settings-trigger:active {
+  opacity: 0.26;
+  color: color-mix(in srgb, var(--placeholder) 72%, var(--text));
+  transform: none;
+  outline: none;
+}
+
+.floating-settings-trigger__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-settings-trigger--attention::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--danger);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 36%, transparent);
 }
 
 .app-shell__form {

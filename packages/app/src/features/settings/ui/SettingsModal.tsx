@@ -29,13 +29,11 @@ export function SettingsModal({
   const {
     prefs,
     clearHistory,
-    insertActionPanelColumn,
-    insertActionPanelRow,
     placeActionPanelCell,
     removeHistory,
     removeActionPanelCell,
-    removeActionPanelColumn,
-    removeActionPanelRow,
+    setHistoryMaxItems,
+    setActionPanelLibraryOrder,
     setActionPanelVisibleRows,
     setEnterBehavior,
     setFontSize,
@@ -44,6 +42,7 @@ export function SettingsModal({
   } = usePreferences();
   const {
     dialogRef,
+    surfaceRef,
     contentRef,
     requestClose,
     handleTouchStart,
@@ -88,57 +87,58 @@ export function SettingsModal({
       }}
     >
       <div
-        className="modal-content"
-        ref={contentRef}
+        className="modal-surface"
+        ref={surfaceRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="modal-header">
-          <h2 className="modal-title">偏好设置</h2>
-          <button
-            className="close-btn"
-            type="button"
-            aria-label="关闭"
-            onPointerDown={(event) => {
-              event.preventDefault();
-              requestClose();
-            }}
-            onClick={requestClose}
-          >
-            <CloseIcon width={24} height={24} />
-          </button>
-        </div>
+        <div className="modal-content" ref={contentRef}>
+          <div className="modal-header">
+            <h2 className="modal-title">偏好设置</h2>
+            <button
+              className="close-btn"
+              type="button"
+              aria-label="关闭"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                requestClose();
+              }}
+              onClick={requestClose}
+            >
+              <CloseIcon width={24} height={24} />
+            </button>
+          </div>
 
-        <ConnectionSettingsSection
-          status={connection.status}
-          endpointDraft={connection.endpointDraft}
-          tokenDraft={connection.tokenDraft}
-          onEndpointDraftChange={connection.setEndpointDraft}
-          onTokenDraftChange={connection.setTokenDraft}
-          onApply={connection.applyDrafts}
-          onOpenScanner={connection.openScanner}
-        />
-        <AppearanceSettingsSection prefs={prefs} onThemeChange={setTheme} />
-        <EnterBehaviorSettingsSection prefs={prefs} onEnterBehaviorChange={setEnterBehavior} />
-        <FontSizeSettingsSection prefs={prefs} onFontSizeChange={setFontSize} />
-        <FeedbackSettingsSection prefs={prefs} onToggleVibration={toggleVibration} />
-        <ActionPanelSettingsSection
-          prefs={prefs}
-          onCellPlace={placeActionPanelCell}
-          onCellRemove={removeActionPanelCell}
-          onColumnInsert={insertActionPanelColumn}
-          onColumnRemove={removeActionPanelColumn}
-          onRowInsert={insertActionPanelRow}
-          onRowRemove={removeActionPanelRow}
-          onVisibleRowsChange={setActionPanelVisibleRows}
-        />
-        <HistorySettingsSection
-          history={prefs.history}
-          onClear={clearHistory}
-          onRemove={removeHistory}
-          onSelect={onHistorySelect}
-        />
+          <ConnectionSettingsSection
+            status={connection.status}
+            endpointDraft={connection.endpointDraft}
+            tokenDraft={connection.tokenDraft}
+            onEndpointDraftChange={connection.setEndpointDraft}
+            onTokenDraftChange={connection.setTokenDraft}
+            onApply={connection.applyDrafts}
+            onOpenScanner={connection.openScanner}
+          />
+          <AppearanceSettingsSection prefs={prefs} onThemeChange={setTheme} />
+          <EnterBehaviorSettingsSection prefs={prefs} onEnterBehaviorChange={setEnterBehavior} />
+          <FontSizeSettingsSection prefs={prefs} onFontSizeChange={setFontSize} />
+          <FeedbackSettingsSection prefs={prefs} onToggleVibration={toggleVibration} />
+          <ActionPanelSettingsSection
+            prefs={prefs}
+            onCellPlace={placeActionPanelCell}
+            onCellRemove={removeActionPanelCell}
+            onLibraryOrderChange={setActionPanelLibraryOrder}
+            onVisibleRowsChange={setActionPanelVisibleRows}
+          />
+          <HistorySettingsSection
+            historyMaxItems={prefs.historyMaxItems}
+            history={prefs.history}
+            onClear={clearHistory}
+            onHistoryMaxItemsChange={setHistoryMaxItems}
+            onRemove={removeHistory}
+            onSelect={onHistorySelect}
+          />
+        </div>
       </div>
 
       <QrScannerModal

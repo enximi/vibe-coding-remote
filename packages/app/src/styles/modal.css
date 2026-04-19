@@ -3,7 +3,10 @@ dialog.modal {
   background: transparent;
   width: 100%;
   max-width: 500px;
-  height: min(85vh, 600px);
+  --modal-top-gap: clamp(16px, 3.4vh, 30px);
+  height: calc(
+    100dvh - max(calc(env(safe-area-inset-top, 0px) + 10px), var(--modal-top-gap))
+  );
   margin: auto auto 0;
   padding: 0;
   overflow: visible;
@@ -17,48 +20,44 @@ dialog.modal:focus-visible {
 }
 
 dialog.modal::backdrop {
-  background: transparent;
+  background: var(--modal-backdrop);
+  opacity: var(--backdrop-opacity);
+  transition: opacity 0.28s ease;
 }
 
 dialog.modal.modal-animating::backdrop {
-  /* No visual transition needed if transparent */
+  transition: opacity 0.28s ease;
 }
 
 dialog.modal.modal-closing::backdrop {
-  background: transparent;
+  opacity: 0;
+}
+
+.modal-surface {
+  width: 100%;
+  height: 100%;
+  background: color-mix(in srgb, var(--surface-elevated) 94%, var(--bg));
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--surface-shadow-soft), var(--surface-shadow-strong);
+  animation: slide-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .modal-content {
   width: 100%;
   height: 100%;
-  background: var(--bg);
   color: var(--text);
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
   padding: 24px 24px calc(env(safe-area-inset-bottom, 24px) + 24px);
   overflow-y: auto;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
   outline: none;
-  box-shadow:
-    0 -12px 48px rgba(0, 0, 0, 0.18),
-    0 -4px 16px rgba(0, 0, 0, 0.08);
-  animation: slide-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: none;
+  position: relative;
+  background: transparent;
   scrollbar-width: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .modal-content {
-    box-shadow:
-      0 -12px 48px rgba(0, 0, 0, 0.5),
-      0 -4px 16px rgba(0, 0, 0, 0.3);
-  }
-}
-
-:root[data-theme="dark"] .modal-content {
-  box-shadow:
-    0 -12px 48px rgba(0, 0, 0, 0.5),
-    0 -4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content::-webkit-scrollbar {
@@ -157,8 +156,8 @@ dialog.modal.modal-closing::backdrop {
 }
 
 .close-btn {
-  background: var(--btn-hover);
-  border: none;
+  background: color-mix(in srgb, var(--surface-strong) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--divider) 48%, transparent);
   width: 36px;
   height: 36px;
   border-radius: 50%;

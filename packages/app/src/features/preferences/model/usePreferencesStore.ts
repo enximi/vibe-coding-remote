@@ -52,9 +52,6 @@ export function usePreferencesStore() {
     serverAuthToken,
     addHistory: (text: string) => send({ type: 'history_added', text }),
     clearHistory: () => send({ type: 'history_cleared' }),
-    insertActionPanelColumn: (index: number) =>
-      send({ type: 'action_panel_column_inserted', index }),
-    insertActionPanelRow: (index: number) => send({ type: 'action_panel_row_inserted', index }),
     placeActionPanelCell: (
       action: ActionPanelActionKey,
       row: number,
@@ -64,9 +61,10 @@ export function usePreferencesStore() {
     removeHistory: (time: number) => send({ type: 'history_removed', time }),
     removeActionPanelCell: (cellId: string) =>
       send({ type: 'action_panel_cell_removed', cellId }),
-    removeActionPanelColumn: (index: number) =>
-      send({ type: 'action_panel_column_removed', index }),
-    removeActionPanelRow: (index: number) => send({ type: 'action_panel_row_removed', index }),
+    setHistoryMaxItems: (historyMaxItems: number) =>
+      send({ type: 'history_max_items_changed', historyMaxItems }),
+    setActionPanelLibraryOrder: (libraryOrder: ActionPanelActionKey[]) =>
+      send({ type: 'action_panel_library_order_changed', libraryOrder }),
     setActionPanelVisibleRows: (visibleRows: number) =>
       send({ type: 'action_panel_visible_rows_changed', visibleRows }),
     setEnterBehavior: (enterBehavior: typeof prefs.enterBehavior) =>

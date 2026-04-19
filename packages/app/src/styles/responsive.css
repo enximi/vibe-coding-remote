@@ -24,7 +24,7 @@
   }
 
   .composer-wrapper {
-    padding: 20px 20px 104px;
+    padding: 20px 20px calc(var(--action-panel-avoidance-height) + 20px);
   }
 
   #composerInput {

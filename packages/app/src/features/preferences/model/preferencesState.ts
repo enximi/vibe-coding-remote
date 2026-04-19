@@ -3,13 +3,15 @@ import {
   type ActionPanelCell,
   appendHistory,
   clampActionPanelVisibleRows,
+  clampHistoryMaxItems,
   clearHistoryItems,
   createActionPanelCellId,
   loadPreferences,
   loadServerAuthToken,
   loadServerEndpoint,
+  normalizeActionPanelCells,
+  normalizeActionPanelLibraryOrder,
   type Preferences,
-  removeDuplicateActionPanelCells,
   removeHistoryItem,
 } from './preferences';
 
@@ -33,10 +35,8 @@ export type PreferencesAction =
       sourceCellId?: string;
     }
   | { type: 'action_panel_cell_removed'; cellId: string }
-  | { type: 'action_panel_row_inserted'; index: number }
-  | { type: 'action_panel_row_removed'; index: number }
-  | { type: 'action_panel_column_inserted'; index: number }
-  | { type: 'action_panel_column_removed'; index: number }
+  | { type: 'action_panel_library_order_changed'; libraryOrder: ActionPanelActionKey[] }
+  | { type: 'history_max_items_changed'; historyMaxItems: number }
   | { type: 'history_added'; text: string }
   | { type: 'history_removed'; time: number }
   | { type: 'history_cleared' }
@@ -106,49 +106,46 @@ export function preferencesReducer(
         ...state,
         prefs: {
           ...state.prefs,
-          actionPanel: {
+          actionPanel: finalizeActionPanel({
             ...state.prefs.actionPanel,
             cells: state.prefs.actionPanel.cells.filter((cell) => cell.id !== action.cellId),
+          }),
+        },
+      };
+    case 'action_panel_library_order_changed':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          actionPanel: {
+            ...state.prefs.actionPanel,
+            libraryOrder: normalizeActionPanelLibraryOrder(action.libraryOrder),
           },
-        },
-      };
-    case 'action_panel_row_inserted':
-      return {
-        ...state,
-        prefs: {
-          ...state.prefs,
-          actionPanel: insertActionPanelRow(state.prefs.actionPanel, action.index),
-        },
-      };
-    case 'action_panel_row_removed':
-      return {
-        ...state,
-        prefs: {
-          ...state.prefs,
-          actionPanel: removeActionPanelRow(state.prefs.actionPanel, action.index),
-        },
-      };
-    case 'action_panel_column_inserted':
-      return {
-        ...state,
-        prefs: {
-          ...state.prefs,
-          actionPanel: insertActionPanelColumn(state.prefs.actionPanel, action.index),
-        },
-      };
-    case 'action_panel_column_removed':
-      return {
-        ...state,
-        prefs: {
-          ...state.prefs,
-          actionPanel: removeActionPanelColumn(state.prefs.actionPanel, action.index),
         },
       };
     case 'history_added':
       return {
         ...state,
-        prefs: { ...state.prefs, history: appendHistory(state.prefs.history, action.text) },
+        prefs: {
+          ...state.prefs,
+          history: appendHistory(
+            state.prefs.history,
+            action.text,
+            state.prefs.historyMaxItems,
+          ),
+        },
       };
+    case 'history_max_items_changed': {
+      const historyMaxItems = clampHistoryMaxItems(action.historyMaxItems);
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          historyMaxItems,
+          history: state.prefs.history.slice(0, historyMaxItems),
+        },
+      };
+    }
     case 'history_removed':
       return {
         ...state,
@@ -183,18 +180,28 @@ function placeActionPanelCell(
   action: ActionPanelActionKey,
   sourceCellId?: string,
 ): Preferences['actionPanel'] {
-  const normalizedRow = Math.max(0, Math.min(actionPanel.rows - 1, Math.floor(row)));
-  const normalizedColumn = Math.max(0, Math.min(actionPanel.columns - 1, Math.floor(column)));
+  const rowShift = Math.max(0, -Math.floor(row));
+  const columnShift = Math.max(0, -Math.floor(column));
+  const shiftedCells =
+    rowShift > 0 || columnShift > 0
+      ? actionPanel.cells.map((cell) => ({
+          ...cell,
+          row: cell.row + rowShift,
+          column: cell.column + columnShift,
+        }))
+      : actionPanel.cells;
+  const normalizedRow = Math.max(0, Math.floor(row) + rowShift);
+  const normalizedColumn = Math.max(0, Math.floor(column) + columnShift);
   const sourceCell = sourceCellId
-    ? actionPanel.cells.find((cell) => cell.id === sourceCellId)
+    ? shiftedCells.find((cell) => cell.id === sourceCellId)
     : undefined;
-  const targetCell = actionPanel.cells.find(
+  const targetCell = shiftedCells.find(
     (cell) => cell.row === normalizedRow && cell.column === normalizedColumn,
   );
 
   let cells: ActionPanelCell[];
   if (sourceCell) {
-    cells = actionPanel.cells.map((cell) => {
+    cells = shiftedCells.map((cell) => {
       if (cell.id === sourceCell.id) {
         return { ...cell, row: normalizedRow, column: normalizedColumn };
       }
@@ -212,81 +219,23 @@ function placeActionPanelCell(
       row: normalizedRow,
       column: normalizedColumn,
     };
-    cells = [...actionPanel.cells.filter((cell) => cell.id !== targetCell?.id), nextCell];
+    cells = [...shiftedCells.filter((cell) => cell.id !== targetCell?.id), nextCell];
   }
 
-  return {
+  return finalizeActionPanel({
     ...actionPanel,
-    cells: removeDuplicateActionPanelCells(cells),
-  };
+    cells,
+  });
 }
 
-function insertActionPanelRow(
+function finalizeActionPanel(
   actionPanel: Preferences['actionPanel'],
-  index: number,
 ): Preferences['actionPanel'] {
-  const normalizedIndex = Math.max(0, Math.min(actionPanel.rows, Math.floor(index)));
+  const cells = normalizeActionPanelCells(actionPanel.cells);
 
   return {
     ...actionPanel,
-    rows: actionPanel.rows + 1,
-    cells: actionPanel.cells.map((cell) =>
-      cell.row >= normalizedIndex ? { ...cell, row: cell.row + 1 } : cell,
-    ),
-  };
-}
-
-function removeActionPanelRow(
-  actionPanel: Preferences['actionPanel'],
-  index: number,
-): Preferences['actionPanel'] {
-  if (actionPanel.rows <= 1) {
-    return actionPanel;
-  }
-
-  const normalizedIndex = Math.max(0, Math.min(actionPanel.rows - 1, Math.floor(index)));
-
-  return {
-    ...actionPanel,
-    rows: actionPanel.rows - 1,
-    cells: actionPanel.cells
-      .filter((cell) => cell.row !== normalizedIndex)
-      .map((cell) => (cell.row > normalizedIndex ? { ...cell, row: cell.row - 1 } : cell)),
-  };
-}
-
-function insertActionPanelColumn(
-  actionPanel: Preferences['actionPanel'],
-  index: number,
-): Preferences['actionPanel'] {
-  const normalizedIndex = Math.max(0, Math.min(actionPanel.columns, Math.floor(index)));
-
-  return {
-    ...actionPanel,
-    columns: actionPanel.columns + 1,
-    cells: actionPanel.cells.map((cell) =>
-      cell.column >= normalizedIndex ? { ...cell, column: cell.column + 1 } : cell,
-    ),
-  };
-}
-
-function removeActionPanelColumn(
-  actionPanel: Preferences['actionPanel'],
-  index: number,
-): Preferences['actionPanel'] {
-  if (actionPanel.columns <= 1) {
-    return actionPanel;
-  }
-
-  const normalizedIndex = Math.max(0, Math.min(actionPanel.columns - 1, Math.floor(index)));
-
-  return {
-    ...actionPanel,
-    columns: actionPanel.columns - 1,
-    cells: actionPanel.cells
-      .filter((cell) => cell.column !== normalizedIndex)
-      .map((cell) =>
-        cell.column > normalizedIndex ? { ...cell, column: cell.column - 1 } : cell,
-      ),
+    cells,
+    visibleRows: clampActionPanelVisibleRows(actionPanel.visibleRows),
   };
 }

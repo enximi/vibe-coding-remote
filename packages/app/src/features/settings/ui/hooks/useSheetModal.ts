@@ -2,14 +2,16 @@ import { type TouchEvent, useCallback, useRef } from 'react';
 
 export function useSheetModal(onClose: () => void) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isClosingRef = useRef(false);
   const touchStartY = useRef(0);
   const scrollStartY = useRef(0);
 
   const resetCloseAnimation = useCallback(() => {
-    if (contentRef.current) {
-      contentRef.current.style.transform = '';
+    if (surfaceRef.current) {
+      surfaceRef.current.style.transform = '';
+      surfaceRef.current.style.transition = '';
     }
     if (dialogRef.current) {
       dialogRef.current.classList.remove('modal-animating');
@@ -34,8 +36,8 @@ export function useSheetModal(onClose: () => void) {
   const handleTouchStart = useCallback((event: TouchEvent) => {
     touchStartY.current = event.touches[0].clientY;
     scrollStartY.current = contentRef.current?.scrollTop || 0;
-    if (contentRef.current) {
-      contentRef.current.style.transition = 'none';
+    if (surfaceRef.current) {
+      surfaceRef.current.style.transition = 'none';
     }
     if (dialogRef.current) {
       dialogRef.current.classList.remove('modal-animating');
@@ -44,14 +46,14 @@ export function useSheetModal(onClose: () => void) {
   }, []);
 
   const handleTouchMove = useCallback((event: TouchEvent) => {
-    if (!contentRef.current) {
+    if (!surfaceRef.current) {
       return;
     }
 
     const deltaY = event.touches[0].clientY - touchStartY.current;
     if (scrollStartY.current <= 0 && deltaY > 0) {
       const translateY = deltaY * 0.6;
-      contentRef.current.style.transform = `translateY(${translateY}px)`;
+      surfaceRef.current.style.transform = `translateY(${translateY}px)`;
 
       if (dialogRef.current) {
         const fadeRatio = Math.max(0, 1 - translateY / 300);
@@ -62,7 +64,7 @@ export function useSheetModal(onClose: () => void) {
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
-      if (!contentRef.current) {
+      if (!surfaceRef.current) {
         return;
       }
 
@@ -72,8 +74,8 @@ export function useSheetModal(onClose: () => void) {
         return;
       }
 
-      contentRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      contentRef.current.style.transform = '';
+      surfaceRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      surfaceRef.current.style.transform = '';
 
       if (dialogRef.current) {
         dialogRef.current.classList.add('modal-animating');
@@ -92,6 +94,7 @@ export function useSheetModal(onClose: () => void) {
 
   return {
     dialogRef,
+    surfaceRef,
     contentRef,
     requestClose,
     handleTouchStart,

@@ -177,6 +177,9 @@ async function executePanelAction(bridge: VibeCodingRemoteBridge, action: Remote
     case 'enter':
       await bridge.sendKeyChord(['Enter']);
       break;
+    case 'escape':
+      await bridge.sendKeyChord(['Escape']);
+      break;
     case 'tab':
       await bridge.sendKeyChord(['Tab']);
       break;
@@ -194,6 +197,18 @@ async function executePanelAction(bridge: VibeCodingRemoteBridge, action: Remote
       break;
     case 'backspace':
       await bridge.sendKeyChord(['Backspace']);
+      break;
+    case 'arrow-up':
+      await bridge.sendKeyChord(['ArrowUp']);
+      break;
+    case 'arrow-down':
+      await bridge.sendKeyChord(['ArrowDown']);
+      break;
+    case 'arrow-left':
+      await bridge.sendKeyChord(['ArrowLeft']);
+      break;
+    case 'arrow-right':
+      await bridge.sendKeyChord(['ArrowRight']);
       break;
   }
 }

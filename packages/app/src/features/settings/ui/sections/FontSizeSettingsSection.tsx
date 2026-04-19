@@ -1,5 +1,10 @@
 import type { Preferences } from '../../../preferences/model/preferences';
 
+const MIN_FONT_SIZE = 16;
+const MAX_FONT_SIZE = 64;
+const FONT_SIZE_STEP = 1;
+const DEFAULT_FONT_SIZE = 24;
+
 export function FontSizeSettingsSection({
   prefs,
   onFontSizeChange,
@@ -7,6 +12,13 @@ export function FontSizeSettingsSection({
   prefs: Preferences;
   onFontSizeChange: (fontSize: number) => void;
 }) {
+  const decreaseDisabled = prefs.fontSize <= MIN_FONT_SIZE;
+  const increaseDisabled = prefs.fontSize >= MAX_FONT_SIZE;
+
+  const updateFontSizeByStep = (delta: number) => {
+    onFontSizeChange(clampFontSize(prefs.fontSize + delta));
+  };
+
   return (
     <section className="settings-group">
       <h3>编辑区字体大小</h3>
@@ -16,8 +28,8 @@ export function FontSizeSettingsSection({
           <input
             type="number"
             inputMode="numeric"
-            min={16}
-            max={64}
+            min={MIN_FONT_SIZE}
+            max={MAX_FONT_SIZE}
             value={prefs.fontSize || ''}
             onChange={(event) => {
               const value = parseInt(event.target.value, 10);
@@ -26,9 +38,9 @@ export function FontSizeSettingsSection({
             onBlur={(event) => {
               let value = parseInt(event.target.value, 10);
               if (Number.isNaN(value) || value === 0) {
-                value = 24;
+                value = DEFAULT_FONT_SIZE;
               }
-              value = Math.max(16, Math.min(64, value));
+              value = clampFontSize(value);
               onFontSizeChange(value);
             }}
             style={{ textAlign: 'right' }}
@@ -38,24 +50,40 @@ export function FontSizeSettingsSection({
         </label>
         <div className="settings-card-divider" />
         <div className="settings-slider-wrapper">
-          <span className="settings-slider-label" style={{ fontSize: 14 }}>
-            A
-          </span>
+          <button
+            type="button"
+            className="settings-stepper-btn"
+            aria-label="减小字体大小"
+            disabled={decreaseDisabled}
+            onClick={() => updateFontSizeByStep(-FONT_SIZE_STEP)}
+          >
+            −
+          </button>
           <input
             type="range"
             className="settings-slider"
-            min={16}
-            max={64}
-            step={1}
+            min={MIN_FONT_SIZE}
+            max={MAX_FONT_SIZE}
+            step={FONT_SIZE_STEP}
             value={prefs.fontSize}
             onChange={(event) => onFontSizeChange(Number(event.target.value))}
             aria-label="拖动调整字体大小"
           />
-          <span className="settings-slider-label" style={{ fontSize: 24 }}>
-            A
-          </span>
+          <button
+            type="button"
+            className="settings-stepper-btn"
+            aria-label="增大字体大小"
+            disabled={increaseDisabled}
+            onClick={() => updateFontSizeByStep(FONT_SIZE_STEP)}
+          >
+            +
+          </button>
         </div>
       </div>
     </section>
   );
+}
+
+function clampFontSize(fontSize: number) {
+  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, fontSize));
 }

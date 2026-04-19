@@ -25,14 +25,14 @@ export const DEFAULT_ACTION_PANEL: ActionPanelPreferences = {
   visibleRows: 2,
   libraryOrder: [...ACTION_PANEL_ACTION_KEYS],
   cells: [
-    { id: 'default-send', action: 'send', row: 0, column: 0 },
-    { id: 'default-backspace', action: 'backspace', row: 0, column: 1 },
+    { id: 'default-escape', action: 'escape', row: 0, column: 0 },
+    { id: 'default-arrow-up', action: 'arrowUp', row: 0, column: 1 },
     { id: 'default-enter', action: 'enter', row: 0, column: 2 },
-    { id: 'default-tab', action: 'tab', row: 0, column: 3 },
-    { id: 'default-shift-tab', action: 'shiftTab', row: 1, column: 0 },
-    { id: 'default-ctrl-c', action: 'ctrlC', row: 1, column: 1 },
-    { id: 'default-ctrl-v', action: 'ctrlV', row: 1, column: 2 },
-    { id: 'default-paste-newline', action: 'pasteNewline', row: 1, column: 3 },
+    { id: 'default-ctrl-c', action: 'ctrlC', row: 0, column: 3 },
+    { id: 'default-arrow-left', action: 'arrowLeft', row: 1, column: 0 },
+    { id: 'default-arrow-down', action: 'arrowDown', row: 1, column: 1 },
+    { id: 'default-arrow-right', action: 'arrowRight', row: 1, column: 2 },
+    { id: 'default-send', action: 'send', row: 1, column: 3 },
   ],
 };
 

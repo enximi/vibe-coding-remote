@@ -75,6 +75,10 @@ body {
   outline: none;
 }
 
+.floating-settings-trigger--inert {
+  pointer-events: none;
+}
+
 .floating-settings-trigger__icon {
   display: inline-flex;
   align-items: center;

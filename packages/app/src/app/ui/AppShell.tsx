@@ -51,6 +51,7 @@ export function AppShell() {
       <button
         className={[
           'floating-settings-trigger',
+          controller.isSettingsOpen ? 'floating-settings-trigger--inert' : '',
           controller.status !== 'workable' && controller.status !== 'checking'
             ? 'floating-settings-trigger--attention'
             : '',

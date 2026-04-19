@@ -1,10 +1,9 @@
-import { useEffect, type MutableRefObject, type RefObject } from 'react';
+import { useEffect, type MutableRefObject } from 'react';
 import { saveComposerDraft } from './draft';
 
 type UseComposerEffectsOptions = {
   focusInput: () => void;
   hasRestoredDraft: boolean;
-  inputRef: RefObject<HTMLTextAreaElement | null>;
   isComposing: boolean;
   moveCaretToEnd: () => void;
   onTextChange?: (hasText: boolean) => void;
@@ -17,7 +16,6 @@ type UseComposerEffectsOptions = {
 export function useComposerEffects({
   focusInput,
   hasRestoredDraft,
-  inputRef,
   isComposing,
   moveCaretToEnd,
   onTextChange,
@@ -28,7 +26,7 @@ export function useComposerEffects({
 }: UseComposerEffectsOptions) {
   useEffect(() => {
     syncTextareaHeight();
-  }, [syncTextareaHeight]);
+  }, [syncTextareaHeight, text]);
 
   useEffect(() => {
     onTextChange?.(text.length > 0);
@@ -46,12 +44,14 @@ export function useComposerEffects({
     if (!isComposing) {
       syncEnterKeyHint();
     }
-  }, [isComposing, syncEnterKeyHint]);
+  }, [isComposing, syncEnterKeyHint, text]);
 
   useEffect(() => {
+    let restoreFocusTimerId = 0;
+    let initialFocusTimerId = 0;
+
     const persistCurrentDraft = () => {
-      const currentValue = inputRef.current?.value ?? textRef.current;
-      saveComposerDraft(currentValue);
+      saveComposerDraft(textRef.current);
     };
 
     const handleVisibilityChange = () => {
@@ -61,13 +61,13 @@ export function useComposerEffects({
       }
 
       if (document.visibilityState === 'visible') {
-        window.setTimeout(focusInput, 60);
+        restoreFocusTimerId = window.setTimeout(focusInput, 60);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('pagehide', persistCurrentDraft);
-    window.setTimeout(() => {
+    initialFocusTimerId = window.setTimeout(() => {
       focusInput();
       if (hasRestoredDraft) {
         moveCaretToEnd();
@@ -75,8 +75,10 @@ export function useComposerEffects({
     }, 120);
 
     return () => {
+      window.clearTimeout(restoreFocusTimerId);
+      window.clearTimeout(initialFocusTimerId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', persistCurrentDraft);
     };
-  }, [focusInput, hasRestoredDraft, inputRef, moveCaretToEnd, textRef]);
+  }, [focusInput, hasRestoredDraft, moveCaretToEnd, textRef]);
 }

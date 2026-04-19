@@ -1,23 +1,19 @@
-import type { ChangeEvent, KeyboardEvent, RefObject } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
 import { useCallback } from 'react';
 import type { VibeCodingRemoteBridge } from '../../../types/bridge';
 import type { Preferences } from '../../preferences/model/preferences';
-import { clearComposerDraft } from './draft';
 
 type UseComposerCommandsOptions = {
   addHistory: (text: string) => void;
   bridge: VibeCodingRemoteBridge;
   enterBehavior: Preferences['enterBehavior'];
   focusInput: () => void;
-  inputRef: RefObject<HTMLTextAreaElement | null>;
   isComposing: boolean;
   moveCaretToEnd: () => void;
   onSendActionComplete?: (success: boolean) => void;
   onSendActionStart?: () => void;
   setComposerText: (value: string) => void;
   status: string;
-  syncEnterKeyHint: () => void;
-  syncTextareaHeight: () => void;
   text: string;
   vibrationEnabled: boolean;
 };
@@ -27,35 +23,21 @@ export function useComposerCommands({
   bridge,
   enterBehavior,
   focusInput,
-  inputRef,
   isComposing,
   moveCaretToEnd,
   onSendActionComplete,
   onSendActionStart,
   setComposerText,
   status,
-  syncEnterKeyHint,
-  syncTextareaHeight,
   text,
   vibrationEnabled,
 }: UseComposerCommandsOptions) {
-  const syncTextareaAfterValueChange = useCallback(() => {
-    window.setTimeout(() => {
-      syncTextareaHeight();
-      syncEnterKeyHint();
-      moveCaretToEnd();
-    }, 0);
-  }, [moveCaretToEnd, syncEnterKeyHint, syncTextareaHeight]);
-
   const setInputText = useCallback(
     (value: string) => {
       setComposerText(value);
-      if (inputRef.current) {
-        inputRef.current.value = value;
-      }
-      syncTextareaAfterValueChange();
+      window.setTimeout(moveCaretToEnd, 0);
     },
-    [inputRef, setComposerText, syncTextareaAfterValueChange],
+    [moveCaretToEnd, setComposerText],
   );
 
   const submitCurrentText = useCallback(async () => {
@@ -90,12 +72,6 @@ export function useComposerCommands({
       await bridge.inputText(text);
       addHistory(text);
       setComposerText('');
-      clearComposerDraft();
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-      window.setTimeout(syncTextareaHeight, 0);
-      window.setTimeout(syncEnterKeyHint, 0);
       window.setTimeout(focusInput, 50);
       didSucceed = true;
     } catch (error) {
@@ -111,13 +87,10 @@ export function useComposerCommands({
     addHistory,
     bridge,
     focusInput,
-    inputRef,
     onSendActionComplete,
     onSendActionStart,
     setComposerText,
     status,
-    syncEnterKeyHint,
-    syncTextareaHeight,
     text,
     vibrationEnabled,
   ]);
@@ -125,9 +98,8 @@ export function useComposerCommands({
   const handleTextChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       setComposerText(event.target.value);
-      window.setTimeout(syncTextareaHeight, 0);
     },
-    [setComposerText, syncTextareaHeight],
+    [setComposerText],
   );
 
   const handleKeyDown = useCallback(
@@ -164,15 +136,8 @@ export function useComposerCommands({
     [bridge, enterBehavior, isComposing, status, submitCurrentText, text.length, vibrationEnabled],
   );
 
-  const handleKeyUp = useCallback(() => {
-    if (!isComposing) {
-      syncEnterKeyHint();
-    }
-  }, [isComposing, syncEnterKeyHint]);
-
   return {
     handleKeyDown,
-    handleKeyUp,
     handleTextChange,
     setInputText,
     submitCurrentText,

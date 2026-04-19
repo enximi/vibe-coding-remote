@@ -2,8 +2,6 @@ import { useEffect, useReducer } from 'react';
 import {
   type ActionPanelActionKey,
   savePreferences,
-  saveServerAuthToken,
-  saveServerEndpoint,
 } from './preferences';
 import {
   createInitialPreferencesState,
@@ -19,7 +17,7 @@ export function usePreferencesStore() {
     undefined,
     createInitialPreferencesState,
   );
-  const { prefs, serverEndpoint, serverAuthToken } = state;
+  const { prefs } = state;
 
   useEffect(() => {
     if (prefs.theme === 'system') {
@@ -34,22 +32,12 @@ export function usePreferencesStore() {
     savePreferences(prefs);
   }, [prefs]);
 
-  useEffect(() => {
-    saveServerEndpoint(serverEndpoint);
-  }, [serverEndpoint]);
-
-  useEffect(() => {
-    saveServerAuthToken(serverAuthToken);
-  }, [serverAuthToken]);
-
   const send = (action: PreferencesAction) => {
     dispatch(action);
   };
 
   return {
     prefs,
-    serverEndpoint,
-    serverAuthToken,
     addHistory: (text: string) => send({ type: 'history_added', text }),
     clearHistory: () => send({ type: 'history_cleared' }),
     placeActionPanelCell: (
@@ -70,8 +58,6 @@ export function usePreferencesStore() {
     setEnterBehavior: (enterBehavior: typeof prefs.enterBehavior) =>
       send({ type: 'enter_behavior_changed', enterBehavior }),
     setFontSize: (fontSize: number) => send({ type: 'font_size_changed', fontSize }),
-    setServerAuthToken: (token: string) => send({ type: 'server_auth_token_changed', token }),
-    setServerEndpoint: (endpoint: string) => send({ type: 'server_endpoint_changed', endpoint }),
     setTheme: (theme: typeof prefs.theme) => send({ type: 'theme_changed', theme }),
     toggleVibration: () => send({ type: 'vibration_toggled' }),
   };

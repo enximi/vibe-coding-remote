@@ -1,17 +1,17 @@
 import { createContext, type PropsWithChildren, useContext } from 'react';
-import { usePreferences } from '../../preferences/model/PreferencesContext';
 import type { ConnectionStatus } from './connectionMachine';
+import { useConnectionConfig } from './ConnectionConfigContext';
 import { useConnectionState } from './useConnectionState';
 
 export type ConnectionContextValue = {
   status: ConnectionStatus;
-  checkConnection: (endpoint?: string, token?: string) => void;
+  recheckConnection: () => void;
 };
 
 const ConnectionContext = createContext<ConnectionContextValue | null>(null);
 
 export function ConnectionProvider({ children }: PropsWithChildren) {
-  const { serverEndpoint, serverAuthToken } = usePreferences();
+  const { serverEndpoint, serverAuthToken } = useConnectionConfig();
   const connection = useConnectionState(serverEndpoint, serverAuthToken);
 
   return <ConnectionContext.Provider value={connection}>{children}</ConnectionContext.Provider>;

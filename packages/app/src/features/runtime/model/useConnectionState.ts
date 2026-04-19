@@ -16,52 +16,49 @@ export function useConnectionState(endpoint: string, token: string) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
 
-  const checkConnection = useCallback(
-    (nextEndpoint = endpoint, nextToken = token) => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+  const recheckConnection = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const resolvedConfig = resolveConnectionConfig(endpoint, token);
+
+    if (resolvedConfig === 'missing') {
+      dispatch({ type: 'config_missing' });
+      return;
+    }
+
+    if (resolvedConfig === 'invalid') {
+      dispatch({ type: 'config_invalid' });
+      return;
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+    dispatch({ type: 'check_requested', requestId });
+
+    void runConnectionCheck(resolvedConfig, controller, {
+      onAuthFailed: () => dispatch({ type: 'check_auth_failed', requestId }),
+      onConnectionFailed: () => dispatch({ type: 'check_connection_failed', requestId }),
+      onSucceeded: () => dispatch({ type: 'check_succeeded', requestId }),
+    }).finally(() => {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
       }
-
-      const resolvedConfig = resolveConnectionConfig(nextEndpoint, nextToken);
-
-      if (resolvedConfig === 'missing') {
-        dispatch({ type: 'config_missing' });
-        return;
-      }
-
-      if (resolvedConfig === 'invalid') {
-        dispatch({ type: 'config_invalid' });
-        return;
-      }
-
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-      requestIdRef.current += 1;
-      const requestId = requestIdRef.current;
-      dispatch({ type: 'check_requested', requestId });
-
-      void runConnectionCheck(resolvedConfig, controller, {
-        onAuthFailed: () => dispatch({ type: 'check_auth_failed', requestId }),
-        onConnectionFailed: () => dispatch({ type: 'check_connection_failed', requestId }),
-        onSucceeded: () => dispatch({ type: 'check_succeeded', requestId }),
-      }).finally(() => {
-        if (abortControllerRef.current === controller) {
-          abortControllerRef.current = null;
-        }
-      });
-    },
-    [endpoint, token],
-  );
+    });
+  }, [endpoint, token]);
 
   useEffect(() => {
-    void checkConnection();
+    void recheckConnection();
 
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [checkConnection]);
+  }, [recheckConnection]);
 
-  return { status: state.status, checkConnection };
+  return { status: state.status, recheckConnection };
 }

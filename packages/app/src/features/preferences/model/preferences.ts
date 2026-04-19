@@ -1,7 +1,5 @@
 import {
   PREFERENCES_STORAGE_KEY,
-  SERVER_AUTH_TOKEN_STORAGE_KEY,
-  SERVER_ENDPOINT_STORAGE_KEY,
 } from '../../../constants/storage';
 
 const DEFAULT_HISTORY_MAX_ITEMS = 50;
@@ -164,36 +162,6 @@ export function clampHistoryMaxItems(value: unknown): number {
     MIN_HISTORY_MAX_ITEMS,
     Math.min(MAX_HISTORY_MAX_ITEMS, Math.floor(value)),
   );
-}
-
-export function loadServerEndpoint(): string {
-  return window.localStorage.getItem(SERVER_ENDPOINT_STORAGE_KEY)?.trim() ?? '';
-}
-
-export function saveServerEndpoint(value: string): string {
-  const normalizedValue = value.trim();
-  if (normalizedValue) {
-    window.localStorage.setItem(SERVER_ENDPOINT_STORAGE_KEY, normalizedValue);
-  } else {
-    window.localStorage.removeItem(SERVER_ENDPOINT_STORAGE_KEY);
-  }
-
-  return normalizedValue;
-}
-
-export function loadServerAuthToken(): string {
-  return window.localStorage.getItem(SERVER_AUTH_TOKEN_STORAGE_KEY)?.trim() ?? '';
-}
-
-export function saveServerAuthToken(value: string): string {
-  const normalizedValue = value.trim();
-  if (normalizedValue) {
-    window.localStorage.setItem(SERVER_AUTH_TOKEN_STORAGE_KEY, normalizedValue);
-  } else {
-    window.localStorage.removeItem(SERVER_AUTH_TOKEN_STORAGE_KEY);
-  }
-
-  return normalizedValue;
 }
 
 function normalizeHistory(history: StoredPreferences['history']): HistoryItem[] {

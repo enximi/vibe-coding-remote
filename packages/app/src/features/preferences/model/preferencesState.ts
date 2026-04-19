@@ -7,8 +7,6 @@ import {
   clearHistoryItems,
   createActionPanelCellId,
   loadPreferences,
-  loadServerAuthToken,
-  loadServerEndpoint,
   normalizeActionPanelCells,
   normalizeActionPanelLibraryOrder,
   type Preferences,
@@ -17,8 +15,6 @@ import {
 
 export type PreferencesState = {
   prefs: Preferences;
-  serverEndpoint: string;
-  serverAuthToken: string;
 };
 
 export type PreferencesAction =
@@ -39,15 +35,11 @@ export type PreferencesAction =
   | { type: 'history_max_items_changed'; historyMaxItems: number }
   | { type: 'history_added'; text: string }
   | { type: 'history_removed'; time: number }
-  | { type: 'history_cleared' }
-  | { type: 'server_endpoint_changed'; endpoint: string }
-  | { type: 'server_auth_token_changed'; token: string };
+  | { type: 'history_cleared' };
 
 export function createInitialPreferencesState(): PreferencesState {
   return {
     prefs: loadPreferences(),
-    serverEndpoint: loadServerEndpoint(),
-    serverAuthToken: loadServerAuthToken(),
   };
 }
 
@@ -155,16 +147,6 @@ export function preferencesReducer(
       return {
         ...state,
         prefs: { ...state.prefs, history: clearHistoryItems() },
-      };
-    case 'server_endpoint_changed':
-      return {
-        ...state,
-        serverEndpoint: action.endpoint.trim(),
-      };
-    case 'server_auth_token_changed':
-      return {
-        ...state,
-        serverAuthToken: action.token.trim(),
       };
   }
 }

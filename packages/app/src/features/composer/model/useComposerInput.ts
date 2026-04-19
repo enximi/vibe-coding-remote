@@ -78,12 +78,12 @@ export function useComposerInput({
       return;
     }
 
-    const wantsSend = input.value.length > 0 && prefs.enterBehavior !== 'newline';
+    const wantsSend = state.text.length > 0 && prefs.enterBehavior !== 'newline';
     const nextHint = wantsSend ? 'send' : 'enter';
     if (input.getAttribute('enterkeyhint') !== nextHint) {
       input.setAttribute('enterkeyhint', nextHint);
     }
-  }, [prefs.enterBehavior]);
+  }, [prefs.enterBehavior, state.text]);
 
   const setComposerText = useCallback((value: string) => {
     dispatch({ type: 'text_changed', text: value });
@@ -92,7 +92,6 @@ export function useComposerInput({
   useComposerEffects({
     focusInput,
     hasRestoredDraft: hasRestoredDraftRef.current,
-    inputRef,
     isComposing: state.isComposing,
     moveCaretToEnd,
     onTextChange,
@@ -104,7 +103,6 @@ export function useComposerInput({
 
   const {
     handleKeyDown,
-    handleKeyUp,
     handleTextChange,
     setInputText,
     submitCurrentText,
@@ -113,15 +111,12 @@ export function useComposerInput({
     bridge,
     enterBehavior: prefs.enterBehavior,
     focusInput,
-    inputRef,
     isComposing: state.isComposing,
     moveCaretToEnd,
     onSendActionComplete,
     onSendActionStart,
     setComposerText,
     status,
-    syncEnterKeyHint,
-    syncTextareaHeight,
     text: state.text,
     vibrationEnabled: prefs.vibrationEnabled,
   });
@@ -141,7 +136,6 @@ export function useComposerInput({
     handleCompositionEnd,
     handleCompositionStart,
     handleKeyDown,
-    handleKeyUp,
     handleTextChange,
     inputRef,
     setInputText,

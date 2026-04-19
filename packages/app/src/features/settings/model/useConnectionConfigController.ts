@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer } from 'react';
-import { usePreferences } from '../../preferences/model/PreferencesContext';
+import { useConnectionConfig } from '../../runtime/model/ConnectionConfigContext';
 import { useConnection } from '../../runtime/model/ConnectionContext';
 import { parseImportUrl } from './importConfig';
 import {
@@ -10,11 +10,10 @@ import {
 export function useConnectionConfigController() {
   const {
     serverEndpoint,
-    setServerEndpoint,
     serverAuthToken,
-    setServerAuthToken,
-  } = usePreferences();
-  const { status, checkConnection } = useConnection();
+    setConnectionConfig,
+  } = useConnectionConfig();
+  const { status, recheckConnection } = useConnection();
   const [state, dispatch] = useReducer(
     settingsConnectionReducer,
     { endpoint: serverEndpoint, token: serverAuthToken },
@@ -31,11 +30,19 @@ export function useConnectionConfigController() {
 
   const applyConnectionConfig = useCallback(
     (endpoint: string, token: string) => {
-      setServerEndpoint(endpoint);
-      setServerAuthToken(token);
-      void checkConnection(endpoint, token);
+      const normalizedEndpoint = endpoint.trim();
+      const normalizedToken = token.trim();
+      const hasChanged =
+        normalizedEndpoint !== serverEndpoint || normalizedToken !== serverAuthToken;
+
+      if (!hasChanged) {
+        void recheckConnection();
+        return;
+      }
+
+      setConnectionConfig(normalizedEndpoint, normalizedToken);
     },
-    [checkConnection, setServerAuthToken, setServerEndpoint],
+    [recheckConnection, serverAuthToken, serverEndpoint, setConnectionConfig],
   );
 
   const applyDrafts = useCallback(() => {

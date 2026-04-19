@@ -25,12 +25,7 @@ export function useAppShellEffects({
         return;
       }
 
-      const isInteractiveOverlay =
-        event.target.closest('.action-panel-shell') ||
-        event.target.closest('.modal') ||
-        event.target.closest('#composerInput');
-
-      if (!isInteractiveOverlay) {
+      if (!isComposerRefocusBlocked(event.target)) {
         focusComposer();
       }
     };
@@ -54,4 +49,16 @@ export function useAppShellEffects({
       window.clearTimeout(timerId);
     };
   }, [dispatch, sendState]);
+}
+
+function isComposerRefocusBlocked(target: HTMLElement): boolean {
+  return Boolean(
+    target.closest('#composerInput') ||
+      target.closest('.action-panel-shell') ||
+      target.closest('.modal') ||
+      target.closest('.floating-settings-trigger') ||
+      target.closest(
+        'button, input, textarea, select, label, a, [role="button"], [contenteditable="true"]',
+      ),
+  );
 }

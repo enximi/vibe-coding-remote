@@ -3,43 +3,30 @@ import {
   DEFAULT_AUTH_CHECK_API_PATH,
   DEFAULT_CAPABILITIES_API_PATH,
   DEFAULT_HEALTHCHECK_PATH,
-  SERVER_AUTH_TOKEN_QUERY_PARAM,
-  SERVER_ENDPOINT_QUERY_PARAM,
 } from '../constants/network';
-import { SERVER_AUTH_TOKEN_STORAGE_KEY, SERVER_ENDPOINT_STORAGE_KEY } from '../constants/storage';
+import {
+  readConfiguredServerAuthTokenInput,
+  readConfiguredServerEndpointInput,
+} from './serverConfigSource';
 
 export function resolveConfiguredActionEndpoint(): string | null {
-  const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
-
-  return resolveActionEndpoint(candidate);
+  return resolveActionEndpoint(readConfiguredServerEndpointInput());
 }
 
 export function resolveConfiguredAuthCheckEndpoint(): string | null {
-  const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
-
-  return resolveAuthCheckEndpoint(candidate);
+  return resolveAuthCheckEndpoint(readConfiguredServerEndpointInput());
 }
 
 export function resolveConfiguredHealthcheckEndpoint(): string | null {
-  const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
-
-  return resolveHealthcheckEndpoint(candidate);
+  return resolveHealthcheckEndpoint(readConfiguredServerEndpointInput());
 }
 
 export function resolveConfiguredCapabilitiesEndpoint(): string | null {
-  const candidate =
-    readPresetValue(SERVER_ENDPOINT_QUERY_PARAM) ?? readStoredValue(SERVER_ENDPOINT_STORAGE_KEY);
-
-  return resolveCapabilitiesEndpoint(candidate);
+  return resolveCapabilitiesEndpoint(readConfiguredServerEndpointInput());
 }
 
 export function resolveConfiguredAuthToken(): string | null {
-  return (
-    readPresetValue(SERVER_AUTH_TOKEN_QUERY_PARAM) ?? readStoredValue(SERVER_AUTH_TOKEN_STORAGE_KEY)
-  );
+  return readConfiguredServerAuthTokenInput();
 }
 
 export function resolveActionEndpoint(value: string | null | undefined): string | null {
@@ -180,14 +167,4 @@ function getActionBasePath(pathname: string): string {
 
 function trimTrailingSlash(pathname: string): string {
   return pathname.replace(/\/+$/, '') || '/';
-}
-
-function readPresetValue(name: string): string | null {
-  const value = new URL(window.location.href).searchParams.get(name);
-  return value?.trim() || null;
-}
-
-function readStoredValue(name: string): string | null {
-  const value = window.localStorage.getItem(name);
-  return value?.trim() || null;
 }

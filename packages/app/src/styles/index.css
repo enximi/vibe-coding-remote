@@ -7,5 +7,7 @@
 @import "./action-panel.css";
 @import "./modal.css";
 @import "./settings.css";
+@import "./settings-controls.css";
+@import "./settings-action-panel.css";
 @import "./history.css";
 @import "./responsive.css";

@@ -51,9 +51,9 @@
   --selection: rgba(255, 255, 255, 0.15);
   --modal-backdrop: rgba(0, 0, 0, 0.6);
   
-  --surface-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.3);
-  --surface-shadow-strong: 0 24px 56px rgba(0, 0, 0, 0.5);
-  --surface-inline-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --surface-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --surface-shadow-strong: 0 24px 56px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --surface-inline-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   
   --thumb-fill: #2c313d;
   --success: #38d9a9;
@@ -79,9 +79,9 @@
     --divider: rgba(255, 255, 255, 0.12);
     --selection: rgba(255, 255, 255, 0.15);
     --modal-backdrop: rgba(0, 0, 0, 0.6);
-    --surface-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.3);
-    --surface-shadow-strong: 0 24px 56px rgba(0, 0, 0, 0.5);
-    --surface-inline-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    --surface-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --surface-shadow-strong: 0 24px 56px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --surface-inline-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     --thumb-fill: #2c313d;
     --success: #38d9a9;
     --warning: #fcc419;

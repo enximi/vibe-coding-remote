@@ -84,6 +84,12 @@
 .action-panel-editor-grid-wrap {
   overflow: auto;
   margin-top: 14px;
+  height: calc(
+    3 * var(--action-panel-editor-cell-size) +
+    2 * var(--action-panel-editor-gap) +
+    var(--action-panel-editor-grid-padding) * 2 +
+    var(--action-panel-editor-wrap-padding) * 2
+  );
   scrollbar-width: none;
   -ms-overflow-style: none;
   overscroll-behavior-x: contain;
@@ -92,12 +98,6 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  max-height: calc(
-    var(--action-panel-editor-viewport-rows) * var(--action-panel-editor-cell-size) +
-      (var(--action-panel-editor-viewport-rows) - 1) * var(--action-panel-editor-gap) +
-      var(--action-panel-editor-grid-padding) * 2 +
-      var(--action-panel-editor-wrap-padding) * 2
-  );
   padding: var(--action-panel-editor-wrap-padding);
   border-radius: 12px;
   background: color-mix(in srgb, var(--surface) 82%, var(--bg));
@@ -297,10 +297,10 @@
 .action-panel-library-viewport {
   overflow: auto;
   height: calc(
-    var(--action-panel-editor-viewport-rows) * var(--action-panel-editor-cell-size) +
-      (var(--action-panel-editor-viewport-rows) - 1) * var(--action-panel-editor-gap) +
-      var(--action-panel-editor-grid-padding) * 2 +
-      var(--action-panel-editor-wrap-padding) * 2
+    3 * var(--action-panel-editor-cell-size) +
+    2 * var(--action-panel-editor-gap) +
+    var(--action-panel-editor-grid-padding) * 2 +
+    var(--action-panel-editor-wrap-padding) * 2
   );
   margin-top: 14px;
   padding: var(--action-panel-editor-wrap-padding);

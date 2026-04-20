@@ -69,8 +69,9 @@ export function ConnectionSettingsSection({
           测试并保存连接
         </button>
         <div className="settings-card-divider" />
-        <button className="settings-card-btn" type="button" onClick={onOpenScanner}>
-          <ScanIcon width={18} height={18} /> 扫码导入配置
+        <button className="settings-card-btn" type="button" onClick={onOpenScanner} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <ScanIcon width={18} height={18} />
+          <span>扫码导入配置</span>
         </button>
       </div>
 
